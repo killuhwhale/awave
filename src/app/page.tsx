@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, ChangeEvent, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  ChangeEvent,
+  useRef,
+  useCallback,
+} from "react";
 import { Howl } from "howler";
 import SongPlayer from "./comps/SongPlayer";
 import SongList from "./comps/songListSearchable";
@@ -26,6 +32,7 @@ function cleanSongSource(songSrc: string): string {
   return encodeURIComponent(songSrc);
 }
 const host = config["host"];
+console.log("hosthosthosthost", host);
 const DEFAULT_SONG = {
   name: "Track 8",
   src: `http://${host}:3001/${cleanSongSource("Track 8.wav")}`,
@@ -426,6 +433,51 @@ const Home = () => {
 
     setShowRemoveOnDeckSong(false);
   };
+
+  const [setlistFileNames, setSetlistFileNames] = useState<Setlists>();
+
+  useEffect(() => {
+    const fetchSetlists = async () => {
+      const url = `http://${config["host"]}:3002`;
+      try {
+        console.log("Getting setlists");
+        const fileNames = (await (await fetch(url)).json()) as Setlists;
+        console.log("SetLists: ", fileNames);
+        setSetlistFileNames(fileNames);
+      } catch (err) {
+        console.error("Failed to fetch Set Lists from: ", url);
+      }
+    };
+    fetchSetlists();
+  }, []);
+
+  const [curSetListIdx, setCurSetListIdx] = useState(0);
+  const setListScrollRef = useRef<HTMLDivElement>(null);
+  const [scrollIntervalID, setScrollIntervalID] =
+    useState<NodeJS.Timeout | null>(null);
+
+  const handleMouseDown = useCallback((dir) => {
+    if (scrollIntervalID) clearInterval(scrollIntervalID);
+    // Start the timer when the mouse button is pressed
+    const intervalID = setInterval(() => {
+      setListScrollRef.current?.scrollBy({
+        behavior: "smooth",
+        left: dir * 75,
+      });
+    }, 100); // Scrolls every 1 second
+    setScrollIntervalID(intervalID);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    // Clear the timer if the mouse button is released
+    if (scrollIntervalID) clearInterval(scrollIntervalID);
+  }, [scrollIntervalID]);
+
+  const handleMouseLeave = useCallback(() => {
+    // Also clear the timer if the cursor leaves the element while holding the mouse button
+    if (scrollIntervalID) clearInterval(scrollIntervalID);
+  }, [scrollIntervalID]);
+
   return (
     <div
       id="pageRoot"
@@ -500,7 +552,7 @@ const Home = () => {
       </div>
 
       <div className="flex  items-center justify-center w-full space-x-12 max-h-3/6 min-h-3/6 h-3/6">
-        <div className=" bg-neutral-800 text-rose-700 text-sm  w-full  rounded-md font-bold h-full">
+        <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">
           <SongListOnDeck
             songs={onDeckSongs}
             onDragOver={onDragOver}
@@ -512,8 +564,89 @@ const Home = () => {
           />
         </div>
 
-        <div className=" bg-neutral-800 w-full text-emerald-300 text-sm font-bold h-full rounded-md ">
-          <SongListSearchable songs={allSongs} onDragStart={onDragStart} />
+        <div className=" bg-neutral-800 w-1/2 text-emerald-300 text-sm font-bold h-full rounded-md ">
+          <div className="flex justify-between">
+            <div
+              onPointerDown={() => {
+                handleMouseDown(-1);
+              }}
+              onPointerUp={() => handleMouseUp()}
+              onPointerLeave={() => handleMouseLeave()}
+            >
+              <UilSkipForwardAlt
+                size="20"
+                color="#61DAFB"
+                onClick={() => {
+                  console.log("Scrolling: ", setListScrollRef.current);
+                  setListScrollRef.current?.scrollBy({
+                    left: -50,
+                    behavior: "smooth",
+                  });
+                }}
+              />
+            </div>
+
+            <div className="overflow-x-auto" ref={setListScrollRef}>
+              <div className="flex justify-center w-full  space-x-8 cursor-pointer ">
+                {setlistFileNames?.files &&
+                  [
+                    ...setlistFileNames?.files,
+                    ...setlistFileNames?.files,
+                    ...setlistFileNames?.files,
+                  ].map((setList: Setlist, idx: number) => {
+                    return (
+                      <div
+                        className={`flex ${
+                          idx === curSetListIdx
+                            ? "text-rose-700"
+                            : "text-neutral-400"
+                        }`}
+                        onClick={() => {
+                          setCurSetListIdx(idx);
+                        }}
+                      >
+                        <p
+                          className={`p-4 border-b-2 ${
+                            idx === curSetListIdx
+                              ? "border-rose-700"
+                              : "border-neutral-400"
+                          }`}
+                        >
+                          {setList.title}
+                        </p>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+            <div
+              onPointerDown={() => {
+                handleMouseDown(1);
+              }}
+              onPointerUp={() => handleMouseUp()}
+              onPointerLeave={() => handleMouseLeave()}
+            >
+              <UilSkipForwardAlt size="100" color="#61DAFB" />
+            </div>
+          </div>
+
+          {setlistFileNames?.files.map((setlist: Setlist, idx: number) => {
+            return (
+              <SongListSearchable
+                hidden={idx !== curSetListIdx}
+                title={setlist.title}
+                songs={setlist.songs}
+                onDragStart={onDragStart}
+              />
+            );
+          })}
+
+          <SongListSearchable
+            hidden={true}
+            title="AllSongs"
+            songs={allSongs}
+            onDragStart={onDragStart}
+          />
         </div>
       </div>
 

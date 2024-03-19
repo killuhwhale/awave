@@ -1,5 +1,6 @@
 {
     "host": "192.168.1.229",
     "host_local": "192.168.1.229",
-    "musicDir": "/home/killuh/Music/unlucky17"
+    "musicDir": "/home/killuh/Music/unlucky17",
+    "setlistDir": "/home/killuh/awave"
 }

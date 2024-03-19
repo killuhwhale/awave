@@ -7,6 +7,8 @@ type SongProps = {
 
 type SongListSearchProps = {
   songs: SongProps[];
+  title: string;
+  hidden: boolean;
   onDragStart(e: any, song: SongProps): void;
 };
 
@@ -34,4 +36,12 @@ type SongPlayerProps = {
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 
   nextSong(playerName: string): void;
+};
+
+type Setlist = {
+  title: string;
+  songs: SongProps[];
+};
+type Setlists = {
+  files: Setlist[];
 };

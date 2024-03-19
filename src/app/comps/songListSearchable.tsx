@@ -8,7 +8,12 @@ import React, {
 } from "react";
 import { debounce, filter, filterOptions } from "../utils/utils";
 
-const SongListSearchable = ({ songs, onDragStart }: SongListSearchProps) => {
+const SongListSearchable = ({
+  songs,
+  title,
+  hidden,
+  onDragStart,
+}: SongListSearchProps) => {
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
   const [
     filteredSongNamesDecoratedStings,
@@ -70,9 +75,13 @@ const SongListSearchable = ({ songs, onDragStart }: SongListSearchProps) => {
   );
 
   return (
-    <div className="w-full h-full p-4 items-center flex flex-col ">
+    <div
+      className={`w-full h-full p-4 items-center flex flex-col ${
+        hidden ? "hidden" : ""
+      }`}
+    >
       <div className="">
-        <p>All Songs </p>
+        <p>{title} </p>
       </div>
       <div className="w-full flex justify-center m-4">
         <input

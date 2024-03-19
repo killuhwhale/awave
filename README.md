@@ -1,8 +1,4 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
-
-## Getting Started
-
-First, run the development server:
+# AWave
 
 ```bash
 npm run dev
@@ -41,8 +37,3 @@ List will essentailly be a list of lists to manage the same way we are managing 
 ## AI Generate playlists
 ?
 
-
-Start Music server
-
-cd ~/
-python3 -m http.server# awave

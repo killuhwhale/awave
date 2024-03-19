@@ -1,13 +1,17 @@
 #!/bin/bash
 
 # Start the first server in the background and get its PID
-node src/fileServer/src/server.ts &
+node src/fileServer/src/server.js &
 SERVER_PID=$!
+
+node src/fileServer/src/serverSetlist.js &
+SETLIST_SERVER_PID=$!
 
 # Function to kill the background server process
 cleanup() {
     echo "Stopping the server..."
     kill $SERVER_PID
+    kill $SETLIST_SERVER_PID
 }
 
 # Trap commands to catch script termination and call the cleanup function

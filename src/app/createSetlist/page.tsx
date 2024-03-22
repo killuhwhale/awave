@@ -7,11 +7,11 @@ import React, {
   useCallback,
 } from "react";
 import { Howl } from "howler";
-import SongPlayer from "./comps/SongPlayer";
-import SongList from "./comps/songListSearchable";
-import SongListSearchable from "./comps/songListSearchable";
-import SongListOnDeck from "./comps/songListOnDeck";
-import config from "../../config.json";
+import SongPlayer from "./../comps/SongPlayer";
+import SongList from "./../comps/songListSearchable";
+import SongListSearchable from "./../comps/songListSearchable";
+import SongListOnDeck from "./../comps/songListOnDeck";
+import config from "../../../config.json";
 import {
   UilPlayCircle,
   UilPauseCircle,
@@ -19,7 +19,7 @@ import {
   UilArrowLeft,
   UilArrowRight,
 } from "@iconscout/react-unicons";
-import ActionCancelModal from "./comps/modals/ActionCancelModal";
+import ActionCancelModal from "./../comps/modals/ActionCancelModal";
 
 /**
  *
@@ -71,37 +71,34 @@ const songs: SongProps[] = [
   },
 ];
 
-const PLAYERNAME_LEFT = "p1";
-const PLAYERNAME_RIGHT = "p2";
-
 const Home = () => {
-  const currentPlayerRef = useRef<Howl | null>();
-  const currentPlayerNameRef = useRef<string>();
-
   const leftPlayerRef = useRef<Howl | null>();
-  const rightPlayerRef = useRef<Howl | null>();
+  const [leftSong, setLeftSong] = useState<SongProps | null>(null);
+  const [leftMusicVolume, setLeftMusicVolume] = useState(50);
   const [leftDuration, setLeftDuration] = useState(0);
   const leftDurationRef = useRef(0);
-  const [rightDuration, setRightDuration] = useState(0);
-  const rightDurationRef = useRef(0);
-
   const [isLeftPlaying, setIsLeftPlaying] = useState(false);
-  const [isRightPlaying, setIsRightPlaying] = useState(false);
 
-  const setNewPlayer = (
-    playerName: string,
-    newSong: SongProps,
-    init = false
-  ) => {
+  const setNewPlayer = (newSong: SongProps) => {
     console.log("Attempting Loading new song and player");
+    console.log(newSong.src, leftSong?.src);
 
     if (!newSong) return;
 
-    if (leftPlayerRef.current && playerName === PLAYERNAME_LEFT) {
-      leftPlayerRef.current.unload();
+    if (newSong.src === leftSong?.src) {
+      if (leftPlayerRef.current?.playing()) {
+        setIsLeftPlaying(false);
+        return leftPlayerRef.current?.pause();
+      } else if (!leftPlayerRef.current?.playing()) {
+        setIsLeftPlaying(true);
+        return leftPlayerRef.current?.play();
+      }
     }
-    if (rightPlayerRef.current && playerName === PLAYERNAME_RIGHT) {
-      rightPlayerRef.current.unload();
+
+    if (leftPlayerRef.current) {
+      leftPlayerRef.current.pause();
+      setIsLeftPlaying(false);
+      leftPlayerRef.current.unload();
     }
 
     const newPlayer = new Howl({
@@ -109,43 +106,20 @@ const Home = () => {
       html5: true, // Allows playing from a file/blob
     });
 
-    if (init) {
-      currentPlayerNameRef.current = PLAYERNAME_LEFT;
-      currentPlayerRef.current = newPlayer;
-    }
-
     newPlayer?.once("load", function () {
       const dur = newPlayer.duration();
 
-      if (playerName === PLAYERNAME_LEFT) {
-        setLeftDuration(dur);
-        leftPlayerRef.current = newPlayer;
-        leftDurationRef.current = dur;
-      } else {
-        setRightDuration(newPlayer.duration());
-        rightPlayerRef.current = newPlayer;
-        rightDurationRef.current = dur;
-      }
+      setLeftDuration(dur);
+      leftPlayerRef.current = newPlayer;
+      leftDurationRef.current = dur;
     });
 
-    //   newPlayer.on("", () => {});
-
-    // setPlayer(newPlayer);
+    newPlayer.play();
+    setLeftSong(newSong);
+    setIsLeftPlaying(true);
   };
 
-  const switchCurrentPlayer = (playerName: string) => {
-    if (playerName === PLAYERNAME_LEFT) {
-      console.log("Switching current player left");
-      currentPlayerNameRef.current = PLAYERNAME_LEFT;
-      currentPlayerRef.current = leftPlayerRef.current;
-    } else {
-      console.log("Switching current player right");
-      currentPlayerNameRef.current = PLAYERNAME_RIGHT;
-      currentPlayerRef.current = rightPlayerRef.current;
-    }
-  };
-
-  const [onDeckSongs, setOnDeckSongs] = useState(songs);
+  const [onDeckSongs, setOnDeckSongs] = useState([] as SongProps[]);
   const [allSongs, setAllSongs] = useState(songs);
 
   const onDragStart = (e: any, song: SongProps) => {
@@ -232,187 +206,23 @@ const Home = () => {
     }
   };
 
-  //TODO() return next song based on generated setlist
-  const getNextSong = () => {
-    console.log("Getting next song");
-    const nextSong = { ...onDeckSongs[0] };
-    setOnDeckSongs(onDeckSongs.slice(1, onDeckSongs.length));
-    if (!nextSong.name) return DEFAULT_SONG;
-    return nextSong;
-  };
-
-  const [leftSong, setLeftSong] = useState<SongProps | null>(null);
-  const [rightSong, setRightSong] = useState<SongProps | null>(null);
-
-  const [leftMusicVolume, setLeftMusicVolume] = useState(50);
-  const [rightMusicVolume, setRightMusicVolume] = useState(50);
-  const [balance, setBalance] = useState(50);
-  const balanceRef = useRef(50);
-  const balanceIntervalRef = useRef<NodeJS.Timeout>();
-  const SLIDE_DURATION = 1776;
-
-  const onVolmeShareChange: React.ChangeEventHandler<HTMLInputElement> = (
-    ev: ChangeEvent<HTMLInputElement>
-  ) => {
-    if (balanceIntervalRef.current) {
-      clearInterval(balanceIntervalRef.current);
-    }
-
-    const val = ev.target.value;
-    updateBalance(val);
-    balanceRef.current = parseInt(val);
-  };
-
-  const updateBalance = (newBalance: string) => {
-    const val = newBalance;
-    const leftVol = 100 - parseInt(val);
-    const rightVol = parseInt(val) - 1;
-    // console.log("Setting volumes: ", leftVol, rightVol, val);
-    setLeftMusicVolume(leftVol / 100);
-    setRightMusicVolume(rightVol / 100);
-    setBalance(parseInt(val));
-  };
-
-  // Slides balance to left or right
-  const slideBalance = (direction: string) => {
-    if (balanceIntervalRef.current) {
-      clearInterval(balanceIntervalRef.current);
-    }
-
-    const steps = 20;
-    const intervalTime = SLIDE_DURATION / steps;
-    let originalVolume = balanceRef.current;
-    if (direction === "right") {
-      originalVolume = 100 - balanceRef.current;
-    }
-    const decrement = originalVolume / steps;
-    const intervalId = setInterval(() => {
-      let newVolume = Math.max(1, balanceRef.current - decrement);
-      if (direction === "right") {
-        newVolume = Math.min(100, balanceRef.current + decrement);
-      }
-
-      balanceRef.current = newVolume;
-      updateBalance(`${newVolume}`);
-    }, intervalTime);
-    balanceIntervalRef.current = intervalId;
-    // Ensure the interval is cleared after the duration
-    setTimeout(() => clearInterval(intervalId), SLIDE_DURATION);
-  };
-
-  useEffect(() => {
-    if (!leftPlayerRef.current) {
-      const nextLeftSong = getNextSong();
-      setNewPlayer(PLAYERNAME_LEFT, nextLeftSong, true);
-      if (!leftSong) setLeftSong(nextLeftSong);
-    }
-
-    if (!rightPlayerRef.current) {
-      const nextRightSong = getNextSong();
-      setNewPlayer(PLAYERNAME_RIGHT, nextRightSong);
-      if (!rightSong) setRightSong(nextRightSong);
-    }
-  }, []);
-
-  const autoNextSong = (playerName: string) => {
-    const nextSong = getNextSong();
-    playNextSong(playerName, nextSong);
-  };
-
-  // Each player will call this with their name
-  // We then need to play the next song on this player.
-  const playNextSong = (playerName: string, nextSong: SongProps) => {
-    if (playerName === PLAYERNAME_LEFT) {
-      slideBalance("right");
-      rightPlayerRef.current?.play();
-      setIsRightPlaying(true);
-      setIsLeftPlaying(false);
-
-      console.log("Setting left song for P1");
-
-      setTimeout(() => {
-        switchCurrentPlayer(PLAYERNAME_RIGHT);
-        leftPlayerRef.current?.unload();
-        setNewPlayer(playerName, nextSong);
-        setLeftSong(nextSong);
-      }, SLIDE_DURATION + 40);
-
-      // play right track
-    } else {
-      slideBalance("left");
-      leftPlayerRef.current?.play();
-      setIsLeftPlaying(true);
-      setIsRightPlaying(false);
-
-      console.log("Setting right song for P2");
-
-      setTimeout(() => {
-        switchCurrentPlayer(PLAYERNAME_LEFT);
-        rightPlayerRef.current?.unload();
-        setNewPlayer(playerName, nextSong);
-        setRightSong(nextSong);
-      }, SLIDE_DURATION + 40);
-    }
-  };
+  useEffect(() => {}, []);
 
   // useEffect(() => {}, [leftSong.src, rightSong.src]);
 
   const masterPlay = () => {
-    if (currentPlayerNameRef.current) {
-      if (
-        currentPlayerNameRef.current === PLAYERNAME_LEFT &&
-        !leftPlayerRef.current?.playing()
-      ) {
-        setIsLeftPlaying(true);
-        leftPlayerRef.current?.play();
-        console.log("Master Play Left");
-      } else if (
-        currentPlayerNameRef.current === PLAYERNAME_RIGHT &&
-        !rightPlayerRef.current?.playing()
-      ) {
-        setIsRightPlaying(true);
-        rightPlayerRef.current?.play();
-        console.log("Master Play Right");
-      }
+    if (leftPlayerRef.current && !leftPlayerRef.current?.playing()) {
+      setIsLeftPlaying(true);
+      leftPlayerRef.current?.play();
+      console.log("Master Play Left");
     }
   };
 
   const masterPause = () => {
-    if (currentPlayerNameRef.current) {
-      if (
-        currentPlayerNameRef.current === PLAYERNAME_LEFT &&
-        leftPlayerRef.current?.playing()
-      ) {
-        setIsLeftPlaying(false);
-        leftPlayerRef.current?.pause();
-        console.log("Master Pause Left");
-      } else if (
-        currentPlayerNameRef.current === PLAYERNAME_RIGHT &&
-        rightPlayerRef.current?.playing()
-      ) {
-        setIsRightPlaying(false);
-        rightPlayerRef.current?.pause();
-        console.log("Master Pause Right");
-      }
-    }
-  };
-
-  const masterNextButtonDisabled = useRef(false);
-  const masterNext = () => {
-    if (
-      currentPlayerRef.current &&
-      currentPlayerNameRef.current &&
-      !masterNextButtonDisabled.current
-    ) {
-      console.log(
-        "Master next current name ref: ",
-        currentPlayerNameRef.current
-      );
-      autoNextSong(currentPlayerNameRef.current);
-      masterNextButtonDisabled.current = true;
-      setTimeout(() => {
-        masterNextButtonDisabled.current = false;
-      }, SLIDE_DURATION + 80);
+    if (leftPlayerRef.current && leftPlayerRef.current?.playing()) {
+      setIsLeftPlaying(false);
+      leftPlayerRef.current?.pause();
+      console.log("Master Pause Left");
     }
   };
 
@@ -437,21 +247,6 @@ const Home = () => {
   };
 
   const [setlistFileNames, setSetlistFileNames] = useState<Setlists>();
-
-  useEffect(() => {
-    const fetchSetlists = async () => {
-      const url = `http://${config["host"]}:3002`;
-      try {
-        console.log("Getting setlists");
-        const fileNames = (await (await fetch(url)).json()) as Setlists;
-        console.log("SetLists: ", fileNames);
-        setSetlistFileNames(fileNames);
-      } catch (err) {
-        console.error("Failed to fetch Set Lists from: ", url);
-      }
-    };
-    fetchSetlists();
-  }, []);
 
   const [curSetListIdx, setCurSetListIdx] = useState(0);
   const setListScrollRef = useRef<HTMLDivElement>(null);
@@ -489,80 +284,55 @@ const Home = () => {
     allSongsSetlist,
     ...(setlistFileNames?.files ?? ([] as Setlist[])),
   ];
+
+  const addOnDeckToNewSetlist = (title: string) => {
+    if (onDeckSongs.length > 0) {
+      console.log("Adding onDeck to setlistFileNames");
+      const newSetlists = [
+        ...(setlistFileNames?.files ?? ([] as Setlist[])),
+        { title, songs: onDeckSongs },
+      ] as Setlist[];
+      setSetlistFileNames({ files: newSetlists });
+      setOnDeckSongs([]);
+    }
+  };
+
+  const [rmSetlist, setRmSetlist] = useState<number>(0);
+  const removeSetlist = () => {
+    console.log("Removing setlist: ", rmSetlist);
+    if (rmSetlist !== 0) {
+      const setlists = setlistFileNames?.files ?? ([] as Setlist[]);
+      const newSetlist = {
+        files: [
+          ...setlists.slice(0, rmSetlist - 1), // mins 1 because we manually add allsongs to index 0
+          ...setlists.slice(rmSetlist, setlists.length),
+        ],
+      };
+      console.log("NewSetList after remove: ", setlists, newSetlist);
+      setSetlistFileNames(newSetlist);
+      setShowRemoveSetlist(false);
+      setCurSetListIdx(0);
+    }
+  };
+
+  const [showRemoveSetlist, setShowRemoveSetlist] = useState(false);
+
   return (
     <div
       id="pageRoot"
       className="flex min-h-screen h-screen max-h-screen  flex-col items-center justify-between ml-8 mr-8"
     >
-      <div className="flex flex-col justify-center  w-full h-3/6 max-h-3/6 min-h-3/6 ">
-        <div className="flex flex-col justify-center  w-full h-3/6 ">
-          <div className="flex  w-full">
-            <div className="w-1/2">
-              {leftSong ? (
-                <SongPlayer
-                  key={`${leftSong.src}_p1`}
-                  playerName={PLAYERNAME_LEFT}
-                  playerRef={leftPlayerRef}
-                  duration={leftDuration}
-                  durationRef={leftDurationRef}
-                  nextSong={autoNextSong}
-                  musicVol={leftMusicVolume}
-                  isPlaying={isLeftPlaying}
-                  setIsPlaying={setIsLeftPlaying}
-                  song={leftSong}
-                  bgColor="bg-slate-800"
-                />
-              ) : (
-                <div></div>
-              )}
-            </div>
-            <div className="w-1/2">
-              {rightSong ? (
-                <SongPlayer
-                  key={`${rightSong.src}_p2`}
-                  playerName={PLAYERNAME_RIGHT}
-                  isPlaying={isRightPlaying}
-                  setIsPlaying={setIsRightPlaying}
-                  playerRef={rightPlayerRef}
-                  duration={rightDuration}
-                  durationRef={rightDurationRef}
-                  nextSong={autoNextSong}
-                  musicVol={rightMusicVolume}
-                  song={rightSong}
-                  bgColor="bg-slate-900"
-                />
-              ) : (
-                <div></div>
-              )}
-            </div>
-          </div>
-          <div className="flex w-full flex-col items-center justify-center">
-            <input
-              className="w-3/4"
-              type="range"
-              onChange={onVolmeShareChange}
-              min="1"
-              max="100"
-              disabled
-              value={balance}
-            ></input>
-            <p className="w-full text-center">
-              Bal: {parseInt(balance.toString())}
-            </p>
-          </div>
-        </div>
-
+      <div className="flex flex-col justify-center  w-full h-1/6 max-h-1/6 min-h-1/6 ">
         <div className="flex w-full justify-center items-center space-x-24 h-3/6">
-          {isLeftPlaying || isRightPlaying ? (
+          {isLeftPlaying ? (
             <UilPauseCircle size="120" color="#61DAFB" onClick={masterPause} />
           ) : (
             <UilPlayCircle size="120" color="#61DAFB" onClick={masterPlay} />
           )}
-          <UilSkipForwardAlt size="120" color="#61DAFB" onClick={masterNext} />
         </div>
       </div>
 
-      <div className="flex  items-center justify-center w-full space-x-12 max-h-3/6 min-h-3/6 h-3/6">
+      <div className="flex  items-center justify-center w-full space-x-12 max-h-5/6 min-h-5/6 h-5/6">
         <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">
           <SongListOnDeck
             songs={onDeckSongs}
@@ -572,6 +342,7 @@ const Home = () => {
             onDragOverRearrangeDeck={onDragOverRearrangeDeck}
             onDropRearrangeDeck={onDropRearrangeDeck}
             confirmRemoveOnDeckSong={confirmRemoveOnDeckSong}
+            addOnDeckToNewSetlist={addOnDeckToNewSetlist}
           />
         </div>
 
@@ -603,11 +374,11 @@ const Home = () => {
               ref={setListScrollRef}
             >
               <div className="w-full flex">
-                {combinedSetlists.map((setList: Setlist, idx: number) => {
+                {combinedSetlists.map((setlist: Setlist, idx: number) => {
                   return (
                     <div
                       key={`${idx}_setlist`}
-                      className={`flex ${
+                      className={`flex items-center ${
                         idx === curSetListIdx
                           ? "text-rose-700"
                           : "text-neutral-400"
@@ -623,8 +394,19 @@ const Home = () => {
                             : "border-neutral-400"
                         }`}
                       >
-                        {setList.title}
+                        {setlist.title}
                       </p>
+                      {setlist.title !== "All Songs" ? (
+                        <div
+                          className="w-[15px] h-[15px] bg-red-500"
+                          onClick={() => {
+                            setRmSetlist(idx);
+                            setShowRemoveSetlist(true);
+                          }}
+                        ></div>
+                      ) : (
+                        <></>
+                      )}
                     </div>
                   );
                 })}
@@ -660,6 +442,10 @@ const Home = () => {
                   title={setlist.title}
                   songs={setlist.songs}
                   onDragStart={onDragStart}
+                  setNewPlayer={setNewPlayer}
+                  leftPlayerRef={leftPlayerRef}
+                  leftSong={leftSong}
+                  isLeftPlaying={isLeftPlaying}
                 />
               );
             })}
@@ -677,6 +463,20 @@ const Home = () => {
         }}
         key={`rmODS_${rmOnDeckSong?.src}`}
         note={`${rmOnDeckSong?.src}`}
+        btnStyle="bg-rose-700 text-slate-200"
+      />
+      <ActionCancelModal
+        isOpen={showRemoveSetlist}
+        message={`Are you sure you want to remove "${
+          setlistFileNames?.files[rmSetlist - 1]?.title
+        }"`}
+        onAction={removeSetlist}
+        actionText="Remove"
+        onClose={() => {
+          setShowRemoveSetlist(false);
+        }}
+        key={`rmSL_${setlistFileNames?.files[rmSetlist - 1]?.title}`}
+        note={`${setlistFileNames?.files[rmSetlist - 1]?.title}`}
         btnStyle="bg-rose-700 text-slate-200"
       />
     </div>

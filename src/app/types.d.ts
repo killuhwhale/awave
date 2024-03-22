@@ -10,6 +10,10 @@ type SongListSearchProps = {
   title: string;
   hidden: boolean;
   onDragStart(e: any, song: SongProps): void;
+  setNewPlayer?(newSong: SongProps): void;
+  leftPlayerRef?: React.MutableRefObject<Howl | null | undefined>;
+  leftSong?: SongProps | null;
+  isLeftPlaying?: boolean;
 };
 
 type SongListOnDeckProps = {
@@ -21,6 +25,8 @@ type SongListOnDeckProps = {
   onDragOverRearrangeDeck(e: any): void;
   onDropRearrangeDeck(e: any, dropIndex: number): void;
   confirmRemoveOnDeckSong: (rmSong: SongProps) => void;
+  addOnDeckToNewSetlist?(title: string): void;
+  setNewPlayer?(newSong: SongProps): void;
 };
 
 type SongPlayerProps = {

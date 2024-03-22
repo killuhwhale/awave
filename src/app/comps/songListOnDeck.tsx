@@ -11,11 +11,36 @@ const SongListOnDeck = ({
   onDragOverRearrangeDeck,
   onDropRearrangeDeck,
   confirmRemoveOnDeckSong,
+  addOnDeckToNewSetlist,
 }: SongListOnDeckProps) => {
+  const [setlistName, setSetlistName] = useState("");
   return (
     <div className="w-full h-full pl-4 pr-4 items-center flex flex-col ">
-      <div>
-        <p>On deck </p>
+      <div className="flex w-full justify-between">
+        <div className="flex content-center items-center">
+          <p>On deck </p>
+        </div>
+        {addOnDeckToNewSetlist ? (
+          <div className="flex">
+            <input
+              placeholder="New setlist name"
+              value={setlistName}
+              onChange={(ev) => setSetlistName(ev.target.value)}
+            />
+            <button
+              className="text-cyan-400 hover:text-cyan-700 p-2"
+              onClick={() => {
+                if (setlistName) {
+                  addOnDeckToNewSetlist(setlistName);
+                }
+              }}
+            >
+              + Create new setlist
+            </button>
+          </div>
+        ) : (
+          <></>
+        )}
       </div>
 
       <div

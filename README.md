@@ -1,27 +1,37 @@
 # AWave
+## WSS Server (Go)
 
 ```bash
-npm run dev
+cd ~/ws_node/awave/src/fileServer/src && go run cmdServer 127.0.0.1:4000
 ```
 
+## Controller Client (React Native)
 
+```bash
+cd ~/ws_node/awave/src/mobile/awave && yarn web
+```
 
+## Music Client (NextJs)
 
-# TODO()
+```bash
+cd ~/ws_node/awave && npm run dev
+```
 
-# Remove all from onDeckSonglist
+```bash
+# Quick Copy
+cd ~/ws_node/awave/src/fileServer/src && go run cmdServer 127.0.
+cd ~/ws_node/awave/src/mobile/awave && yarn web
+cd ~/ws_node/awave && npm run dev
+```
 
-# Add feature to songListSearchable
-- allow for "add all" to onDeck list.
+## fixIconScout.sh
+iconScount icons do not come with index.d.ts
+Run to populate file in node_modules.
 
-
-## Master Volume for Music
-So we can lower volume and give voice message
-
-## Another Player to play voice messages
+## TODO()
+### Another Player to play voice messages
 Main Component can play a file
 
-
-## AI Generate playlists
+### AI Generate playlists
 ?
 

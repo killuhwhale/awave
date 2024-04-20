@@ -6,10 +6,13 @@
     "dev": "bash npmdev.sh",
     "build": "next build",
     "start": "bash npmstart.sh",
-    "lint": "next lint"
+    "lint": "next lint",
+    "ts:check": "tsc"
   },
   "dependencies": {
     "@iconscout/react-unicons": "^2.0.2",
+    "firebase": "^10.11.0",
+    "firestore": "^1.1.6",
     "howler": "^2.2.4",
     "next": "14.1.3",
     "react": "^18",

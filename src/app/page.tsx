@@ -20,6 +20,16 @@ import {
   UilArrowRight,
 } from "@iconscout/react-unicons";
 import ActionCancelModal from "./comps/modals/ActionCancelModal";
+import fbApp from "./utils/firebase";
+
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+} from "firebase/firestore/lite";
+const db = getFirestore(fbApp);
 
 /**
  *
@@ -28,7 +38,31 @@ import ActionCancelModal from "./comps/modals/ActionCancelModal";
  *
  */
 
-export const btnStyle = "w-[50px] bg-purple-700 mr-6";
+interface IndexedObject {
+  [key: string]: string; // Index signature
+}
+
+class Commands {
+  PLAY = "play";
+  PAUSE = "pause";
+  NEXT = "next";
+  VOLUP = "volup";
+  VOLDOWN = "voldown";
+  LOADSETLIST = "loadSetlist";
+
+  getCmd: IndexedObject = {
+    "1": this.PLAY,
+    "2": this.PAUSE,
+    "3": this.NEXT,
+    "4": this.VOLUP,
+    "5": this.VOLDOWN,
+    "6": this.LOADSETLIST,
+  };
+}
+
+const CMD = new Commands();
+
+const WSURL = "ws://localhost:4000";
 
 function cleanSongSource(songSrc: string): string {
   return encodeURIComponent(songSrc);
@@ -42,7 +76,15 @@ const DEFAULT_SONG = {
 
 const songs: SongProps[] = [
   {
-    name: "Track5 This is a really long track name that should be truncated and not be long that roughly seventy- two charactes",
+    name: "Dumby1",
+    src: `http://${host}:3001/${cleanSongSource("Dumby1.wav")}`,
+  },
+  {
+    name: "Dumby2",
+    src: `http://${host}:3001/${cleanSongSource("Dumby2.wav")}`,
+  },
+  {
+    name: "Track5",
     album: "Debut Album",
     artist: "Unlucky 17",
     src: `http://${host}:3001/${cleanSongSource("Track5.wav")}`,
@@ -74,6 +116,16 @@ const songs: SongProps[] = [
 const PLAYERNAME_LEFT = "p1";
 const PLAYERNAME_RIGHT = "p2";
 
+type CmdMsg = {
+  cmd: number;
+  cmdType: number;
+  partyName: string;
+  secretCode: string;
+  setlist: number;
+  volAmount: number;
+};
+const partyName = "tp";
+
 const Home = () => {
   const currentPlayerRef = useRef<Howl | null>();
   const currentPlayerNameRef = useRef<string>();
@@ -87,6 +139,144 @@ const Home = () => {
 
   const [isLeftPlaying, setIsLeftPlaying] = useState(false);
   const [isRightPlaying, setIsRightPlaying] = useState(false);
+
+  const ws = useRef<WebSocket | null>(null);
+
+  const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
+  const setlistsRef = useRef<Setlist[]>([] as Setlist[]);
+
+  useEffect(() => {
+    const setListPath = `setlists/${partyName}/setlists`;
+    console.log("loading setlists: ", setListPath);
+    const _ = async () => {
+      console.log("Getting doc...");
+      const setlistDocs = await getDocs(collection(db, setListPath));
+      console.log("Got doc:", setlistDocs);
+
+      // const allSetlists: Setlist[] = [] as Setlist[];
+
+      const allSetlists = await Promise.all(
+        setlistDocs.docs.map(async (doc) => {
+          // console.log("Setlist: ", doc.data());
+          const setlistData = doc.data() as Setlist;
+
+          const songDocs = await getDocs(
+            collection(db, `${setListPath}/${setlistData.title}/songs`)
+          );
+
+          const allSongs = [] as SongProps[];
+          songDocs.docs.forEach((songDoc) => {
+            const songData = songDoc.data() as SongProps;
+            allSongs.push({
+              ...songData,
+              src: `http://${host}:3001/${encodeURIComponent(
+                songData["name"]
+              )}`,
+            });
+          });
+
+          return {
+            ...setlistData,
+            songs: allSongs,
+          } as Setlist;
+        })
+      );
+
+      console.log("Setting setlists: ", allSetlists);
+      allSetlists.sort((a, b) => (a.order > b.order ? 1 : -1));
+      setSetlists(allSetlists);
+      setlistsRef.current = allSetlists;
+    };
+    _().then(() => {});
+  }, []);
+
+  const connectToWebSocket = () => {
+    if (ws.current) return;
+    const wss = new WebSocket(WSURL);
+
+    ws.current = wss;
+  };
+
+  const executeCmd = (data: CmdMsg) => {
+    switch (CMD.getCmd[data.cmd]) {
+      case CMD.PLAY:
+        console.log("Press Play!");
+        masterPlay();
+        break;
+      case CMD.PAUSE:
+        console.log("Press Pause!");
+        masterPause();
+        break;
+      case CMD.NEXT:
+        console.log("Press Next!");
+
+        masterNext();
+        break;
+      case CMD.VOLUP:
+        console.log("Press Vol up!", data.volAmount);
+        masterVol(data.volAmount);
+        break;
+      case CMD.VOLDOWN:
+        console.log("Press Vol down!", data.volAmount);
+        masterVol(-data.volAmount);
+        break;
+      case CMD.LOADSETLIST:
+        console.log("LoadSetlist!", data.setlist);
+        unconfirmedLoadSetlist(data.setlist);
+        break;
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (ws.current === null) {
+      return connectToWebSocket();
+    }
+
+    ws.current.onopen = () => {
+      console.log("Connected!");
+      ws.current?.send(
+        JSON.stringify({
+          cmd: 0,
+          cmdType: 0,
+          partyName: partyName,
+        })
+      );
+    };
+
+    ws.current.onmessage = (ev) => {
+      const data = JSON.parse(ev.data);
+      console.log("Recv'd msg: ", data);
+      const cmd = data["cmd"];
+      const cmdType = data["cmdType"];
+      console.log("cmdType: ", typeof cmdType, cmdType);
+      if (cmdType == 1) {
+        executeCmd(data);
+      }
+    };
+
+    ws.current.onerror = (error) => {
+      console.log("WebSocket Error ", error);
+      if (ws.current && ws.current.readyState !== WebSocket.OPEN) {
+        ws.current = null;
+      }
+    };
+
+    ws.current.onclose = (ev) => {
+      if (!ev.wasClean) {
+        ws.current = null;
+      }
+    };
+
+    return () => {
+      if ((ws.current as WebSocket)?.readyState !== WebSocket.CLOSED) {
+        (ws.current as WebSocket).close();
+      }
+    };
+  }, [ws]);
+
+  const initLoadingRef = useRef(false);
 
   const setNewPlayer = (
     playerName: string,
@@ -146,6 +336,7 @@ const Home = () => {
   };
 
   const [onDeckSongs, setOnDeckSongs] = useState(songs);
+  const onDeckSongsRef = useRef(songs);
   const [allSongs, setAllSongs] = useState(songs);
 
   const onDragStart = (e: any, song: SongProps) => {
@@ -165,20 +356,31 @@ const Home = () => {
 
     try {
       const draggedSong = JSON.parse(e.dataTransfer.getData("song"));
-      const onDeckSongsFiltered = onDeckSongs.filter((onDeckSong) => {
-        return onDeckSong.src === draggedSong.src;
-      });
+      if (!onDeckSongsRef.current) return;
+      const onDeckSongsFiltered = onDeckSongsRef.current.filter(
+        (onDeckSong) => {
+          return onDeckSong.src === draggedSong.src;
+        }
+      );
 
       console.log("Fileted val: ", onDeckSongsFiltered.length);
       if (onDeckSongsFiltered.length === 0) {
-        if (onDeckSongs.length === 0) {
-          setOnDeckSongs((prevSongs) => [...prevSongs, draggedSong]);
+        if (onDeckSongsRef.current.length === 0) {
+          setOnDeckSongs((prevSongs) => {
+            const s = [...prevSongs, draggedSong];
+            onDeckSongsRef.current = s;
+            return s;
+          });
         } else {
-          setOnDeckSongs((prevSongs) => [
-            ...prevSongs.slice(0, dropIndex),
-            draggedSong,
-            ...prevSongs.slice(dropIndex),
-          ]);
+          setOnDeckSongs((prevSongs) => {
+            const s = [
+              ...prevSongs.slice(0, dropIndex),
+              draggedSong,
+              ...prevSongs.slice(dropIndex),
+            ];
+            onDeckSongsRef.current = s;
+            return s;
+          });
         }
       }
     } catch (err) {
@@ -225,6 +427,7 @@ const Home = () => {
           newSongs.splice(startIndex + 1, 1);
         }
         console.log("Dropped songs 2: ", newSongs);
+        onDeckSongsRef.current = newSongs;
         return newSongs;
       });
     } catch (err) {
@@ -232,11 +435,14 @@ const Home = () => {
     }
   };
 
-  //TODO() return next song based on generated setlist
   const getNextSong = () => {
-    console.log("Getting next song");
-    const nextSong = { ...onDeckSongs[0] };
-    setOnDeckSongs(onDeckSongs.slice(1, onDeckSongs.length));
+    console.log("Getting next song from: ", onDeckSongs);
+    const nextSong = { ...onDeckSongsRef.current[0] };
+    setOnDeckSongs(onDeckSongsRef.current.slice(1, onDeckSongs.length));
+    onDeckSongsRef.current = onDeckSongsRef.current.slice(
+      1,
+      onDeckSongs.length
+    );
     if (!nextSong.name) return DEFAULT_SONG;
     return nextSong;
   };
@@ -301,20 +507,28 @@ const Home = () => {
   };
 
   useEffect(() => {
+    console.log("Init load for songs!!");
     if (!leftPlayerRef.current) {
+      console.log("Getting next left song", leftPlayerRef.current);
       const nextLeftSong = getNextSong();
+
       setNewPlayer(PLAYERNAME_LEFT, nextLeftSong, true);
+
       if (!leftSong) setLeftSong(nextLeftSong);
     }
 
     if (!rightPlayerRef.current) {
+      console.log("Getting next right song", rightPlayerRef.current);
       const nextRightSong = getNextSong();
-      setNewPlayer(PLAYERNAME_RIGHT, nextRightSong);
+      setNewPlayer(PLAYERNAME_RIGHT, nextRightSong, true);
+
       if (!rightSong) setRightSong(nextRightSong);
     }
+    initLoadingRef.current = false;
   }, []);
 
   const autoNextSong = (playerName: string) => {
+    console.log("AUTONEXTSONG called.");
     const nextSong = getNextSong();
     playNextSong(playerName, nextSong);
   };
@@ -416,6 +630,14 @@ const Home = () => {
     }
   };
 
+  const masterVol = (volAmount: number) => {
+    const delta = volAmount / 100;
+    const curVol = Howler.volume();
+    const newVolume = Math.max(0, Math.min(curVol + delta, 1));
+    console.log("New Volume");
+    Howler.volume(newVolume);
+  };
+
   const [showRemoveOnDeckSong, setShowRemoveOnDeckSong] = useState(false);
   const [rmOnDeckSong, setRmOnDeckSong] = useState<SongProps | null>();
 
@@ -430,28 +652,15 @@ const Home = () => {
     console.log("Removing: ", rmOnDeckSong?.src);
     setOnDeckSongs((prevSongs) => {
       const newSongs = [...prevSongs];
-      return newSongs.filter((song) => song.src !== rmOnDeckSong?.src);
+      const fNewSongs = newSongs.filter(
+        (song) => song.src !== rmOnDeckSong?.src
+      );
+      onDeckSongsRef.current = fNewSongs;
+      return fNewSongs;
     });
 
     setShowRemoveOnDeckSong(false);
   };
-
-  const [setlistFileNames, setSetlistFileNames] = useState<Setlists>();
-
-  useEffect(() => {
-    const fetchSetlists = async () => {
-      const url = `http://${config["host"]}:3002`;
-      try {
-        console.log("Getting setlists");
-        const fileNames = (await (await fetch(url)).json()) as Setlists;
-        console.log("SetLists: ", fileNames);
-        setSetlistFileNames(fileNames);
-      } catch (err) {
-        console.error("Failed to fetch Set Lists from: ", url);
-      }
-    };
-    fetchSetlists();
-  }, []);
 
   const [curSetListIdx, setCurSetListIdx] = useState(0);
   const setListScrollRef = useRef<HTMLDivElement>(null);
@@ -482,13 +691,53 @@ const Home = () => {
 
   const allSongsSetlist = {
     title: "All Songs",
+    order: 0,
     songs: allSongs,
   };
 
   const combinedSetlists = [
     allSongsSetlist,
-    ...(setlistFileNames?.files ?? ([] as Setlist[])),
+    ...(setlists ?? ([] as Setlist[])),
   ];
+
+  const [setlistToLoad, setSetlistToLoad] = useState(-1);
+  const [showSetlistToLoadConfirm, setShowSetlistToLoadConfirm] =
+    useState(false);
+
+  const confirmLoadSetlist = (idx: number) => {
+    setShowSetlistToLoadConfirm(true);
+    setSetlistToLoad(idx);
+  };
+
+  const unconfirmedLoadSetlist = (unconfirmedSetlist: number) => {
+    console.log(
+      "unconfirmedLoadSetlist unconfirmedSetlist:",
+      unconfirmedSetlist,
+      setlists
+    );
+    const setlist =
+      unconfirmedSetlist === -1
+        ? allSongsSetlist
+        : setlistsRef.current[unconfirmedSetlist - 1];
+
+    console.log("unconfirmedLoadSetlist ", setlist);
+    if (setlist) {
+      setOnDeckSongs(setlist.songs);
+      onDeckSongsRef.current = setlist.songs;
+      setCurSetListIdx(unconfirmedSetlist);
+    }
+  };
+
+  const loadSetlist = () => {
+    const setlist =
+      setlistToLoad === -1 ? allSongsSetlist : setlists[setlistToLoad];
+    if (setlist) {
+      setOnDeckSongs(setlist.songs);
+      onDeckSongsRef.current = setlist.songs;
+    }
+    setShowSetlistToLoadConfirm(false);
+  };
+
   return (
     <div
       id="pageRoot"
@@ -603,7 +852,7 @@ const Home = () => {
               ref={setListScrollRef}
             >
               <div className="w-full flex">
-                {combinedSetlists.map((setList: Setlist, idx: number) => {
+                {combinedSetlists?.map((setList: Setlist, idx: number) => {
                   return (
                     <div
                       key={`${idx}_setlist`}
@@ -660,6 +909,9 @@ const Home = () => {
                   title={setlist.title}
                   songs={setlist.songs}
                   onDragStart={onDragStart}
+                  confirmLoadSetlist={() => {
+                    confirmLoadSetlist(idx - 1);
+                  }}
                 />
               );
             })}
@@ -677,6 +929,18 @@ const Home = () => {
         }}
         key={`rmODS_${rmOnDeckSong?.src}`}
         note={`${rmOnDeckSong?.src}`}
+        btnStyle="bg-rose-700 text-slate-200"
+      />
+      <ActionCancelModal
+        isOpen={showSetlistToLoadConfirm}
+        message={`Are you sure you want to load "${setlists[setlistToLoad]?.title}"`}
+        onAction={loadSetlist}
+        actionText="Load"
+        onClose={() => {
+          setShowSetlistToLoadConfirm(false);
+        }}
+        key={`LSL_${setlists[setlistToLoad]?.title}`}
+        note={`${setlists[setlistToLoad]?.title}`}
         btnStyle="bg-rose-700 text-slate-200"
       />
     </div>

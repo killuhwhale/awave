@@ -1,6 +1,31 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-/src/app/fileServer/node_modules
+src/fileServer/node_modules
+src/mobile/awave/node_modules
+
+
+# Expo
+src/mobile/awave/.expo/
+src/mobile/awave/dist/
+src/mobile/awave/web-build/
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+src/mobile/awave/metro-health-check*
+
+# macOS
+src/mobile/awave/.DS_Store
+*.pem
+
+
+
 
 # dependencies
 /node_modules

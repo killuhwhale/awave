@@ -6,7 +6,12 @@ import React, {
   ChangeEvent,
   useLayoutEffect,
 } from "react";
-import { UilPlayCircle, UilPauseCircle } from "@iconscout/react-unicons";
+import {
+  UilPlayCircle,
+  UilPauseCircle,
+  UilFileImport,
+  UilImport,
+} from "@iconscout/react-unicons";
 import { debounce, filter, filterOptions } from "../utils/utils";
 
 const SongListSearchable = ({
@@ -18,6 +23,7 @@ const SongListSearchable = ({
   leftSong,
   leftPlayerRef,
   isLeftPlaying,
+  confirmLoadSetlist,
 }: SongListSearchProps) => {
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
   const [
@@ -119,11 +125,33 @@ const SongListSearchable = ({
         hidden ? "hidden" : ""
       }`}
     >
-      <div className="">
-        <p>{title} </p>
-        <p className="cursor-pointer" onClick={downloadSetlist}>
-          Download
-        </p>
+      <div className="flex flex-col w-full justify-center">
+        <p className="text-center">{title} </p>
+        <div className="flex w-full justify-start">
+          {confirmLoadSetlist ? (
+            <div
+              onClick={confirmLoadSetlist}
+              className="cursor-pointer flex items-center"
+            >
+              <UilFileImport
+                size="35"
+                className="bg-emerald-400 hover:bg-emerald-700 text-slate-200 font-bold pl-1 pr-1"
+              />
+              <p className="pl-2">Load</p>
+            </div>
+          ) : (
+            <div
+              onClick={downloadSetlist}
+              className="cursor-pointer flex items-center"
+            >
+              <UilImport
+                size="35"
+                className="bg-emerald-400 hover:bg-emerald-700 text-slate-200 font-bold pl-1 pr-1"
+              />
+              <p className="pl-2">Download</p>
+            </div>
+          )}
+        </div>
       </div>
       <div className="w-full flex justify-center m-4">
         <input
@@ -141,6 +169,7 @@ const SongListSearchable = ({
           const curDecorName = filteredSongNamesDecoratedStings.get(song.name);
           return (
             <div
+              key={song.src}
               draggable
               onDragStart={(e) => onDragStart(e, song)}
               className="flex justify-between hover:bg-slate-600 border-b-1 border border-neutral-500 items-center"

@@ -18,7 +18,6 @@ const ActionCancelModal: React.FC<ActionCancelProps> = ({
   note,
   btnStyle,
 }) => {
-  console.log("isModalOpen", isOpen);
   return (
     <>
       {isOpen && (

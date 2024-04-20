@@ -14,6 +14,7 @@ type SongListSearchProps = {
   leftPlayerRef?: React.MutableRefObject<Howl | null | undefined>;
   leftSong?: SongProps | null;
   isLeftPlaying?: boolean;
+  confirmLoadSetlist?(): void;
 };
 
 type SongListOnDeckProps = {
@@ -46,6 +47,7 @@ type SongPlayerProps = {
 
 type Setlist = {
   title: string;
+  order: number;
   songs: SongProps[];
 };
 type Setlists = {

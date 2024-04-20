@@ -28,8 +28,6 @@ import ActionCancelModal from "./../comps/modals/ActionCancelModal";
  *
  */
 
-export const btnStyle = "w-[50px] bg-purple-700 mr-6";
-
 function cleanSongSource(songSrc: string): string {
   return encodeURIComponent(songSrc);
 }
@@ -278,6 +276,7 @@ const Home = () => {
   const allSongsSetlist = {
     title: "All Songs",
     songs: allSongs,
+    order: 0,
   };
 
   const combinedSetlists = [

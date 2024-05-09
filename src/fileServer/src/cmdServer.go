@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"log"
-	"net"
+
+	// "net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -34,21 +36,31 @@ func run(cm *ClientManager) error {
 		return errors.New("please provide IP addr to listen on")
 	}
 
-	l, err := net.Listen("tcp", os.Args[1])
-	if err != nil {
-		return err
+	// l, err := net.Listen("tcp", os.Args[1])
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Println("Listening on: ", l.Addr())
+
+	// Setup TLS configuration
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
 	}
-	fmt.Println("Listening on: ", l.Addr())
 
 	s := &http.Server{
 		Handler:      commandServer{logf: log.Printf, cm: *cm},
+		TLSConfig:    tlsConfig,
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 10,
 	}
 
 	errc := make(chan error, 1)
 	go func() {
-		errc <- s.Serve(l)
+		err := s.ListenAndServeTLS("cert.pem", "key.pem")
+		if err != nil {
+			log.Fatal("ListenAndServeTLS: ", err)
+		}
+		// errc <- s.Serve(l)
 	}()
 
 	sigs := make(chan os.Signal, 1)

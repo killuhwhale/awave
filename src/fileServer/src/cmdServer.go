@@ -6,16 +6,16 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
+
+	// "net"
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
-
-	"sync"
 )
 
 func main() {
@@ -35,11 +35,11 @@ func run(cm *ClientManager) error {
 		return errors.New("please provide IP addr to listen on")
 	}
 
-	l, err := net.Listen("tcp", os.Args[1])
-	if err != nil {
-		return err
-	}
-	fmt.Println("Listening on: ", l.Addr())
+	// l, err := net.Listen("tcp", os.Args[1])
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Println("Listening on: ", l.Addr())
 
 	// Setup TLS configuration
 	tlsConfig := &tls.Config{
@@ -60,7 +60,7 @@ func run(cm *ClientManager) error {
 		if err != nil {
 			log.Fatal("ListenAndServeTLS: ", err)
 		}
-		errc <- s.Serve(l)
+		// errc <- s.Serve(l)
 	}()
 
 	sigs := make(chan os.Signal, 1)

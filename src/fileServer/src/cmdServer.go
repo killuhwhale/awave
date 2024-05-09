@@ -6,8 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-
-	// "net"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,11 +35,11 @@ func run(cm *ClientManager) error {
 		return errors.New("please provide IP addr to listen on")
 	}
 
-	// l, err := net.Listen("tcp", os.Args[1])
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Println("Listening on: ", l.Addr())
+	l, err := net.Listen("tcp", os.Args[1])
+	if err != nil {
+		return err
+	}
+	fmt.Println("Listening on: ", l.Addr())
 
 	// Setup TLS configuration
 	tlsConfig := &tls.Config{
@@ -52,6 +51,7 @@ func run(cm *ClientManager) error {
 		TLSConfig:    tlsConfig,
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 10,
+		Addr:         os.Args[1],
 	}
 
 	errc := make(chan error, 1)
@@ -60,7 +60,7 @@ func run(cm *ClientManager) error {
 		if err != nil {
 			log.Fatal("ListenAndServeTLS: ", err)
 		}
-		// errc <- s.Serve(l)
+		errc <- s.Serve(l)
 	}()
 
 	sigs := make(chan os.Signal, 1)

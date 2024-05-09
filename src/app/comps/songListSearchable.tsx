@@ -167,7 +167,9 @@ const SongListSearchable = ({
       <div className="overflow-y-auto flex flex-col w-full p-1">
         {filteredSongs.map((song) => {
           const curDecorName = filteredSongNamesDecoratedStings.get(song.name);
-          return (
+          return song.name.startsWith("--") ? (
+            <></>
+          ) : (
             <div
               key={song.src}
               draggable

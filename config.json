@@ -1,6 +1,6 @@
 {
-    "host": "192.168.1.229",
-    "host_local": "192.168.1.229",
+    "host": "192.168.0.59",
+    "host_local": "192.168.0.59",
     "musicDirA": "/media/killuh/usb/unlucky17",
     "musicDir": "/home/killuh/Music/unlucky17",
     "voiceDir": "/home/killuh/voicemsgs",

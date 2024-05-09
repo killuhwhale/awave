@@ -30,10 +30,10 @@ cleanup() {
 trap cleanup EXIT SIGINT SIGTERM
 
 # Start the second server in the foreground
-# next dev
+next dev
 
 # Host locally to check on other devices.
-HOST=192.168.1.229 next dev
+# HOST=192.168.1.229 next dev
 
 # The script will proceed to here if the 'next dev' command exits
 # The cleanup function will be called automatically due to the trap

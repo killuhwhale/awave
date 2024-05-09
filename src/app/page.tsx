@@ -76,11 +76,11 @@ const DEFAULT_SONG = {
 
 const songs: SongProps[] = [
   {
-    name: "Dumby1",
+    name: "--Dumby1",
     src: `http://${host}:3001/${cleanSongSource("Dumby1.wav")}`,
   },
   {
-    name: "Dumby2",
+    name: "--Dumby2",
     src: `http://${host}:3001/${cleanSongSource("Dumby2.wav")}`,
   },
   {

@@ -19,7 +19,7 @@ cd ~/ws_node/awave && npm run dev
 
 ```bash
 # Quick Copy
-cd ~/ws_node/awave/src/fileServer/src && go run cmdServer 127.0.
+cd ~/ws_node/awave/src/fileServer/src && go run cmdServer 127.0.0.1:4000
 cd ~/ws_node/awave/src/mobile/awave && yarn web
 cd ~/ws_node/awave && npm run dev
 ```
@@ -29,6 +29,8 @@ iconScount icons do not come with index.d.ts
 Run to populate file in node_modules.
 
 ## TODO()
+Configure config to fold GO host address (WSURL)
+
 ### Another Player to play voice messages
 Main Component can play a file
 

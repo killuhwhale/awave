@@ -29,9 +29,14 @@ async def run():
         while True:
             print("Sending...")
             await ws.send(json.dumps({
-                "partyName": sys.argv[1],
                 "cmd": 0,
-                "cmdType": 0
+                "cmdType": 0,
+                "partyName": sys.argv[1],
+                "secretCode": "",
+                "setlist": "",
+                "volAmount": 0,
+
+
             }))
             print("Sent...")
 

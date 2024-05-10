@@ -27,11 +27,13 @@ async def run():
     # async with websockets.connect("wss://heyjamieai.com/webrtcwss/", ssl=ssl_context) as ws:
         print("Connected...")
         while True:
+            print("Sending...")
             await ws.send(json.dumps({
                 "partyName": sys.argv[1],
                 "cmd": 0,
                 "cmdType": 0
             }))
+            print("Sent...")
 
 
             # Optionally receive and print a response

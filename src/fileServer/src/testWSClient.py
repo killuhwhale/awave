@@ -33,7 +33,7 @@ async def run():
                 "cmdType": 0,
                 "partyName": sys.argv[1],
                 "secretCode": "a",
-                "setlist": "a",
+                "setlist": 0,
                 "volAmount": 0,
 
 

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import ssl
 import sys
 import time
 import websockets
@@ -18,7 +19,11 @@ cmd:
 '''
 
 async def run():
-    async with websockets.connect("ws://127.0.0.1:4000") as ws:
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    async with websockets.connect("wss://localhost:4000", ssl=ssl_context) as ws:
+    # async with websockets.connect("wss://heyjamieai.com/webrtcwss/", ssl=ssl_context) as ws:
         while True:
             await ws.send(json.dumps({
                 "partyName": sys.argv[1],

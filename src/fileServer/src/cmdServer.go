@@ -45,9 +45,12 @@ func run(cm *ClientManager) error {
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS12,
 	}
+	mux := http.NewServeMux()
+
+	mux.Handle("/webrtcwss/", commandServer{logf: log.Printf, cm: *cm})
 
 	s := &http.Server{
-		Handler:      commandServer{logf: log.Printf, cm: *cm},
+		Handler:      mux,
 		TLSConfig:    tlsConfig,
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 10,
@@ -62,6 +65,8 @@ func run(cm *ClientManager) error {
 		}
 		// errc <- s.Serve(l)
 	}()
+
+	fmt.Println("Listening on ", os.Args[1])
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt)
@@ -115,6 +120,7 @@ type WSMessage struct {
 }
 
 func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("ServeHTTP...")
 	// Upgrade to ws protocol
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		Subprotocols:   []string{"echo"},

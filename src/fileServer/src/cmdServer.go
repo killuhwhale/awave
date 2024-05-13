@@ -22,6 +22,11 @@ import (
 func main() {
 	fmt.Println("Test command server")
 	cm := NewClientManager()
+	// defer func() {
+	// 	client.conn.Close(websocket.StatusNormalClosure, "Closed...")
+	// 	cs.cm.remove(data.PartyName)
+	// 	log.Println("removed client... ", data.PartyName)
+	// }()
 
 	err := run(cm)
 	if err != nil {
@@ -177,7 +182,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			log.Println("Error reading message!:", err)
-			continue
+			return
 		}
 
 		if msgType < 1 || msgType > 2 {
@@ -207,11 +212,11 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			client.id = data.PartyName
 			cs.cm.add(client.id, &client)
-			defer func() {
-				client.conn.Close(websocket.StatusNormalClosure, "Closed...")
-				cs.cm.remove(data.PartyName)
-				log.Println("removed client... ", data.PartyName)
-			}()
+			// defer func() {
+			// 	client.conn.Close(websocket.StatusNormalClosure, "Closed...")
+			// 	cs.cm.remove(data.PartyName)
+			// 	log.Println("removed client... ", data.PartyName)
+			// }()
 
 			log.Println("Added new client... ", data.PartyName)
 			if err = wsjson.Write(ctx, c, data); err != nil {

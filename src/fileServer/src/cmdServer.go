@@ -156,7 +156,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if msgType < 1 || msgType > 2 {
-			log.Println("Error reading message:", err)
+			log.Println("bad message type:", err)
 			return
 		}
 

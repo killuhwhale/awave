@@ -316,12 +316,16 @@ const Home = () => {
       } else if (cmdType === 1337) {
         switch (data.rtcType) {
           case "offer":
+            console.log("handling offer...");
             peerConnection.setRemoteDescription(
               new RTCSessionDescription(data.offer)
             );
+            console.log("creating answer...");
+
             peerConnection
               .createAnswer()
               .then((answer) => {
+                console.log("Created answer...");
                 peerConnection.setLocalDescription(answer);
                 ws.current?.send(
                   JSON.stringify(

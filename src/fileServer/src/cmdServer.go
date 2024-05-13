@@ -111,8 +111,8 @@ type commandServer struct {
 }
 
 type Offer struct {
-	Type string `json:type`
-	SDP  string `json:sdp`
+	Type string `json:"type"`
+	SDP  string `json:"sdp"`
 }
 
 type WSMessage struct {
@@ -122,10 +122,10 @@ type WSMessage struct {
 	SecretCode string  `json:"secretCode"`
 	Setlist    int     `json:"setlist"`
 	VolAmount  int     `json:"volAmount"`
-	RTCType    *string `json:rtcType`
-	Candidate  *string `json:candidate`
-	Answer     *string `json:answer`
-	Offer      *Offer  `json:offer`
+	RTCType    *string `json:"rtcType"`
+	Candidate  *string `json:"candidate"`
+	Answer     *string `json:"answer"`
+	Offer      *Offer  `json:"offer"`
 }
 
 func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {

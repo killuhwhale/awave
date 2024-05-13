@@ -21,11 +21,9 @@ import (
 
 func main() {
 	fmt.Println("Test command server")
-	cm := ClientManager{
-		clients: make(map[string]*Client),
-	}
+	cm := NewClientManager()
 
-	err := run(&cm)
+	err := run(cm)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,20 +88,47 @@ type Client struct {
 }
 
 type ClientManager struct {
-	clients map[string]*Client
+	clients map[string]map[*Client]bool
 	lock    sync.Mutex
+}
+
+func NewClientManager() *ClientManager {
+	return &ClientManager{
+		clients: make(map[string]map[*Client]bool),
+	}
 }
 
 func (cm ClientManager) add(partyName string, c *Client) {
 	cm.lock.Lock()
 	defer cm.lock.Unlock()
-	cm.clients[partyName] = c
+	if cm.clients[partyName] == nil {
+		cm.clients[partyName] = make(map[*Client]bool)
+	}
+	cm.clients[partyName][c] = true
 }
 
 func (cm ClientManager) remove(partyName string) {
 	cm.lock.Lock()
 	defer cm.lock.Unlock()
-	delete(cm.clients, partyName)
+	if val, exists := cm.clients[partyName]; exists {
+		delete(cm.clients, partyName)
+		if len(val) == 0 {
+			delete(cm.clients, partyName)
+		}
+	}
+}
+
+func (cm ClientManager) getClients(partyName string) []*Client {
+	cm.lock.Lock()
+	defer cm.lock.Unlock()
+
+	var cl []*Client
+	if clients, exists := cm.clients[partyName]; exists {
+		for client := range clients {
+			cl = append(cl, client)
+		}
+	}
+	return cl
 }
 
 type commandServer struct {
@@ -195,14 +220,18 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			log.Println("Sending message to client... ", data.PartyName)
-			if client_sendee, exists := cs.cm.clients[data.PartyName]; exists {
+			clients := cs.cm.getClients(data.PartyName)
+
+			if len(clients) > 0 {
 				// Check SecretCode
-				if badCode := checkSecretCode(data.SecretCode, data.PartyName); badCode {
+				if badCode := isBadSecretCode(data.SecretCode, data.PartyName); badCode {
 					continue
 				}
-				if err = wsjson.Write(ctx, client_sendee.conn, data); err != nil {
-					log.Printf("Error writing json:  %v \n\n V: %v", err, data)
-					break
+				for _, client := range clients {
+					if err = wsjson.Write(ctx, client.conn, data); err != nil {
+						log.Printf("Error writing json:  %v \n\n V: %v", err, data)
+						continue
+					}
 				}
 			}
 
@@ -212,6 +241,6 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.Close(websocket.StatusNormalClosure, "WSS Done!")
 }
 
-func checkSecretCode(secretCode, partyName string) bool {
+func isBadSecretCode(secretCode, partyName string) bool {
 	return false
 }

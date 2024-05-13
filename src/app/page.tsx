@@ -270,7 +270,8 @@ const Home = () => {
     }
 
     ws.current.onopen = () => {
-      console.log("Connected!");
+      console.log("WSS Connected! Sending register command 0");
+
       ws.current?.send(
         JSON.stringify({
           cmd: 0,

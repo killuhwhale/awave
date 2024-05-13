@@ -93,8 +93,13 @@ function Main() {
 
   useEffect(() => {
     let peerConnection: WebRTCPeerConnection;
-    if (wsRef.current && wsRef.current.readyState != WebSocket.OPEN) return;
-    console.log("Begin creating webrtc connect...");
+    if (
+      !wsRef.current ||
+      !wsRef.current.readyState ||
+      wsRef.current.readyState !== WebSocket.OPEN
+    )
+      return;
+    console.log("Begin creating webrtc connect...", wsRef.current.readyState);
 
     const _ = async () => {
       let audioCount = 0;
@@ -120,7 +125,8 @@ function Main() {
         peerConnection.addEventListener("connectionstatechange", (event) => {});
         peerConnection.addEventListener("icecandidate", (event) => {
           if (event.candidate) {
-            ws.send(
+            console.log("onCandidate:");
+            ws?.send(
               JSON.stringify(
                 rtcMsg(partyName, "s3cr3t", {
                   rtcType: "candidate",
@@ -148,6 +154,7 @@ function Main() {
           .forEach((track) =>
             peerConnection.addTrack(track, streamRef.current)
           );
+
         let sessionConstraints = {
           mandatory: {
             OfferToReceiveAudio: true,
@@ -160,7 +167,7 @@ function Main() {
           .createOffer(sessionConstraints)
           .then((offer) => {
             peerConnection.setLocalDescription(offer);
-            console.log("Sending offer: ", offer);
+            console.log("Sending offer: ", offer, ws.readyState);
             ws?.send(
               JSON.stringify(
                 rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
@@ -213,6 +220,15 @@ function Main() {
 
     ws.onopen = () => {
       console.log("Connected!");
+      console.log("WSS Connected! Sending register command 0");
+
+      ws.send(
+        JSON.stringify({
+          cmd: 0,
+          cmdType: 0,
+          partyName: partyName,
+        })
+      );
     };
 
     ws.onmessage = (ev) => {

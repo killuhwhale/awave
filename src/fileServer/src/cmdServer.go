@@ -110,22 +110,22 @@ type commandServer struct {
 	cm   ClientManager
 }
 
-type Offer struct {
+type RTCSessionDescription struct {
 	Type string `json:"type"`
 	SDP  string `json:"sdp"`
 }
 
 type WSMessage struct {
-	Cmd        int     `json:"cmd"`
-	CmdType    int     `json:"cmdType"`
-	PartyName  string  `json:"partyName"`
-	SecretCode string  `json:"secretCode"`
-	Setlist    int     `json:"setlist"`
-	VolAmount  int     `json:"volAmount"`
-	RTCType    *string `json:"rtcType"`
-	Candidate  *string `json:"candidate"`
-	Answer     *string `json:"answer"`
-	Offer      *Offer  `json:"offer"`
+	Cmd        int                    `json:"cmd"`
+	CmdType    int                    `json:"cmdType"`
+	PartyName  string                 `json:"partyName"`
+	SecretCode string                 `json:"secretCode"`
+	Setlist    int                    `json:"setlist"`
+	VolAmount  int                    `json:"volAmount"`
+	RTCType    *string                `json:"rtcType"`
+	Candidate  *string                `json:"candidate"`
+	Answer     *RTCSessionDescription `json:"answer"`
+	Offer      *RTCSessionDescription `json:"offer"`
 }
 
 func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {

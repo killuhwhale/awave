@@ -325,7 +325,7 @@ const Home = () => {
             peerConnection
               .createAnswer()
               .then((answer) => {
-                console.log("Created answer...");
+                console.log("Created answer...", answer);
                 peerConnection.setLocalDescription(answer);
                 ws.current?.send(
                   JSON.stringify(

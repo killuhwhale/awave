@@ -221,7 +221,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Println("Sending message to client... ", data.PartyName)
 			clients := cs.cm.getClients(data.PartyName)
-
+			log.Printf("Sending to clients for partyName:  %s -- %v", data.PartyName, clients)
 			if len(clients) > 0 {
 				// Check SecretCode
 				if badCode := isBadSecretCode(data.SecretCode, data.PartyName); badCode {

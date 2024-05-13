@@ -142,6 +142,8 @@ const Home = () => {
   const [isRightPlaying, setIsRightPlaying] = useState(false);
 
   const ws = useRef<WebSocket | null>(null);
+  const micStreamRef = useRef<HTMLAudioElement | null>(null);
+  const [hasMicStream, setHasMicStream] = useState(false);
 
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
   const setlistsRef = useRef<Setlist[]>([] as Setlist[]);
@@ -303,6 +305,11 @@ const Home = () => {
 
     peerConnection.ontrack = function (event) {
       console.log("Send stream to RTCView: ", event.streams[0]);
+      if (micStreamRef.current) {
+        micStreamRef.current.srcObject = event.streams[0];
+        micStreamRef.current.play();
+        setHasMicStream(true);
+      }
     };
 
     ws.current.onmessage = (ev) => {
@@ -327,6 +334,8 @@ const Home = () => {
               .then((answer) => {
                 console.log("Created answer...", answer);
                 peerConnection.setLocalDescription(answer);
+                console.log("Sending answer...", ws.current);
+
                 ws.current?.send(
                   JSON.stringify(
                     rtcMsg(partyName, "s3cr3t", {
@@ -339,9 +348,9 @@ const Home = () => {
               .catch((error) => console.error("Answer error: ", error));
             break;
           case "answer":
-            peerConnection.setRemoteDescription(
-              new RTCSessionDescription(data.answer)
-            );
+            // peerConnection.setRemoteDescription(
+            //   new RTCSessionDescription(data.answer)
+            // );
             break;
           case "candidate":
             peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
@@ -904,7 +913,7 @@ const Home = () => {
           <UilSkipForwardAlt size="120" color="#61DAFB" onClick={masterNext} />
         </div>
       </div>
-
+      <audio id="audioPlayer" controls ref={micStreamRef}></audio>
       <div className="flex  items-center justify-center w-full space-x-12 max-h-3/6 min-h-3/6 h-3/6">
         <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">
           <SongListOnDeck

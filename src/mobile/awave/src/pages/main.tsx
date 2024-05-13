@@ -122,7 +122,7 @@ function Main() {
           if (event.candidate) {
             ws.send(
               JSON.stringify(
-                rtcMsg("partyName", "s3cr3t", {
+                rtcMsg(partyName, "s3cr3t", {
                   rtcType: "candidate",
                   candidate: event.candidate,
                 })
@@ -148,9 +148,16 @@ function Main() {
           .forEach((track) =>
             peerConnection.addTrack(track, streamRef.current)
           );
+        let sessionConstraints = {
+          mandatory: {
+            OfferToReceiveAudio: true,
+            OfferToReceiveVideo: false,
+            VoiceActivityDetection: true,
+          },
+        };
 
         peerConnection
-          .createOffer()
+          .createOffer(sessionConstraints)
           .then((offer) => {
             peerConnection.setLocalDescription(offer);
             console.log("Sending offer: ", offer);
@@ -168,25 +175,6 @@ function Main() {
         datachannel.addEventListener("close", (event) => {});
         datachannel.addEventListener("message", (message) => {});
         // datachannel.send("TEststststststtst");
-
-        let sessionConstraints = {
-          mandatory: {
-            OfferToReceiveAudio: true,
-            OfferToReceiveVideo: false,
-            VoiceActivityDetection: true,
-          },
-        };
-
-        try {
-          const offerDescription = await peerConnection.createOffer(
-            sessionConstraints
-          );
-          await peerConnection.setLocalDescription(offerDescription);
-
-          // Send the offerDescription to the other participant.
-        } catch (err) {
-          // Handle Errors
-        }
 
         setHasAudioStream(true);
       } catch (err) {
@@ -230,32 +218,36 @@ function Main() {
     ws.onmessage = (ev) => {
       // Not expecting messages from controller
       const data = JSON.parse(ev.data);
-      switch (data.type) {
-        case "offer":
-          peerConnectionRef.current.setRemoteDescription(
-            new RTCSessionDescription(data.offer)
-          );
-          peerConnectionRef.current
-            .createAnswer()
-            .then((answer) => {
-              peerConnectionRef.current.setLocalDescription(answer);
-              ws.send(
-                JSON.stringify(
-                  rtcMsg(partyName, "s3cr3t", {
-                    rtcType: "answer",
-                    answer: answer,
-                  })
-                )
-              );
-            })
-            .catch((error) => console.error("Answer error: ", error));
-          break;
+      console.log("Recv'd msg:", data);
+      switch (data.rtcType) {
+        // case "offer":
+        //   peerConnectionRef.current.setRemoteDescription(
+        //     new RTCSessionDescription(data.offer)
+        //   );
+        //   peerConnectionRef.current
+        //     .createAnswer()
+        //     .then((answer) => {
+        //       peerConnectionRef.current.setLocalDescription(answer);
+        //       console.log("Sending answer: ", answer);
+        //       ws.send(
+        //         JSON.stringify(
+        //           rtcMsg(partyName, "s3cr3t", {
+        //             rtcType: "answer",
+        //             answer: answer,
+        //           })
+        //         )
+        //       );
+        //     })
+        //     .catch((error) => console.error("Answer error: ", error));
+        //   break;
         case "answer":
+          console.log("Recv'd answer! Setting Remote Description");
           peerConnectionRef.current.setRemoteDescription(
             new RTCSessionDescription(data.answer)
           );
           break;
         case "candidate":
+          console.log("Recv'd candidate! Adding ice candidate");
           peerConnectionRef.current.addIceCandidate(
             new RTCIceCandidate(data.candidate)
           );

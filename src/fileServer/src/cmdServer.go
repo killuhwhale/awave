@@ -216,7 +216,6 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Println("Added new client... ", data.PartyName)
 			if err = wsjson.Write(ctx, c, data); err != nil {
 				log.Printf("Error writing json at register:  %v \n\n V: %v", err, data)
-				break
 			}
 		} else {
 			log.Println("Sending message to client... ", data.PartyName)

@@ -123,7 +123,7 @@ function Main() {
             ws.send(
               JSON.stringify(
                 rtcMsg("partyName", "s3cr3t", {
-                  type: "candidate",
+                  rtcType: "candidate",
                   candidate: event.candidate,
                 })
               )
@@ -156,7 +156,7 @@ function Main() {
             console.log("Sending offer: ", offer);
             ws?.send(
               JSON.stringify(
-                rtcMsg(partyName, "s3cr3t", { type: "offer", offer: offer })
+                rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
               )
             );
           })
@@ -242,7 +242,7 @@ function Main() {
               ws.send(
                 JSON.stringify(
                   rtcMsg(partyName, "s3cr3t", {
-                    type: "answer",
+                    rtcType: "answer",
                     answer: answer,
                   })
                 )

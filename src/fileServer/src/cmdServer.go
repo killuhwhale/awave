@@ -122,7 +122,7 @@ type WSMessage struct {
 	SecretCode string  `json:"secretCode"`
 	Setlist    int     `json:"setlist"`
 	VolAmount  int     `json:"volAmount"`
-	Type       *string `json:type`
+	RTCType    *string `json:rtcType`
 	Candidate  *string `json:candidate`
 	Answer     *string `json:answer`
 	Offer      *Offer  `json:offer`

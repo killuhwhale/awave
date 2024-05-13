@@ -314,7 +314,7 @@ const Home = () => {
       if (cmdType == 1) {
         executeCmd(data);
       } else if (cmdType === 1337) {
-        switch (data.type) {
+        switch (data.rtcType) {
           case "offer":
             peerConnection.setRemoteDescription(
               new RTCSessionDescription(data.offer)
@@ -326,7 +326,7 @@ const Home = () => {
                 ws.current?.send(
                   JSON.stringify(
                     rtcMsg(partyName, "s3cr3t", {
-                      type: "answer",
+                      rtcType: "answer",
                       answer: answer,
                     })
                   )

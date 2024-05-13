@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -16,8 +16,43 @@ import {
   getDocs,
   getDoc,
 } from "firebase/firestore/lite";
+
+// import {
+//   ScreenCapturePickerView,
+//   RTCPeerConnection,
+//   RTCIceCandidate,
+//   RTCSessionDescription,
+//   RTCView,
+//   MediaStream,
+//   MediaStreamTrack,
+//   mediaDevices,
+//   registerGlobals,
+// } from "react-native-webrtc";
+
+import {
+  RTCPeerConnection as WebRTCPeerConnection,
+  RTCIceCandidate as WebRTCIceCandidate,
+  RTCSessionDescription as WebRTCSessionDescription,
+  RTCRtpTransceiver as WebRTCRtpTransceiver,
+  RTCRtpReceiver as WebRTCRtpReceiver,
+  RTCRtpSender as WebRTCRtpSender,
+  RTCErrorEvent as WebRTCErrorEvent,
+  MediaStream as WebMediaStream,
+  MediaStreamTrack as WebMediaStreamTrack,
+  mediaDevices as WebmediaDevices,
+  permissions as Webpermissions,
+  registerGlobals as WebregisterGlobals,
+  RTCView as WebRTCView,
+} from "react-native-webrtc-web-shim";
+
+import config from "../../config.json";
+import { rtcMsg } from "../utils/utils";
+
+// You'll only really need to use this function if you are mixing project development with libraries that use browser based WebRTC functions. Also applies if you are making your project compatible with react-native-web.
+// registerGlobals();
+
 const db = getFirestore(fbApp);
-const WSURL = "ws://localhost:4000";
+const WSURL = config["wss_url"];
 
 class Commands {
   cmds = {
@@ -50,6 +85,125 @@ function Main() {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
   const [currentSetlist, setCurrentSetlist] = useState<Setlist | null>(null);
+  const streamRef = useRef<any | null>(null);
+  const peerConnectionRef = useRef<WebRTCPeerConnection | null>(null);
+  const [hasAudioStream, setHasAudioStream] = useState(false);
+
+  useEffect(() => {
+    let peerConnection: WebRTCPeerConnection;
+    const _ = async () => {
+      let audioCount = 0;
+      let mediaConstraints = {
+        audio: true,
+        video: false,
+      };
+
+      try {
+        const stream = await WebmediaDevices.getUserMedia(mediaConstraints);
+        streamRef.current = stream;
+
+        let peerConstraints = {
+          iceServers: [
+            {
+              urls: "stun:stun.l.google.com:19302",
+            },
+          ],
+        };
+
+        peerConnection = new WebRTCPeerConnection(peerConstraints);
+        peerConnectionRef.current = peerConnection;
+        peerConnection.addEventListener("connectionstatechange", (event) => {});
+        peerConnection.addEventListener("icecandidate", (event) => {
+          if (event.candidate) {
+            ws.send(
+              JSON.stringify(
+                rtcMsg("partyName", "s3cr3t", {
+                  type: "candidate",
+                  candidate: event.candidate,
+                })
+              )
+            );
+          }
+        });
+        peerConnection.addEventListener("icecandidateerror", (event) => {});
+        peerConnection.addEventListener(
+          "iceconnectionstatechange",
+          (event) => {}
+        );
+        peerConnection.addEventListener(
+          "icegatheringstatechange",
+          (event) => {}
+        );
+        peerConnection.addEventListener("negotiationneeded", (event) => {});
+        peerConnection.addEventListener("signalingstatechange", (event) => {});
+        peerConnection.addEventListener("track", (event) => {});
+
+        streamRef.current
+          .getTracks()
+          .forEach((track) =>
+            peerConnection.addTrack(track, streamRef.current)
+          );
+
+        peerConnection
+          .createOffer()
+          .then((offer) => {
+            peerConnection.setLocalDescription(offer);
+            ws.send(
+              JSON.stringify(
+                rtcMsg("partyName", "s3cr3t", { type: "offer", offer: offer })
+              )
+            );
+          })
+          .catch((error) => console.error("Offer error: ", error));
+
+        let datachannel = peerConnection.createDataChannel("my_channel");
+
+        datachannel.addEventListener("open", (event) => {});
+        datachannel.addEventListener("close", (event) => {});
+        datachannel.addEventListener("message", (message) => {});
+        datachannel.send("TEststststststtst");
+
+        let sessionConstraints = {
+          mandatory: {
+            OfferToReceiveAudio: true,
+            OfferToReceiveVideo: false,
+            VoiceActivityDetection: true,
+          },
+        };
+
+        try {
+          const offerDescription = await peerConnection.createOffer(
+            sessionConstraints
+          );
+          await peerConnection.setLocalDescription(offerDescription);
+
+          // Send the offerDescription to the other participant.
+        } catch (err) {
+          // Handle Errors
+        }
+
+        setHasAudioStream(true);
+      } catch (err) {
+        // Handle Error
+        console.log("Err: ", err);
+      }
+
+      console.log("Audio devices: ", audioCount);
+    };
+    _()
+      .then(() => {})
+      .catch(() => {});
+
+    return () => {
+      if (streamRef && streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+      if (peerConnection) {
+        peerConnection.close();
+      }
+    };
+  }, []);
 
   const connectToWebSocket = () => {
     if (ws) return;
@@ -68,6 +222,38 @@ function Main() {
 
     ws.onmessage = (ev) => {
       // Not expecting messages from controller
+      const data = JSON.parse(ev.data);
+      switch (data.type) {
+        case "offer":
+          peerConnectionRef.current.setRemoteDescription(
+            new RTCSessionDescription(data.offer)
+          );
+          peerConnectionRef.current
+            .createAnswer()
+            .then((answer) => {
+              peerConnectionRef.current.setLocalDescription(answer);
+              ws.send(
+                JSON.stringify(
+                  rtcMsg(partyName, "s3cr3t", {
+                    type: "answer",
+                    answer: answer,
+                  })
+                )
+              );
+            })
+            .catch((error) => console.error("Answer error: ", error));
+          break;
+        case "answer":
+          peerConnectionRef.current.setRemoteDescription(
+            new RTCSessionDescription(data.answer)
+          );
+          break;
+        case "candidate":
+          peerConnectionRef.current.addIceCandidate(
+            new RTCIceCandidate(data.candidate)
+          );
+          break;
+      }
     };
 
     ws.onerror = (error) => {
@@ -175,6 +361,7 @@ function Main() {
         value={secretCode}
         onChange={(ev) => setSecretCode(ev.nativeEvent.text)}
       />
+      {/* {hasAudioStream ? <WebRTCView stream={streamRef.current} /> : <></>} */}
       <Button title="Play" onPress={sendPlay} />
       <Button title="Pause" onPress={sendPause} />
       <Button title="Next" onPress={sendNext} />

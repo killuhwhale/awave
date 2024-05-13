@@ -1,6 +1,7 @@
 {
     "host": "192.168.0.59",
     "host_local": "192.168.0.59",
+    "wss_url": "wss://heyjamieai.com/webrtcwss/",
     "musicDirA": "/media/killuh/usb/unlucky17",
     "musicDir": "/home/killuh/Music/unlucky17",
     "voiceDir": "/home/killuh/voicemsgs",

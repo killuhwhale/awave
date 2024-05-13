@@ -29,6 +29,7 @@ import {
   getDocs,
   getDoc,
 } from "firebase/firestore/lite";
+import { rtcMsg } from "./utils/utils";
 const db = getFirestore(fbApp);
 
 /**
@@ -62,7 +63,7 @@ class Commands {
 
 const CMD = new Commands();
 
-const WSURL = "ws://localhost:4000";
+const WSURL = config["wss_url"];
 
 function cleanSongSource(songSrc: string): string {
   return encodeURIComponent(songSrc);
@@ -144,6 +145,38 @@ const Home = () => {
 
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
   const setlistsRef = useRef<Setlist[]>([] as Setlist[]);
+
+  // useEffect(()=> {
+
+  //   if (ws == null) return
+
+  //   let peerConstraints = {
+  //     iceServers: [
+  //       {
+  //         urls: 'stun:stun.l.google.com:19302'
+  //       }
+  //     ]
+  //   };
+  //   let peerConnection = new RTCPeerConnection( peerConstraints );
+  //   let datachannel: RTCDataChannel|null = null;
+
+  //   peerConnection.addEventListener( 'datachannel', event => {
+  //     datachannel = event.channel;
+
+  //     // Now you've got the datachannel.
+  //     // You can hookup and use the same events as above ^
+
+  //     datachannel.addEventListener( 'open', event => {} );
+  //     datachannel.addEventListener( 'close', event => {} );
+  //     datachannel.addEventListener( 'message', message => {} );
+  //   } );
+
+  //   return () => {
+  //     if(datachannel){
+  //       datachannel.close();
+  //     }
+  //   }
+  // }, [ws])
 
   useEffect(() => {
     const setListPath = `setlists/${partyName}/setlists`;
@@ -245,6 +278,33 @@ const Home = () => {
       );
     };
 
+    let peerConstraints = {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+      ],
+    };
+    let peerConnection = new RTCPeerConnection(peerConstraints);
+    let datachannel: RTCDataChannel | null = null;
+
+    peerConnection.addEventListener("datachannel", (event) => {
+      datachannel = event.channel;
+
+      // Now you've got the datachannel.
+      // You can hookup and use the same events as above ^
+
+      datachannel.addEventListener("open", (event) => {});
+      datachannel.addEventListener("close", (event) => {});
+      datachannel.addEventListener("message", (message) => {
+        alert(message);
+      });
+    });
+
+    peerConnection.ontrack = function (event) {
+      console.log("Send stream to RTCView: ", event.streams[0]);
+    };
+
     ws.current.onmessage = (ev) => {
       const data = JSON.parse(ev.data);
       console.log("Recv'd msg: ", data);
@@ -253,6 +313,36 @@ const Home = () => {
       console.log("cmdType: ", typeof cmdType, cmdType);
       if (cmdType == 1) {
         executeCmd(data);
+      } else if (cmdType === 1337) {
+        switch (data.type) {
+          case "offer":
+            peerConnection.setRemoteDescription(
+              new RTCSessionDescription(data.offer)
+            );
+            peerConnection
+              .createAnswer()
+              .then((answer) => {
+                peerConnection.setLocalDescription(answer);
+                ws.current?.send(
+                  JSON.stringify(
+                    rtcMsg(partyName, "s3cr3t", {
+                      type: "answer",
+                      answer: answer,
+                    })
+                  )
+                );
+              })
+              .catch((error) => console.error("Answer error: ", error));
+            break;
+          case "answer":
+            peerConnection.setRemoteDescription(
+              new RTCSessionDescription(data.answer)
+            );
+            break;
+          case "candidate":
+            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            break;
+        }
       }
     };
 

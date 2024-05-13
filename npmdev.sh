@@ -18,12 +18,22 @@ SETLIST_SERVER_PID=$!
 # GO_CMD_SERVER_PID=$!
 # cd $CUR_DIR
 
+
+
+# cp config.json ./src/mobile/awave
+
+# PWD=$(pwd)
+# cd ~/ws_node/awave/src/mobile/awave && yarn web &
+# MOBILE_CLIENT=$!
+# cd ${PWD}
+
 # Function to kill the background server process
 cleanup() {
     echo "Stopping the servers..."
     kill $SERVER_PID
     kill $SETLIST_SERVER_PID
     kill $GO_CMD_SERVER_PID
+    # kill $MOBILE_CLIENT
 }
 
 # Trap commands to catch script termination and call the cleanup function
@@ -31,6 +41,8 @@ trap cleanup EXIT SIGINT SIGTERM
 
 # Start the second server in the foreground
 next dev
+
+
 
 # Host locally to check on other devices.
 # HOST=192.168.1.229 next dev

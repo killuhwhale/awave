@@ -12,6 +12,18 @@ export type filterOptions = {
   limit?: number;
 };
 
+export function rtcMsg(partyName: string, secretCode: string, rtcData: any) {
+  return {
+    cmd: 1337,
+    cmdType: 1337,
+    partyName,
+    secretCode,
+    setlist: "",
+    volAmount: "",
+    ...rtcData,
+  };
+}
+
 const makePrefix = (color: string) => {
   return `<span style='color: ${color};'>`;
 };

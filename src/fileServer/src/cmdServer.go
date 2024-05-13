@@ -176,18 +176,18 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		msgType, msg, err := c.Read(ctx)
 
 		if err != nil {
-			log.Println("Error reading message:", err)
-			return
+			log.Println("Error reading message!:", err)
+			continue
 		}
 
 		if msgType < 1 || msgType > 2 {
 			log.Println("bad message type:", err)
-			return
+			continue
 		}
 
 		if err := json.Unmarshal(msg, &data); err != nil {
 			log.Println("Error decoding JSON:", err)
-			return
+			continue
 		}
 
 		// err = wsjson.Read(ctx, c, &data)

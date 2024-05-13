@@ -177,7 +177,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			log.Println("Error reading message!:", err)
-			return
+			continue
 		}
 
 		if msgType < 1 || msgType > 2 {

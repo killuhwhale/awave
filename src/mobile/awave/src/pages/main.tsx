@@ -83,6 +83,8 @@ function Main() {
   const partyName = "tp"; // Get from a config file
   const [secretCode, setSecretCode] = useState("");
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
   const [currentSetlist, setCurrentSetlist] = useState<Setlist | null>(null);
   const streamRef = useRef<any | null>(null);
@@ -91,6 +93,9 @@ function Main() {
 
   useEffect(() => {
     let peerConnection: WebRTCPeerConnection;
+    if (wsRef.current && wsRef.current.readyState != WebSocket.OPEN) return;
+    console.log("Begin creating webrtc connect...");
+
     const _ = async () => {
       let audioCount = 0;
       let mediaConstraints = {
@@ -148,9 +153,10 @@ function Main() {
           .createOffer()
           .then((offer) => {
             peerConnection.setLocalDescription(offer);
-            ws.send(
+            console.log("Sending offer: ", offer);
+            ws?.send(
               JSON.stringify(
-                rtcMsg("partyName", "s3cr3t", { type: "offer", offer: offer })
+                rtcMsg(partyName, "s3cr3t", { type: "offer", offer: offer })
               )
             );
           })
@@ -161,7 +167,7 @@ function Main() {
         datachannel.addEventListener("open", (event) => {});
         datachannel.addEventListener("close", (event) => {});
         datachannel.addEventListener("message", (message) => {});
-        datachannel.send("TEststststststtst");
+        // datachannel.send("TEststststststtst");
 
         let sessionConstraints = {
           mandatory: {
@@ -203,12 +209,13 @@ function Main() {
         peerConnection.close();
       }
     };
-  }, []);
+  }, [ws?.readyState]);
 
   const connectToWebSocket = () => {
     if (ws) return;
     const wss = new WebSocket(WSURL);
     setWs(wss);
+    wsRef.current = wss;
   };
 
   useEffect(() => {
@@ -260,12 +267,14 @@ function Main() {
       console.log("WebSocket Error ", error);
       if (ws && ws.readyState !== WebSocket.OPEN) {
         setWs(null);
+        wsRef.current = null;
       }
     };
 
     ws.onclose = (ev) => {
       if (!ev.wasClean) {
         setWs(null);
+        wsRef.current = null;
       }
     };
 

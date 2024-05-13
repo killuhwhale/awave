@@ -110,6 +110,11 @@ type commandServer struct {
 	cm   ClientManager
 }
 
+type Offer struct {
+	Type string `json:type`
+	SDP  string `json:sdp`
+}
+
 type WSMessage struct {
 	Cmd        int     `json:"cmd"`
 	CmdType    int     `json:"cmdType"`
@@ -120,7 +125,7 @@ type WSMessage struct {
 	RTCType    *string `json:type`
 	Candidate  *string `json:candidate`
 	Answer     *string `json:answer`
-	Offer      *string `json:offer`
+	Offer      *Offer  `json:offer`
 }
 
 func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {

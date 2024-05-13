@@ -18,8 +18,8 @@ export function rtcMsg(partyName: string, secretCode: string, rtcData: any) {
     cmdType: 1337,
     partyName,
     secretCode,
-    setlist: "",
-    volAmount: "",
+    setlist: -1,
+    volAmount: -1,
     ...rtcData,
   };
 }

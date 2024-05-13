@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -148,11 +149,28 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var data WSMessage
 		// Read as JSON, store in v
 		msgType, msg, err := c.Read(ctx)
-		err = wsjson.Read(ctx, c, &data)
+
 		if err != nil {
-			log.Println("Error reading json: ", err, msgType, msg)
-			break
+			log.Println("Error reading message:", err)
+			return
 		}
+
+		if msgType < 1 || msgType > 2 {
+			log.Println("Error reading message:", err)
+			return
+		}
+
+		if err := json.Unmarshal(msg, &data); err != nil {
+			log.Println("Error decoding JSON:", err)
+			return
+		}
+
+		// err = wsjson.Read(ctx, c, &data)
+
+		// if err != nil {
+		// 	log.Println("Error reading json: ", err, msgType, msg)
+		// 	break
+		// }
 
 		log.Printf("Recv'd: %v", data)
 

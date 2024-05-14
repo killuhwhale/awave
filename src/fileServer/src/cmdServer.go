@@ -171,7 +171,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error accepting connection: ", err)
 		return
 	}
-
+	fmt.Println("Connection accepted...")
 	defer c.Close(websocket.StatusInternalError, "Sky is falling")
 
 	ctx := context.Background()
@@ -181,17 +181,17 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		msgType, msg, err := c.Read(ctx)
 
 		if err != nil {
-			log.Println("Error reading message!:", err)
+			log.Println("Error reading message!:", err, msgType, msg)
 			return
 		}
 
 		if msgType < 1 || msgType > 2 {
-			log.Println("bad message type:", err)
+			log.Println("bad message type:", err, msgType, msg)
 			return
 		}
 
 		if err := json.Unmarshal(msg, &data); err != nil {
-			log.Println("Error decoding JSON:", err)
+			log.Println("Error decoding JSON:", err, msgType, msg)
 			return
 		}
 

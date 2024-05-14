@@ -84,6 +84,7 @@ function Main() {
   const [secretCode, setSecretCode] = useState("");
   const [ws, setWs] = useState<WebSocket | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const [signaled, setSignaled] = useState(false);
 
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
   const [currentSetlist, setCurrentSetlist] = useState<Setlist | null>(null);
@@ -122,7 +123,10 @@ function Main() {
 
         peerConnection = new WebRTCPeerConnection(peerConstraints);
         peerConnectionRef.current = peerConnection;
-        peerConnection.addEventListener("connectionstatechange", (event) => {});
+        peerConnection.addEventListener("connectionstatechange", (event) => {
+          console.log("connectionstatechange:", event);
+        });
+
         peerConnection.addEventListener("icecandidate", (event) => {
           if (event.candidate) {
             console.log("onCandidate:");
@@ -136,25 +140,44 @@ function Main() {
             );
           }
         });
-        peerConnection.addEventListener("icecandidateerror", (event) => {});
-        peerConnection.addEventListener(
-          "iceconnectionstatechange",
-          (event) => {}
-        );
-        peerConnection.addEventListener(
-          "icegatheringstatechange",
-          (event) => {}
-        );
-        peerConnection.addEventListener("negotiationneeded", (event) => {});
-        peerConnection.addEventListener("signalingstatechange", (event) => {});
-        peerConnection.addEventListener("track", (event) => {});
+        peerConnection.addEventListener("icecandidateerror", (event) => {
+          console.log("icecandidateerror:", event);
+        });
 
-        streamRef.current
-          .getTracks()
-          .forEach((track) =>
-            peerConnection.addTrack(track, streamRef.current)
-          );
+        peerConnection.addEventListener("iceconnectionstatechange", (event) => {
+          console.log("iceconnectionstatechange:", event);
+        });
+        peerConnection.addEventListener("icegatheringstatechange", (event) => {
+          console.log("icegatheringstatechange:", event);
+        });
+        peerConnection.addEventListener("negotiationneeded", (event) => {
+          console.log("negotiationneeded:", event);
+        });
+        peerConnection.addEventListener("signalingstatechange", (event) => {
+          console.log("signalingstatechange:", event);
+        });
+        peerConnection.addEventListener("track", (event) => {
+          console.log("track:", event);
+        });
 
+        peerConnection.onconnectionstatechange = function (event) {
+          switch (peerConnection.connectionState) {
+            case "connected":
+              console.log(
+                "The peer connection is directly connected with the other peer."
+              );
+              streamRef.current
+                .getTracks()
+                .forEach((track) =>
+                  peerConnection.addTrack(track, streamRef.current)
+                );
+              break;
+            case "disconnected":
+            case "failed":
+              console.error("Connection state is failed/disconnected.");
+              break;
+          }
+        };
         let sessionConstraints = {
           mandatory: {
             OfferToReceiveAudio: true,
@@ -204,12 +227,12 @@ function Main() {
         peerConnection.close();
       }
     };
-  }, [ws?.readyState]);
+  }, [signaled]);
 
   const connectToWebSocket = () => {
     if (ws) return;
     const wss = new WebSocket(WSURL);
-    setWs(wss);
+    setWs(ws);
     wsRef.current = wss;
   };
 
@@ -221,7 +244,7 @@ function Main() {
     ws.onopen = () => {
       console.log("Connected!");
       console.log("WSS Connected! Sending register command 0");
-
+      setSignaled(true);
       ws.send(
         JSON.stringify({
           cmd: 0,

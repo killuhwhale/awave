@@ -291,6 +291,20 @@ const Home = () => {
     let peerConnection = new RTCPeerConnection(peerConstraints);
     let datachannel: RTCDataChannel | null = null;
 
+    peerConnection.addEventListener("icecandidate", (event) => {
+      if (event.candidate) {
+        console.log("onCandidate:");
+        ws.current?.send(
+          JSON.stringify(
+            rtcMsg(partyName, "s3cr3t", {
+              rtcType: "candidate",
+              candidate: event.candidate,
+            })
+          )
+        );
+      }
+    });
+
     peerConnection.addEventListener("datachannel", (event) => {
       datachannel = event.channel;
 
@@ -354,6 +368,7 @@ const Home = () => {
             // );
             break;
           case "candidate":
+            console.log("Adding candidate");
             peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
             break;
         }

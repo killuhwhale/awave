@@ -82,28 +82,136 @@ type Setlist = {
 function Main() {
   const partyName = "tp"; // Get from a config file
   const [secretCode, setSecretCode] = useState("");
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  // const [ws, setWs] = useState<WebSocket | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const [signaled, setSignaled] = useState(false);
 
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
   const [currentSetlist, setCurrentSetlist] = useState<Setlist | null>(null);
   const streamRef = useRef<any | null>(null);
   const peerConnectionRef = useRef<WebRTCPeerConnection | null>(null);
-  const [hasAudioStream, setHasAudioStream] = useState(false);
+
+  const connectToWebSocket = () => {
+    console.log("Attempting to connec to wss...");
+    if (wsRef.current) return;
+    console.log("Connecting to wss...");
+    let cleanupwebRTC;
+    try {
+      const wss = new WebSocket(WSURL);
+
+      console.log("Setting wss listeners....");
+      wss.onopen = () => {
+        console.log("Connected!");
+        console.log("WSS Connected! Sending register command 0");
+        cleanupwebRTC = setupWebRTC();
+        wss.send(
+          JSON.stringify({
+            cmd: 0,
+            cmdType: 0,
+            partyName: partyName,
+          })
+        );
+      };
+
+      wss.onmessage = (ev) => {
+        // Not expecting messages from controller
+        const data = JSON.parse(ev.data);
+        console.log("Recv'd msg:", data);
+        switch (data.rtcType) {
+          // case "offer":
+          //   peerConnectionRef.current.setRemoteDescription(
+          //     new RTCSessionDescription(data.offer)
+          //   );
+          //   peerConnectionRef.current
+          //     .createAnswer()
+          //     .then((answer) => {
+          //       peerConnectionRef.current.setLocalDescription(answer);
+          //       console.log("Sending answer: ", answer);
+          //       ws.send(
+          //         JSON.stringify(
+          //           rtcMsg(partyName, "s3cr3t", {
+          //             rtcType: "answer",
+          //             answer: answer,
+          //           })
+          //         )
+          //       );
+          //     })
+          //     .catch((error) => console.error("Answer error: ", error));
+          //   break;
+          case "answer":
+            console.log("Recv'd answer! Setting Remote Description");
+            peerConnectionRef.current.setRemoteDescription(
+              new RTCSessionDescription(data.answer)
+            );
+            break;
+          case "candidate":
+            console.log("Recv'd candidate! Adding ice candidate");
+            peerConnectionRef.current.addIceCandidate(
+              new RTCIceCandidate(data.candidate)
+            );
+            break;
+        }
+      };
+
+      wss.onerror = (error) => {
+        console.log("WebSocket Error ", error);
+        if (wsRef.current && wsRef.current.readyState !== WebSocket.OPEN) {
+          wsRef.current = null;
+        }
+      };
+
+      wss.onclose = (ev) => {
+        console.log("on wss close");
+        if (!ev.wasClean) {
+          wsRef.current = null;
+          connectToWebSocket();
+        }
+      };
+
+      wsRef.current = wss;
+    } catch (err) {
+      console.log("Err connecting to wss: ", err);
+    }
+
+    return () => {
+      if (cleanupwebRTC) {
+        console.log("Called cleanuowebRTC");
+        cleanupwebRTC();
+      }
+    };
+  };
 
   useEffect(() => {
+    let cleanupWss;
+    if (wsRef.current === null) {
+      cleanupWss = connectToWebSocket();
+    }
+
+    // return () => {
+    //   console.log("Cleaning websocket");
+    //   if ((wsRef.current as WebSocket)?.readyState !== WebSocket.CLOSED) {
+    //     (wsRef.current as WebSocket).close();
+    //   }
+    //   if (cleanupWss) {
+    //     console.log("Called cleanupwebRTC");
+    //     cleanupWss();
+    //   }
+    // };
+  }, [wsRef.current]);
+
+  // useEffect(() => {
+
+  // }, [wsRef.current?.readyState]);
+
+  const setupWebRTC = () => {
     let peerConnection: WebRTCPeerConnection;
-    if (
-      !wsRef.current ||
-      !wsRef.current.readyState ||
-      wsRef.current.readyState !== WebSocket.OPEN
-    )
-      return;
+
+    console.log("Is ws ready?...", wsRef.current, wsRef.current?.readyState);
+
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
     console.log("Begin creating webrtc connect...", wsRef.current.readyState);
 
     const _ = async () => {
-      let audioCount = 0;
       let mediaConstraints = {
         audio: true,
         video: false,
@@ -111,26 +219,42 @@ function Main() {
 
       try {
         const stream = await WebmediaDevices.getUserMedia(mediaConstraints);
-        streamRef.current = stream;
+
+        const turnConfig = {
+          urls: config["urls"],
+          username: "a",
+          credential: "a",
+          // username: config["username"],
+          // credential: config["credential"],
+        };
+
+        console.log("peerConstraint TURN: ", turnConfig);
 
         let peerConstraints = {
           iceServers: [
             {
               urls: "stun:stun.l.google.com:19302",
             },
+            turnConfig,
           ],
         };
 
         peerConnection = new WebRTCPeerConnection(peerConstraints);
-        peerConnectionRef.current = peerConnection;
+
+        console.log("Adding stream tracks to peerCon: ", stream);
+        stream.getTracks().forEach((track) => {
+          console.log("Adding track to stream: ", track);
+          peerConnection.addTrack(track, stream);
+        });
+
         peerConnection.addEventListener("connectionstatechange", (event) => {
           console.log("connectionstatechange:", event);
         });
 
         peerConnection.addEventListener("icecandidate", (event) => {
+          console.log("onCandidate:", event, event.candidate);
           if (event.candidate) {
-            console.log("onCandidate:");
-            ws?.send(
+            wsRef.current?.send(
               JSON.stringify(
                 rtcMsg(partyName, "s3cr3t", {
                   rtcType: "candidate",
@@ -157,7 +281,7 @@ function Main() {
           console.log("signalingstatechange:", event);
         });
         peerConnection.addEventListener("track", (event) => {
-          console.log("track:", event);
+          console.log("addEventListener track:", event);
         });
 
         peerConnection.onconnectionstatechange = function (event) {
@@ -166,11 +290,7 @@ function Main() {
               console.log(
                 "The peer connection is directly connected with the other peer."
               );
-              streamRef.current
-                .getTracks()
-                .forEach((track) =>
-                  peerConnection.addTrack(track, streamRef.current)
-                );
+
               break;
             case "disconnected":
             case "failed":
@@ -186,138 +306,55 @@ function Main() {
           },
         };
 
-        peerConnection
-          .createOffer(sessionConstraints)
-          .then((offer) => {
-            peerConnection.setLocalDescription(offer);
-            console.log("Sending offer: ", offer, ws.readyState);
-            ws?.send(
-              JSON.stringify(
-                rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
-              )
-            );
-          })
-          .catch((error) => console.error("Offer error: ", error));
-
         let datachannel = peerConnection.createDataChannel("my_channel");
 
-        datachannel.addEventListener("open", (event) => {});
-        datachannel.addEventListener("close", (event) => {});
+        datachannel.addEventListener("open", (event) => {
+          console.log("Data channel open");
+          datachannel.send("TEststststststtst");
+        });
+        datachannel.addEventListener("close", (event) => {
+          console.log("Data channel");
+        });
         datachannel.addEventListener("message", (message) => {});
-        // datachannel.send("TEststststststtst");
 
-        setHasAudioStream(true);
+        try {
+          const offer = await peerConnection.createOffer(sessionConstraints);
+          peerConnection.setLocalDescription(offer);
+          console.log("Sending offer: ", offer, wsRef.current.readyState);
+          wsRef.current?.send(
+            JSON.stringify(
+              rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
+            )
+          );
+        } catch (err) {
+          console.log("Error creating offer");
+        }
+
+        streamRef.current = stream;
+        peerConnectionRef.current = peerConnection;
       } catch (err) {
         // Handle Error
         console.log("Err: ", err);
       }
-
-      console.log("Audio devices: ", audioCount);
     };
     _()
       .then(() => {})
       .catch(() => {});
 
     return () => {
+      console.log("Cleaning webrtc");
       if (streamRef && streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
-      if (peerConnection) {
-        peerConnection.close();
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
       }
     };
-  }, [signaled]);
-
-  const connectToWebSocket = () => {
-    if (ws) return;
-    const wss = new WebSocket(WSURL);
-    setWs(ws);
-    wsRef.current = wss;
   };
 
-  useEffect(() => {
-    if (ws === null) {
-      return connectToWebSocket();
-    }
-
-    ws.onopen = () => {
-      console.log("Connected!");
-      console.log("WSS Connected! Sending register command 0");
-      setSignaled(true);
-      ws.send(
-        JSON.stringify({
-          cmd: 0,
-          cmdType: 0,
-          partyName: partyName,
-        })
-      );
-    };
-
-    ws.onmessage = (ev) => {
-      // Not expecting messages from controller
-      const data = JSON.parse(ev.data);
-      console.log("Recv'd msg:", data);
-      switch (data.rtcType) {
-        // case "offer":
-        //   peerConnectionRef.current.setRemoteDescription(
-        //     new RTCSessionDescription(data.offer)
-        //   );
-        //   peerConnectionRef.current
-        //     .createAnswer()
-        //     .then((answer) => {
-        //       peerConnectionRef.current.setLocalDescription(answer);
-        //       console.log("Sending answer: ", answer);
-        //       ws.send(
-        //         JSON.stringify(
-        //           rtcMsg(partyName, "s3cr3t", {
-        //             rtcType: "answer",
-        //             answer: answer,
-        //           })
-        //         )
-        //       );
-        //     })
-        //     .catch((error) => console.error("Answer error: ", error));
-        //   break;
-        case "answer":
-          console.log("Recv'd answer! Setting Remote Description");
-          peerConnectionRef.current.setRemoteDescription(
-            new RTCSessionDescription(data.answer)
-          );
-          break;
-        case "candidate":
-          console.log("Recv'd candidate! Adding ice candidate");
-          peerConnectionRef.current.addIceCandidate(
-            new RTCIceCandidate(data.candidate)
-          );
-          break;
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.log("WebSocket Error ", error);
-      if (ws && ws.readyState !== WebSocket.OPEN) {
-        setWs(null);
-        wsRef.current = null;
-      }
-    };
-
-    ws.onclose = (ev) => {
-      if (!ev.wasClean) {
-        setWs(null);
-        wsRef.current = null;
-      }
-    };
-
-    return () => {
-      if ((ws as WebSocket)?.readyState !== WebSocket.CLOSED) {
-        (ws as WebSocket).close();
-      }
-    };
-  }, [ws]);
-
   const sendCommand = (cmdKey, setlist: number = 0, volAmount: number = 12) => {
-    if (ws) {
+    if (wsRef.current) {
       const cmd = {
         cmdType: 1,
         cmd: CMD.cmds[cmdKey],
@@ -327,7 +364,7 @@ function Main() {
         volAmount,
       };
       console.log("Command: ", cmd);
-      ws.send(JSON.stringify(cmd));
+      wsRef.current.send(JSON.stringify(cmd));
     }
   };
 
@@ -401,7 +438,7 @@ function Main() {
         value={secretCode}
         onChange={(ev) => setSecretCode(ev.nativeEvent.text)}
       />
-      {/* {hasAudioStream ? <WebRTCView stream={streamRef.current} /> : <></>} */}
+      {/* <WebRTCView stream={streamRef.current} /> */}
       <Button title="Play" onPress={sendPlay} />
       <Button title="Pause" onPress={sendPause} />
       <Button title="Next" onPress={sendNext} />

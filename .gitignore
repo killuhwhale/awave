@@ -2,7 +2,7 @@
 
 src/fileServer/node_modules
 src/mobile/awave/node_modules
-
+config.json
 
 # Expo
 src/mobile/awave/.expo/

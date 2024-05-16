@@ -432,7 +432,7 @@ function Main() {
         value={secretCode}
         onChange={(ev) => setSecretCode(ev.nativeEvent.text)}
       />
-      {/* <WebRTCView stream={streamRef.current} /> */}
+      <WebRTCView stream={streamRef.current} />
       <Button title="Play" onPress={sendPlay} />
       <Button title="Pause" onPress={sendPause} />
       <Button title="Next" onPress={sendNext} />

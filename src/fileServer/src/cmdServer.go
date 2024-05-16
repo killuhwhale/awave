@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -195,33 +194,33 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for {
 		var data WSMessage
 		// Read as JSON, store in v
-		msgType, msg, err := c.Read(ctx)
-
-		if err != nil {
-			log.Println("Error reading message!:", err, msgType, msg)
-			// Remove conn from cs.cm.remove
-			cs.cm.removeClient(data.PartyName, c)
-			return
-		}
-
-		if msgType < 1 || msgType > 2 {
-			log.Println("bad message type:", err, msgType, msg)
-			cs.cm.removeClient(data.PartyName, c)
-			return
-		}
-
-		if err := json.Unmarshal(msg, &data); err != nil {
-			log.Println("Error decoding JSON:", err, msgType, msg)
-			cs.cm.removeClient(data.PartyName, c)
-			return
-		}
-
-		// err = wsjson.Read(ctx, c, &data)
+		// msgType, msg, err := c.Read(ctx)
 
 		// if err != nil {
-		// 	log.Println("Error reading json: ", err, msgType, msg)
-		// 	break
+		// 	log.Println("Error reading message!:", err, msgType, msg)
+		// 	// Remove conn from cs.cm.remove
+		// 	cs.cm.removeClient(data.PartyName, c)
+		// 	return
 		// }
+
+		// if msgType < 1 || msgType > 2 {
+		// 	log.Println("bad message type:", err, msgType, msg)
+		// 	cs.cm.removeClient(data.PartyName, c)
+		// 	return
+		// }
+
+		// if err := json.Unmarshal(msg, &data); err != nil {
+		// 	log.Println("Error decoding JSON:", err, msgType, msg)
+		// 	cs.cm.removeClient(data.PartyName, c)
+		// 	return
+		// }
+
+		err = wsjson.Read(ctx, c, &data)
+
+		if err != nil {
+			log.Println("Error reading json: ", err)
+			continue
+		}
 
 		log.Printf("Recv'd: %v", data)
 

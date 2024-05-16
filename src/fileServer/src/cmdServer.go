@@ -232,9 +232,13 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 				for _, client := range clients {
-					if err = wsjson.Write(ctx, client.conn, data); err != nil {
-						log.Printf("Error writing json:  %v \n\n V: %v", err, data)
-						continue
+					if client.conn != c {
+						if err = wsjson.Write(ctx, client.conn, data); err != nil {
+							log.Printf("Error writing json:  %v \n\n V: %v", err, data)
+							continue
+						}
+					} else {
+						fmt.Println("Not sending back to self client...")
 					}
 				}
 			}

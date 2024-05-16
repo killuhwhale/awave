@@ -97,12 +97,11 @@ function Main() {
     let cleanupwebRTC;
     try {
       const wss = new WebSocket(WSURL);
-
+      wsRef.current = wss;
       console.log("Setting wss listeners....");
       wss.onopen = () => {
         console.log("Connected!");
         console.log("WSS Connected! Sending register command 0");
-        cleanupwebRTC = setupWebRTC();
         wss.send(
           JSON.stringify({
             cmd: 0,
@@ -110,6 +109,7 @@ function Main() {
             partyName: partyName,
           })
         );
+        cleanupwebRTC = setupWebRTC();
       };
 
       wss.onmessage = (ev) => {
@@ -166,8 +166,6 @@ function Main() {
           connectToWebSocket();
         }
       };
-
-      wsRef.current = wss;
     } catch (err) {
       console.log("Err connecting to wss: ", err);
     }
@@ -197,10 +195,6 @@ function Main() {
     //   }
     // };
   }, [wsRef.current]);
-
-  // useEffect(() => {
-
-  // }, [wsRef.current?.readyState]);
 
   const setupWebRTC = () => {
     let peerConnection: WebRTCPeerConnection;

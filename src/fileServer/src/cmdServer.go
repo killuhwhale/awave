@@ -219,7 +219,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			log.Println("Error reading json: ", err)
-			continue
+			return
 		}
 
 		log.Printf("Recv'd: %v", data)

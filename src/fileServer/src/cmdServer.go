@@ -123,6 +123,23 @@ func (cm ClientManager) remove(partyName string) {
 	}
 }
 
+func (cm ClientManager) removeClient(partyName string, conn *websocket.Conn) {
+	cm.lock.Lock()
+	defer cm.lock.Unlock()
+	if partyClients, exists := cm.clients[partyName]; exists {
+
+		for client := range partyClients {
+			if client.conn == conn {
+				delete(cm.clients["partyName"], client)
+			}
+		}
+
+		if len(partyClients) == 0 {
+			delete(cm.clients, partyName)
+		}
+	}
+}
+
 func (cm ClientManager) getClients(partyName string) []*Client {
 	cm.lock.Lock()
 	defer cm.lock.Unlock()
@@ -182,17 +199,21 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			log.Println("Error reading message!:", err, msgType, msg)
-			continue
+			// Remove conn from cs.cm.remove
+			cs.cm.removeClient(data.PartyName, c)
+			return
 		}
 
 		if msgType < 1 || msgType > 2 {
 			log.Println("bad message type:", err, msgType, msg)
-			continue
+			cs.cm.removeClient(data.PartyName, c)
+			return
 		}
 
 		if err := json.Unmarshal(msg, &data); err != nil {
 			log.Println("Error decoding JSON:", err, msgType, msg)
-			continue
+			cs.cm.removeClient(data.PartyName, c)
+			return
 		}
 
 		// err = wsjson.Read(ctx, c, &data)

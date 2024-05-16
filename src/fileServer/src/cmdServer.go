@@ -161,6 +161,22 @@ type RTCSessionDescription struct {
 	Type string `json:"type"`
 	SDP  string `json:"sdp"`
 }
+type RTCIceCandidate struct {
+	Address          string `json:"address"`
+	Candidate        string `json:"candidate"`
+	Component        string `json:"component"`
+	Foundation       string `json:"foundation"`
+	Port             int    `json:"port"`
+	Priority         int    `json:"priority"`
+	Protocol         string `json:"protocol"`
+	RelatedAddress   string `json:"relatedAddress"`
+	RelatedPort      int    `json:"relatedPort"`
+	SdpMLineIndex    int    `json:"sdpMLineIndex"`
+	SdpMid           string `json:"sdpMid"`
+	TcpType          string `json:"tcpType"`
+	Type             string `json:"type"`
+	UsernameFragment string `json:"usernameFragment"`
+}
 
 type WSMessage struct {
 	Cmd        int                    `json:"cmd"`
@@ -170,7 +186,7 @@ type WSMessage struct {
 	Setlist    int                    `json:"setlist"`
 	VolAmount  int                    `json:"volAmount"`
 	RTCType    *string                `json:"rtcType"`
-	Candidate  *string                `json:"candidate"`
+	Candidate  *RTCIceCandidate       `json:"candidate"`
 	Answer     *RTCSessionDescription `json:"answer"`
 	Offer      *RTCSessionDescription `json:"offer"`
 }

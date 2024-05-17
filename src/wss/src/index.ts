@@ -100,7 +100,7 @@ wss.on("connection", (ws: WebSocket) => {
   });
 });
 
-const PORT = process.argv[2] || 3000;
+const PORT = process.argv[2] || 4000;
 server.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
 });

@@ -118,14 +118,15 @@ function Main() {
         console.log("Recv'd msg:", data);
         switch (data.rtcType) {
           case "offer":
-            peerConnectionRef.current.setRemoteDescription(
-              new RTCSessionDescription(data.offer)
-            );
+            console.log("received offer");
+            // peerConnectionRef.current.setRemoteDescription(
+            //   new RTCSessionDescription(data.offer)
+            // );
 
             peerConnectionRef.current
               .createAnswer()
               .then((answer) => {
-                peerConnectionRef.current.setLocalDescription(answer);
+                // peerConnectionRef.current.setLocalDescription(answer);
                 console.log("Sending answer: ", answer);
                 wsRef.current?.send(
                   JSON.stringify(

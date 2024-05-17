@@ -201,6 +201,34 @@ const Home = () => {
 
     wss.onopen = () => {
       console.log("WSS Connected! Sending register command 0");
+      // Create offer
+      try {
+        // let sessionConstraints = {
+        //   mandatory: {
+        //     OfferToReceiveAudio: true,
+        //     OfferToReceiveVideo: false,
+        //     VoiceActivityDetection: true,
+        //   },
+        // };
+
+        const sessionConstraints = {
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: false,
+        } as RTCOfferOptions;
+
+        peerConnection.createOffer(sessionConstraints).then((offer) => {
+          peerConnection.setLocalDescription(offer);
+
+          console.log("Sending offer: ", offer);
+          wss.send(
+            JSON.stringify(
+              rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
+            )
+          );
+        });
+      } catch (err) {
+        console.log("Error creating offer");
+      }
 
       wss.send(
         JSON.stringify({
@@ -294,16 +322,16 @@ const Home = () => {
         switch (data.rtcType) {
           case "offer":
             console.log("handling offer...");
-            peerConnectionRef.current?.setRemoteDescription(
-              new RTCSessionDescription(data.offer)
-            );
+            // peerConnectionRef.current?.setRemoteDescription(
+            //   new RTCSessionDescription(data.offer)
+            // );
             console.log("creating answer...");
 
             peerConnectionRef.current
               ?.createAnswer()
               .then((answer) => {
                 console.log("Created answer...", answer);
-                peerConnectionRef.current?.setLocalDescription(answer);
+                // peerConnectionRef.current?.setLocalDescription(answer);
                 console.log("Sending answer...", wss);
 
                 wss.send(
@@ -319,7 +347,7 @@ const Home = () => {
             break;
           case "answer":
             console.log("Setting local description from answer");
-            peerConnection.setLocalDescription(
+            peerConnection.setRemoteDescription(
               new RTCSessionDescription(data.answer)
             );
             break;
@@ -347,36 +375,6 @@ const Home = () => {
         connectToWebSocket();
       }
     };
-
-    // Create offer
-    try {
-      // let sessionConstraints = {
-      //   mandatory: {
-      //     OfferToReceiveAudio: true,
-      //     OfferToReceiveVideo: false,
-      //     VoiceActivityDetection: true,
-      //   },
-      // };
-
-      const sessionConstraints = {
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: false,
-      } as RTCOfferOptions;
-
-      peerConnection.createOffer(sessionConstraints).then((offer) => {
-        peerConnection.setLocalDescription(offer);
-
-        console.log("Sending offer: ", offer);
-        wss.send(
-          JSON.stringify(
-            rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
-          )
-        );
-      });
-    } catch (err) {
-      console.log("Error creating offer");
-    }
-    // Also listen for an answer
 
     ws.current = wss;
     // return () => {

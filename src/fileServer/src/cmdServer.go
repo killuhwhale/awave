@@ -268,14 +268,14 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 				for _, client := range clients {
-					if client.conn != c {
-						if err = wsjson.Write(ctx, client.conn, data); err != nil {
-							log.Printf("Error writing json:  %v \n\n V: %v", err, data)
-							break
-						}
-					} else {
-						fmt.Println("Not sending back to self client...")
+					if err = wsjson.Write(ctx, client.conn, data); err != nil {
+						log.Printf("Error writing json:  %v \n\n V: %v", err, data)
+						break
 					}
+					// if client.conn != c {
+					// } else {
+					// 	fmt.Println("Not sending back to self client...")
+					// }
 				}
 			}
 

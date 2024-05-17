@@ -117,26 +117,27 @@ function Main() {
         const data = JSON.parse(ev.data);
         console.log("Recv'd msg:", data);
         switch (data.rtcType) {
-          // case "offer":
-          //   peerConnectionRef.current.setRemoteDescription(
-          //     new RTCSessionDescription(data.offer)
-          //   );
-          //   peerConnectionRef.current
-          //     .createAnswer()
-          //     .then((answer) => {
-          //       peerConnectionRef.current.setLocalDescription(answer);
-          //       console.log("Sending answer: ", answer);
-          //       ws.send(
-          //         JSON.stringify(
-          //           rtcMsg(partyName, "s3cr3t", {
-          //             rtcType: "answer",
-          //             answer: answer,
-          //           })
-          //         )
-          //       );
-          //     })
-          //     .catch((error) => console.error("Answer error: ", error));
-          //   break;
+          case "offer":
+            peerConnectionRef.current.setRemoteDescription(
+              new RTCSessionDescription(data.offer)
+            );
+
+            peerConnectionRef.current
+              .createAnswer()
+              .then((answer) => {
+                peerConnectionRef.current.setLocalDescription(answer);
+                console.log("Sending answer: ", answer);
+                wsRef.current?.send(
+                  JSON.stringify(
+                    rtcMsg(partyName, "s3cr3t", {
+                      rtcType: "answer",
+                      answer: answer,
+                    })
+                  )
+                );
+              })
+              .catch((error) => console.error("Answer error: ", error));
+            break;
           case "answer":
             console.log("Recv'd answer! Setting Remote Description");
             peerConnectionRef.current.setRemoteDescription(
@@ -292,13 +293,18 @@ function Main() {
               break;
           }
         };
-        let sessionConstraints = {
-          mandatory: {
-            OfferToReceiveAudio: true,
-            OfferToReceiveVideo: false,
-            VoiceActivityDetection: true,
-          },
-        };
+        // let sessionConstraints = {
+        //   mandatory: {
+        //     OfferToReceiveAudio: true,
+        //     OfferToReceiveVideo: false,
+        //     VoiceActivityDetection: true,
+        //   },
+        // };
+
+        const sessionConstraints = {
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: false,
+        } as RTCOfferOptions;
 
         let datachannel = peerConnection.createDataChannel("my_channel");
 

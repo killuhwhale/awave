@@ -348,6 +348,36 @@ const Home = () => {
       }
     };
 
+    // Create offer
+    try {
+      // let sessionConstraints = {
+      //   mandatory: {
+      //     OfferToReceiveAudio: true,
+      //     OfferToReceiveVideo: false,
+      //     VoiceActivityDetection: true,
+      //   },
+      // };
+
+      const sessionConstraints = {
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false,
+      } as RTCOfferOptions;
+
+      peerConnection.createOffer(sessionConstraints).then((offer) => {
+        peerConnection.setLocalDescription(offer);
+
+        console.log("Sending offer: ", offer);
+        wss.send(
+          JSON.stringify(
+            rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
+          )
+        );
+      });
+    } catch (err) {
+      console.log("Error creating offer");
+    }
+    // Also listen for an answer
+
     ws.current = wss;
     // return () => {
     //   if ((wss as WebSocket)?.readyState !== WebSocket.CLOSED) {

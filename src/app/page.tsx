@@ -252,7 +252,7 @@ const Home = () => {
         {
           urls: "stun:stun.l.google.com:19302",
         },
-        turnConfig,
+        // turnConfig,
       ],
     };
     let peerConnection = new RTCPeerConnection(peerConstraints);
@@ -322,7 +322,7 @@ const Home = () => {
         switch (data.rtcType) {
           case "offer":
             console.log("handling offer...");
-            peerConnectionRef.current?.setLocalDescription(
+            peerConnectionRef.current?.setRemoteDescription(
               new RTCSessionDescription(data.offer)
             );
             console.log("creating answer...");
@@ -331,7 +331,7 @@ const Home = () => {
               ?.createAnswer()
               .then((answer) => {
                 console.log("Created answer...", answer);
-                // peerConnectionRef.current?.setLocalDescription(answer);
+                peerConnectionRef.current?.setLocalDescription(answer);
                 console.log("Sending answer...", wss);
 
                 wss.send(

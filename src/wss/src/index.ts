@@ -49,7 +49,8 @@ const cm = new ClientManager();
 // Upgrade HTTP to WebSocket for /webrtcwss/
 server.on("upgrade", (request, socket, head) => {
   const { url } = request;
-  if (url === "/webrtcwss/") {
+  console.log("onupgrade");
+  if (url === "/webrtcwss") {
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit("connection", ws, request);
     });

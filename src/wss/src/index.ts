@@ -61,7 +61,7 @@ const pj = (s: string) => {
 
 const wss = new WebSocketServer({ server });
 
-app.get("/webrtcwss", (req, res) => {
+app.get("/webrtcwss/", (req, res) => {
   res.send("Hello, world!");
 });
 

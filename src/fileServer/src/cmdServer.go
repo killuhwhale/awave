@@ -271,7 +271,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					if err = wsjson.Write(ctx, client.conn, data); err != nil {
 						log.Printf("Error writing json:  %v \n\n V: %v", err, data)
 						cs.cm.removeClient(data.PartyName, client.conn)
-						break
+						return
 					}
 					// if client.conn != c {
 					// } else {

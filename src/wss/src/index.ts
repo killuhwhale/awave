@@ -43,8 +43,20 @@ class ClientManager {
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ noServer: true });
 const cm = new ClientManager();
+
+// Upgrade HTTP to WebSocket for /webrtcwss/
+server.on("upgrade", (request, socket, head) => {
+  const { url } = request;
+  if (url === "/webrtcwss/") {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
 
 wss.on("connection", (ws: WebSocket) => {
   console.log("Connection accepted...");
@@ -100,8 +112,8 @@ wss.on("connection", (ws: WebSocket) => {
   });
 });
 
-const PORT = process.argv[2] || 4000;
-server.listen(PORT, () => {
+const PORT = 4000;
+server.listen(PORT, "127.0.0.1", () => {
   console.log(`Listening on port ${PORT}`);
 });
 

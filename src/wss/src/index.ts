@@ -1,9 +1,14 @@
+import { createServer } from "http";
+import { parse } from "url";
 import express from "express";
-import http from "http";
-import https from "https";
-import WebSocket, { WebSocketServer } from "ws";
-import fs from "fs";
-import path from "path";
+import WebSocket, { WebSocketServer, RawData } from "ws";
+
+const dev = process.env.NODE_ENV === "development";
+const hostname = "localhost";
+const port = 4000;
+// const app = next({ dev, hostname, port });
+const app = express();
+const server = createServer(app);
 
 interface Client {
   conn: WebSocket;
@@ -42,36 +47,24 @@ class ClientManager {
   }
 }
 
-const sslCertificate = "dist/cert.pem";
-const sslKey = "dist/key.pem";
-
-const options = {
-  cert: fs.readFileSync(sslCertificate),
-  key: fs.readFileSync(sslKey),
-};
-
-const app = express();
-const server = https.createServer(options, app);
-const wss = new WebSocketServer({ noServer: true });
 const cm = new ClientManager();
 
-// Upgrade HTTP to WebSocket for /webrtcwss/
-server.on("upgrade", (request, socket, head) => {
-  const { url } = request;
-  console.log("onupgrade");
-  if (url === "/webrtcwss") {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit("connection", ws, request);
-    });
-  } else {
-    socket.destroy();
-  }
-});
+// Create a message to send.
+const ping = (msg: string, data: any) => {
+  return JSON.stringify({ msg, data });
+};
+
+// parseJson
+const pj = (s: string) => {
+  return JSON.parse(s);
+};
+
+const wss = new WebSocketServer({ server });
 
 wss.on("connection", (ws: WebSocket) => {
   console.log("Connection accepted...");
 
-  ws.on("message", (message: WebSocket.RawData) => {
+  ws.on("message", (message: RawData) => {
     const data = JSON.parse(message.toString());
     console.log("Received:", data);
 
@@ -122,9 +115,23 @@ wss.on("connection", (ws: WebSocket) => {
   });
 });
 
-const PORT = 4000;
-server.listen(PORT, "localhost", () => {
-  console.log(`Listening on port ${PORT}`);
+server.on("upgrade", (req, socket, head) => {
+  const parsedUrl = parse(req.url ?? "", true);
+  const { pathname } = parsedUrl;
+  console.log("Upgrading: ", pathname);
+  if (pathname?.startsWith("webrtcwss")) {
+    console.debug("Handling upgrade to wss...");
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit("connection", ws, req);
+    });
+  }
 });
 
-app.use(express.static(path.join(__dirname, "public")));
+server
+  .once("error", (err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .listen(port, () => {
+    console.log(`> Ready on http://${hostname}:${port}`);
+  });

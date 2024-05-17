@@ -114,7 +114,7 @@ wss.on("connection", (ws: WebSocket) => {
 });
 
 const PORT = 4000;
-server.listen(PORT, "127.0.0.1", () => {
+server.listen(PORT, "localhost", () => {
   console.log(`Listening on port ${PORT}`);
 });
 

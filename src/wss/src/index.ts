@@ -42,8 +42,8 @@ class ClientManager {
   }
 }
 
-const sslCertificate = "./cert.pem";
-const sslKey = "./key.pem";
+const sslCertificate = "dist/cert.pem";
+const sslKey = "dist/key.pem";
 
 const options = {
   cert: fs.readFileSync(sslCertificate),

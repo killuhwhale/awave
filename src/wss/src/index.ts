@@ -1,5 +1,6 @@
 import express from "express";
 import http from "http";
+import https from "https";
 import WebSocket, { WebSocketServer } from "ws";
 import fs from "fs";
 import path from "path";
@@ -41,8 +42,16 @@ class ClientManager {
   }
 }
 
+const sslCertificate = "./cert.pem";
+const sslKey = "./key.pem";
+
+const options = {
+  cert: fs.readFileSync(sslCertificate),
+  key: fs.readFileSync(sslKey),
+};
+
 const app = express();
-const server = http.createServer(app);
+const server = https.createServer(options, app);
 const wss = new WebSocketServer({ noServer: true });
 const cm = new ClientManager();
 

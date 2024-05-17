@@ -6,7 +6,6 @@ import WebSocket, { WebSocketServer, RawData } from "ws";
 const dev = process.env.NODE_ENV === "development";
 const hostname = "localhost";
 const port = 4000;
-// const app = next({ dev, hostname, port });
 const app = express();
 const server = createServer(app);
 
@@ -48,16 +47,6 @@ class ClientManager {
 }
 
 const cm = new ClientManager();
-
-// Create a message to send.
-const ping = (msg: string, data: any) => {
-  return JSON.stringify({ msg, data });
-};
-
-// parseJson
-const pj = (s: string) => {
-  return JSON.parse(s);
-};
 
 const wss = new WebSocketServer({ server });
 
@@ -114,18 +103,6 @@ wss.on("connection", (ws: WebSocket) => {
     }
   });
 });
-
-// server.on("upgrade", (req, socket, head) => {
-//   const parsedUrl = parse(req.url ?? "", true);
-//   const { pathname } = parsedUrl;
-//   console.log("Upgrading: ", pathname);
-//   if (pathname?.startsWith("webrtcwss")) {
-//     console.debug("Handling upgrade to wss...");
-//     wss.handleUpgrade(req, socket, head, (ws) => {
-//       wss.emit("connection", ws, req);
-//     });
-//   }
-// });
 
 server
   .once("error", (err) => {

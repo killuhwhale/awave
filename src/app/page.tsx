@@ -318,9 +318,10 @@ const Home = () => {
               .catch((error) => console.error("Answer error: ", error));
             break;
           case "answer":
-            // peerConnection.setRemoteDescription(
-            //   new RTCSessionDescription(data.answer)
-            // );
+            console.log("Setting local description from answer");
+            peerConnection.setLocalDescription(
+              new RTCSessionDescription(data.answer)
+            );
             break;
           case "candidate":
             console.log("Adding candidate");

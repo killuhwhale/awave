@@ -311,7 +311,7 @@ const Home = () => {
       }
     });
 
-    wss.onmessage = (ev) => {
+    wss.onmessage = async (ev) => {
       const data = JSON.parse(ev.data);
       console.log("Recv'd msg: ", data);
       const cmd = data["cmd"];
@@ -323,16 +323,16 @@ const Home = () => {
         switch (data.rtcType) {
           case "offer":
             console.log("handling offer...");
-            peerConnectionRef.current?.setRemoteDescription(
+            await peerConnectionRef.current?.setRemoteDescription(
               new RTCSessionDescription(data.offer)
             );
             console.log("creating answer...");
 
             peerConnectionRef.current
               ?.createAnswer()
-              .then((answer) => {
+              .then(async (answer) => {
                 console.log("Created answer...", answer);
-                peerConnectionRef.current?.setLocalDescription(answer);
+                await peerConnectionRef.current?.setLocalDescription(answer);
                 console.log("Sending answer...", wss);
 
                 wss.send(
@@ -354,7 +354,7 @@ const Home = () => {
             // );
             break;
           case "candidate":
-            console.log("Adding candidate");
+            console.log("Adding candidate from", data.clientName);
             peerConnectionRef.current?.addIceCandidate(
               new RTCIceCandidate(data.candidate)
             );

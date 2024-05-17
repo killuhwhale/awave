@@ -113,14 +113,14 @@ function Main() {
         cleanupwebRTC = setupWebRTC();
       };
 
-      wss.onmessage = (ev) => {
+      wss.onmessage = async (ev) => {
         // Not expecting messages from controller
         const data = JSON.parse(ev.data);
         console.log("Recv'd msg:", data);
         switch (data.rtcType) {
           case "offer":
             console.log("received offer");
-            peerConnectionRef.current.setLocalDescription(
+            await peerConnectionRef.current.setLocalDescription(
               new RTCSessionDescription(data.offer)
             );
 
@@ -143,13 +143,13 @@ function Main() {
             break;
           case "answer":
             console.log("Recv'd answer! Setting Remote Description");
-            peerConnectionRef.current.setRemoteDescription(
+            await peerConnectionRef.current.setRemoteDescription(
               new RTCSessionDescription(data.answer)
             );
             break;
           case "candidate":
             console.log("Recv'd candidate! Adding ice candidate");
-            peerConnectionRef.current.addIceCandidate(
+            await peerConnectionRef.current.addIceCandidate(
               new RTCIceCandidate(data.candidate)
             );
             break;
@@ -323,7 +323,7 @@ function Main() {
 
         try {
           const offer = await peerConnection.createOffer(sessionConstraints);
-          peerConnection.setLocalDescription(offer);
+          await peerConnection.setLocalDescription(offer);
           console.log("Sending offer: ", offer, wsRef.current.readyState);
           wsRef.current?.send(
             JSON.stringify(

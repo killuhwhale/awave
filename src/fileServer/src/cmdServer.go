@@ -235,7 +235,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			log.Println("Error reading json: ", err)
-			return
+			break
 		}
 
 		log.Printf("Recv'd: %v", data)
@@ -271,7 +271,7 @@ func (cs commandServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					if client.conn != c {
 						if err = wsjson.Write(ctx, client.conn, data); err != nil {
 							log.Printf("Error writing json:  %v \n\n V: %v", err, data)
-							return
+							break
 						}
 					} else {
 						fmt.Println("Not sending back to self client...")

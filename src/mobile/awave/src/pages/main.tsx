@@ -119,7 +119,7 @@ function Main() {
         switch (data.rtcType) {
           case "offer":
             console.log("received offer");
-            peerConnectionRef.current.setRemoteDescription(
+            peerConnectionRef.current.setLocalDescription(
               new RTCSessionDescription(data.offer)
             );
 

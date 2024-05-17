@@ -247,7 +247,7 @@ function Main() {
 
         peerConnection.addEventListener("icecandidate", (event) => {
           console.log("onCandidate:", event, event.candidate);
-          if (event.candidate) {
+          if (event.candidate && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current?.send(
               JSON.stringify(
                 rtcMsg(partyName, "s3cr3t", {

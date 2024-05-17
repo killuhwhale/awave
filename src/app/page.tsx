@@ -322,9 +322,9 @@ const Home = () => {
         switch (data.rtcType) {
           case "offer":
             console.log("handling offer...");
-            // peerConnectionRef.current?.setRemoteDescription(
-            //   new RTCSessionDescription(data.offer)
-            // );
+            peerConnectionRef.current?.setRemoteDescription(
+              new RTCSessionDescription(data.offer)
+            );
             console.log("creating answer...");
 
             peerConnectionRef.current

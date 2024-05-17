@@ -9,6 +9,8 @@ src/mobile/awave/.expo/
 src/mobile/awave/dist/
 src/mobile/awave/web-build/
 
+src/wss/node_modules
+
 # Native
 *.orig.*
 *.jks

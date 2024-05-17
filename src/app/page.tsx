@@ -202,33 +202,33 @@ const Home = () => {
     wss.onopen = () => {
       console.log("WSS Connected! Sending register command 0");
       // Create offer
-      try {
-        // let sessionConstraints = {
-        //   mandatory: {
-        //     OfferToReceiveAudio: true,
-        //     OfferToReceiveVideo: false,
-        //     VoiceActivityDetection: true,
-        //   },
-        // };
+      // try {
+      //   // let sessionConstraints = {
+      //   //   mandatory: {
+      //   //     OfferToReceiveAudio: true,
+      //   //     OfferToReceiveVideo: false,
+      //   //     VoiceActivityDetection: true,
+      //   //   },
+      //   // };
 
-        const sessionConstraints = {
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: false,
-        } as RTCOfferOptions;
+      //   const sessionConstraints = {
+      //     offerToReceiveAudio: true,
+      //     offerToReceiveVideo: false,
+      //   } as RTCOfferOptions;
 
-        peerConnection.createOffer(sessionConstraints).then((offer) => {
-          peerConnection.setLocalDescription(offer);
+      //   peerConnection.createOffer(sessionConstraints).then((offer) => {
+      //     peerConnection.setLocalDescription(offer);
 
-          console.log("Sending offer: ", offer);
-          wss.send(
-            JSON.stringify(
-              rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
-            )
-          );
-        });
-      } catch (err) {
-        console.log("Error creating offer");
-      }
+      //     console.log("Sending offer: ", offer);
+      //     wss.send(
+      //       JSON.stringify(
+      //         rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
+      //       )
+      //     );
+      //   });
+      // } catch (err) {
+      //   console.log("Error creating offer");
+      // }
 
       wss.send(
         JSON.stringify({
@@ -346,10 +346,10 @@ const Home = () => {
               .catch((error) => console.error("Answer error: ", error));
             break;
           case "answer":
-            console.log("Setting local description from answer");
-            peerConnection.setRemoteDescription(
-              new RTCSessionDescription(data.answer)
-            );
+            // console.log("Setting local description from answer");
+            // peerConnection.setRemoteDescription(
+            //   new RTCSessionDescription(data.answer)
+            // );
             break;
           case "candidate":
             console.log("Adding candidate");

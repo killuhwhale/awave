@@ -61,6 +61,10 @@ const pj = (s: string) => {
 
 const wss = new WebSocketServer({ server });
 
+app.get("/webrtcwss/", (req, res) => {
+  res.send("Hello, world!");
+});
+
 wss.on("connection", (ws: WebSocket) => {
   console.log("Connection accepted...");
 

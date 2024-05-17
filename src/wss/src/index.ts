@@ -115,17 +115,17 @@ wss.on("connection", (ws: WebSocket) => {
   });
 });
 
-server.on("upgrade", (req, socket, head) => {
-  const parsedUrl = parse(req.url ?? "", true);
-  const { pathname } = parsedUrl;
-  console.log("Upgrading: ", pathname);
-  if (pathname?.startsWith("webrtcwss")) {
-    console.debug("Handling upgrade to wss...");
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit("connection", ws, req);
-    });
-  }
-});
+// server.on("upgrade", (req, socket, head) => {
+//   const parsedUrl = parse(req.url ?? "", true);
+//   const { pathname } = parsedUrl;
+//   console.log("Upgrading: ", pathname);
+//   if (pathname?.startsWith("webrtcwss")) {
+//     console.debug("Handling upgrade to wss...");
+//     wss.handleUpgrade(req, socket, head, (ws) => {
+//       wss.emit("connection", ws, req);
+//     });
+//   }
+// });
 
 server
   .once("error", (err) => {

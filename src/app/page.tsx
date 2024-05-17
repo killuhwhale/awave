@@ -235,6 +235,7 @@ const Home = () => {
           cmd: 0,
           cmdType: 0,
           partyName: partyName,
+          clientName: "musicplayer",
         })
       );
     };
@@ -339,6 +340,7 @@ const Home = () => {
                     rtcMsg(partyName, "s3cr3t", {
                       rtcType: "answer",
                       answer: answer,
+                      clientName: "musicplayer",
                     })
                   )
                 );

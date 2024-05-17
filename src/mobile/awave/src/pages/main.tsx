@@ -107,6 +107,7 @@ function Main() {
             cmd: 0,
             cmdType: 0,
             partyName: partyName,
+            clientName: "controller",
           })
         );
         cleanupwebRTC = setupWebRTC();
@@ -133,6 +134,7 @@ function Main() {
                     rtcMsg(partyName, "s3cr3t", {
                       rtcType: "answer",
                       answer: answer,
+                      clientName: "controller",
                     })
                   )
                 );
@@ -255,6 +257,7 @@ function Main() {
                 rtcMsg(partyName, "s3cr3t", {
                   rtcType: "candidate",
                   candidate: event.candidate,
+                  clientName: "controller",
                 })
               )
             );

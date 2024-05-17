@@ -18,6 +18,7 @@ export function rtcMsg(partyName, secretCode, rtcData){
         secretCode,
         setlist: -1,
         volAmount: -1,
+        clientName: "controller",
         ...rtcData,
     }
 }

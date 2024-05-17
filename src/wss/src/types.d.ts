@@ -5,6 +5,7 @@ export type WSMessage = {
   secretCode: string;
   setlist: number;
   volAmount: number;
+  clientName: string;
   rtcType?: string;
   candidate?: RTCIceCandidate;
   answer?: RTCSessionDescription;

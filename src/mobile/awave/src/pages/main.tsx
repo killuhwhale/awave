@@ -307,7 +307,7 @@ function Main() {
                 JSON.stringify(
                   rtcMsg(partyName, "s3cr3t", {
                     rtcType: "offer",
-                    offer: offer,
+                    offer: peerConnectionRef.current.localDescription,
                   })
                 )
               );

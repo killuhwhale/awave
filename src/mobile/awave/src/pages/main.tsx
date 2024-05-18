@@ -241,7 +241,7 @@ function Main() {
         };
 
         peerConnection = new WebRTCPeerConnection(peerConstraints);
-
+        streamRef.current = stream;
         console.log("Adding stream tracks to peerCon: ", stream);
         stream.getTracks().forEach((track) => {
           console.log("Adding track to stream: ", track);
@@ -337,7 +337,6 @@ function Main() {
           console.log("Error creating offer");
         }
 
-        streamRef.current = stream;
         peerConnectionRef.current = peerConnection;
       } catch (err) {
         // Handle Error

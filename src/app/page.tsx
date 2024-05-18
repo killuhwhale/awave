@@ -214,7 +214,7 @@ const Home = () => {
         {
           urls: "stun:stun.l.google.com:19302",
         },
-        turnConfig,
+        // turnConfig,
       ],
     };
     let peerConnection = new RTCPeerConnection(peerConstraints);
@@ -264,10 +264,14 @@ const Home = () => {
       );
 
       if (micStreamRef.current) {
-        micStreamRef.current.srcObject = event.streams[0];
+        const mediaStream = event.streams[0];
+
+        micStreamRef.current.srcObject = mediaStream;
+
+        // micStreamRef.current.srcObject = event.streams[0];
         micStreamRef.current.muted = false;
         micStreamRef.current.volume = 0.95;
-        micStreamRef.current.play();
+        // micStreamRef.current.play();
       }
       if (vidStreamRef.current) {
         vidStreamRef.current.srcObject = event.streams[0];
@@ -294,30 +298,39 @@ const Home = () => {
       } else if (cmdType === 1337) {
         switch (data.rtcType) {
           case "offer":
-            console.log("handling offer...");
-            await peerConnectionRef.current?.setRemoteDescription(
-              new RTCSessionDescription(data.offer)
-            );
-            console.log("creating answer...");
+            console.log("handling offer...", data.offer.sdp);
+            try {
+              await peerConnectionRef.current?.setRemoteDescription(
+                new RTCSessionDescription(data.offer)
+              );
+              console.log("creating answer...");
 
-            peerConnectionRef.current
-              ?.createAnswer()
-              .then(async (answer) => {
-                console.log("Created answer...", answer);
-                await peerConnectionRef.current?.setLocalDescription(answer);
-                console.log("Sending answer...", wss);
+              peerConnectionRef.current
+                ?.createAnswer()
+                .then(async (answer) => {
+                  console.log("Created answer...", answer);
+                  await peerConnectionRef.current?.setLocalDescription(
+                    new RTCSessionDescription(answer)
+                  );
+                  console.log(
+                    "Sending answer... local desc: ",
+                    peerConnectionRef.current?.localDescription
+                  );
 
-                wss.send(
-                  JSON.stringify(
-                    rtcMsg(partyName, "s3cr3t", {
-                      rtcType: "answer",
-                      answer: answer,
-                      clientName: "musicplayer",
-                    })
-                  )
-                );
-              })
-              .catch((error) => console.error("Answer error: ", error));
+                  wss.send(
+                    JSON.stringify(
+                      rtcMsg(partyName, "s3cr3t", {
+                        rtcType: "answer",
+                        answer: answer,
+                        clientName: "musicplayer",
+                      })
+                    )
+                  );
+                })
+                .catch((error) => console.error("Answer error: ", error));
+            } catch (err) {
+              console.log("Err responding to offer: ", err);
+            }
             break;
           case "answer":
             // console.log("Setting local description from answer");
@@ -343,7 +356,7 @@ const Home = () => {
     };
 
     wss.onclose = (ev) => {
-      console.log("WSs closeed");
+      console.log("WSs closeed", ev);
       if (!ev.wasClean) {
         ws.current = null;
         connectToWebSocket();

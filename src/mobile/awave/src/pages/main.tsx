@@ -109,7 +109,7 @@ function Main() {
         {
           urls: "stun:stun.l.google.com:19302",
         },
-        turnConfig,
+        // turnConfig,
       ],
     };
 
@@ -173,7 +173,7 @@ function Main() {
 
             try {
               await peerConnectionRef.current.setRemoteDescription(
-                new RTCSessionDescription(data.answer)
+                new WebRTCSessionDescription(data.answer)
               );
             } catch (err) {
               console.log(
@@ -186,7 +186,7 @@ function Main() {
           case "candidate":
             console.log("Adding ice candidate from: ", data.clientName);
             await peerConnectionRef.current.addIceCandidate(
-              new RTCIceCandidate(data.candidate)
+              new WebRTCIceCandidate(data.candidate)
             );
             break;
         }
@@ -234,12 +234,18 @@ function Main() {
       };
 
       try {
-        const stream = await WebmediaDevices.getUserMedia(mediaConstraints);
+        let stream;
+        try {
+          stream = await WebmediaDevices.getUserMedia(mediaConstraints);
+          streamRef.current = stream;
+        } catch (err) {
+          console.log("Err getting media: ", err);
+        }
 
         console.log("Adding stream tracks to peerCon: ", stream);
-        stream.getTracks().forEach((track) => {
+        streamRef.current.getTracks().forEach((track) => {
           console.log("Adding track to stream: ", track);
-          peerConnectionRef.current.addTrack(track, stream);
+          peerConnectionRef.current.addTrack(track, streamRef.current);
         });
 
         peerConnectionRef.current.addEventListener(
@@ -284,7 +290,7 @@ function Main() {
         );
         peerConnectionRef.current.addEventListener(
           "negotiationneeded",
-          (event) => {
+          async (event) => {
             console.log("negotiationneeded:", event);
           }
         );
@@ -314,9 +320,9 @@ function Main() {
         };
         // let sessionConstraints = {
         //   mandatory: {
-        //     OfferToReceiveAudio: true,
-        //     OfferToReceiveVideo: false,
-        //     VoiceActivityDetection: true,
+        //     offerToReceiveAudio: true,
+        //     offerToReceiveVideo: true,
+        //     voiceActivityDetection: true,
         //   },
         // };
 
@@ -325,23 +331,13 @@ function Main() {
           offerToReceiveVideo: false,
         } as RTCOfferOptions;
 
-        let datachannel =
-          peerConnectionRef.current.createDataChannel("my_channel");
-
-        datachannel.addEventListener("open", (event) => {
-          console.log("Data channel open");
-          datachannel.send("TEststststststtst");
-        });
-        datachannel.addEventListener("close", (event) => {
-          console.log("Data channel");
-        });
-        datachannel.addEventListener("message", (message) => {});
-
         try {
           const offer = await peerConnectionRef.current.createOffer(
             sessionConstraints
           );
-          await peerConnectionRef.current.setLocalDescription(offer);
+          await peerConnectionRef.current.setLocalDescription(
+            new WebRTCSessionDescription(offer)
+          );
           console.log("Sending offer: ", offer, wsRef.current.readyState);
           wsRef.current?.send(
             JSON.stringify(
@@ -351,17 +347,17 @@ function Main() {
         } catch (err) {
           console.log("Error creating offer");
         }
-
-        streamRef.current = stream;
-        // peerConnectionRef.current = peerConnection;
       } catch (err) {
         // Handle Error
         console.log("Err: ", err);
       }
     };
+
     _()
       .then(() => {})
-      .catch(() => {});
+      .catch((err) => {
+        console.log("Error::");
+      });
 
     return () => {
       console.log("Cleaning webrtc");

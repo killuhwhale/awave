@@ -185,24 +185,6 @@ function Main() {
     };
   };
 
-  useEffect(() => {
-    let cleanupWss;
-    if (wsRef.current === null) {
-      cleanupWss = connectToWebSocket();
-    }
-
-    // return () => {
-    //   console.log("Cleaning websocket");
-    //   if ((wsRef.current as WebSocket)?.readyState !== WebSocket.CLOSED) {
-    //     (wsRef.current as WebSocket).close();
-    //   }
-    //   if (cleanupWss) {
-    //     console.log("Called cleanupwebRTC");
-    //     cleanupWss();
-    //   }
-    // };
-  }, [wsRef.current]);
-
   const setupWebRTC = () => {
     let peerConnection: WebRTCPeerConnection;
 
@@ -236,7 +218,7 @@ function Main() {
             {
               urls: "stun:stun.l.google.com:19302",
             },
-            // turnConfig,
+            turnConfig,
           ],
         };
 
@@ -359,6 +341,24 @@ function Main() {
       }
     };
   };
+
+  useEffect(() => {
+    let cleanupWss;
+    if (wsRef.current === null) {
+      cleanupWss = connectToWebSocket();
+    }
+
+    // return () => {
+    //   console.log("Cleaning websocket");
+    //   if ((wsRef.current as WebSocket)?.readyState !== WebSocket.CLOSED) {
+    //     (wsRef.current as WebSocket).close();
+    //   }
+    //   if (cleanupWss) {
+    //     console.log("Called cleanupwebRTC");
+    //     cleanupWss();
+    //   }
+    // };
+  }, [wsRef.current]);
 
   const sendCommand = (cmdKey, setlist: number = 0, volAmount: number = 12) => {
     if (wsRef.current) {

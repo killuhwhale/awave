@@ -253,7 +253,7 @@ const Home = () => {
         {
           urls: "stun:stun.l.google.com:19302",
         },
-        // turnConfig,
+        turnConfig,
       ],
     };
     let peerConnection = new RTCPeerConnection(peerConstraints);
@@ -297,17 +297,17 @@ const Home = () => {
       event.streams[0].getAudioTracks().forEach((track) => {
         console.log("Audio enabled: ", track.enabled);
       });
-      console.log("Enabled: ", event.streams[0].getTracks());
+      console.log("Track: ", event.streams[0].getTracks()[0]);
 
       if (micStreamRef.current) {
         micStreamRef.current.srcObject = event.streams[0];
         micStreamRef.current.play();
-        micStreamRef.current.volume = 1;
+        micStreamRef.current.volume = 0.95;
       }
       if (vidStreamRef.current) {
         vidStreamRef.current.srcObject = event.streams[0];
         vidStreamRef.current.play();
-        vidStreamRef.current.volume = 1;
+        vidStreamRef.current.volume = 0.95;
       }
     });
 

@@ -224,6 +224,7 @@ function Main() {
 
         if (!peerConnectionRef.current) {
           peerConnection = new WebRTCPeerConnection(peerConstraints);
+          peerConnectionRef.current = peerConnection;
         }
 
         console.log("Adding stream tracks to peerCon: ", stream);

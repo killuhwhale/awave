@@ -144,7 +144,27 @@ const Home = () => {
   const ws = useRef<WebSocket | null>(null);
   const micStreamRef = useRef<HTMLAudioElement | null>(null);
   const vidStreamRef = useRef<HTMLVideoElement | null>(null);
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+
+  const turnConfig = {
+    urls: config["urls"],
+    username: "a",
+    credential: "a",
+  };
+
+  // console.log("turnConfig: ", turnConfig);
+
+  let peerConstraints = {
+    iceServers: [
+      {
+        urls: "stun:stun.l.google.com:19302",
+      },
+      // turnConfig,
+    ],
+  };
+
+  const peerConnectionRef = useRef<RTCPeerConnection>(
+    new RTCPeerConnection(peerConstraints)
+  );
 
   const setlistsRef = useRef<Setlist[]>([] as Setlist[]);
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
@@ -162,34 +182,6 @@ const Home = () => {
 
     wss.onopen = () => {
       console.log("WSS Connected! Sending register command 0");
-      // Create offer
-      // try {
-      //   // let sessionConstraints = {
-      //   //   mandatory: {
-      //   //     OfferToReceiveAudio: true,
-      //   //     OfferToReceiveVideo: false,
-      //   //     VoiceActivityDetection: true,
-      //   //   },
-      //   // };
-
-      //   const sessionConstraints = {
-      //     offerToReceiveAudio: true,
-      //     offerToReceiveVideo: false,
-      //   } as RTCOfferOptions;
-
-      //   peerConnection.createOffer(sessionConstraints).then((offer) => {
-      //     peerConnection.setLocalDescription(offer);
-
-      //     console.log("Sending offer: ", offer);
-      //     wss.send(
-      //       JSON.stringify(
-      //         rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
-      //       )
-      //     );
-      //   });
-      // } catch (err) {
-      //   console.log("Error creating offer");
-      // }
 
       wss.send(
         JSON.stringify({
@@ -200,26 +192,6 @@ const Home = () => {
         })
       );
     };
-
-    const turnConfig = {
-      urls: config["urls"],
-      username: "a",
-      credential: "a",
-    };
-
-    console.log("turnConfig: ", turnConfig);
-
-    let peerConstraints = {
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com:19302",
-        },
-        // turnConfig,
-      ],
-    };
-    let peerConnection = new RTCPeerConnection(peerConstraints);
-    let datachannel: RTCDataChannel | null = null;
-    peerConnectionRef.current = peerConnection;
 
     peerConnectionRef.current.addEventListener("icecandidate", (event) => {
       console.log("onCandidate:", event.candidate);
@@ -237,19 +209,6 @@ const Home = () => {
 
     peerConnectionRef.current.addEventListener("icecandidateerror", (event) => {
       console.log("icecandidateerror:", event);
-    });
-
-    peerConnectionRef.current.addEventListener("datachannel", (event) => {
-      datachannel = event.channel;
-
-      // Now you've got the datachannel.
-      // You can hookup and use the same events as above ^
-
-      datachannel.addEventListener("open", (event) => {});
-      datachannel.addEventListener("close", (event) => {});
-      datachannel.addEventListener("message", (message) => {
-        alert(message);
-      });
     });
 
     peerConnectionRef.current.addEventListener("track", async (event) => {
@@ -298,36 +257,37 @@ const Home = () => {
       } else if (cmdType === 1337) {
         switch (data.rtcType) {
           case "offer":
-            console.log("handling offer...", data.offer.sdp);
+            if (!peerConnectionRef.current) return;
+
+            console.log("handling offer...", data.offer);
             try {
               await peerConnectionRef.current?.setRemoteDescription(
                 new RTCSessionDescription(data.offer)
               );
               console.log("creating answer...");
 
-              peerConnectionRef.current
-                ?.createAnswer()
-                .then(async (answer) => {
-                  console.log("Created answer...", answer);
-                  await peerConnectionRef.current?.setLocalDescription(
-                    new RTCSessionDescription(answer)
-                  );
-                  console.log(
-                    "Sending answer... local desc: ",
-                    peerConnectionRef.current?.localDescription
-                  );
+              peerConnectionRef.current.createAnswer().then((answer) => {
+                console.log("Created answer...", answer);
+                peerConnectionRef.current
+                  ?.setLocalDescription(new RTCSessionDescription(answer))
+                  .then(() => {
+                    console.log(
+                      "Sending answer... local desc: ",
+                      peerConnectionRef.current?.localDescription
+                    );
 
-                  wss.send(
-                    JSON.stringify(
-                      rtcMsg(partyName, "s3cr3t", {
-                        rtcType: "answer",
-                        answer: answer,
-                        clientName: "musicplayer",
-                      })
-                    )
-                  );
-                })
-                .catch((error) => console.error("Answer error: ", error));
+                    wss.send(
+                      JSON.stringify(
+                        rtcMsg(partyName, "s3cr3t", {
+                          rtcType: "answer",
+                          answer: peerConnectionRef.current?.localDescription,
+                          clientName: "musicplayer",
+                        })
+                      )
+                    );
+                  })
+                  .catch((error) => console.error("Answer error: ", error));
+              });
             } catch (err) {
               console.log("Err responding to offer: ", err);
             }

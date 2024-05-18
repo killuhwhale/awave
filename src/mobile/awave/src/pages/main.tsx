@@ -219,8 +219,6 @@ function Main() {
   };
 
   const setupWebRTC = () => {
-    // let peerConnection: WebRTCPeerConnection;
-
     console.log("Is ws ready?...", wsRef.current, wsRef.current?.readyState);
 
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -292,6 +290,30 @@ function Main() {
           "negotiationneeded",
           async (event) => {
             console.log("negotiationneeded:", event);
+            const sessionConstraints = {
+              offerToReceiveAudio: true,
+              offerToReceiveVideo: false,
+            } as RTCOfferOptions;
+
+            try {
+              const offer = await peerConnectionRef.current.createOffer(
+                sessionConstraints
+              );
+              await peerConnectionRef.current.setLocalDescription(
+                new WebRTCSessionDescription(offer)
+              );
+              console.log("Sending offer: ", offer, wsRef.current.readyState);
+              wsRef.current?.send(
+                JSON.stringify(
+                  rtcMsg(partyName, "s3cr3t", {
+                    rtcType: "offer",
+                    offer: offer,
+                  })
+                )
+              );
+            } catch (err) {
+              console.log("Error creating offer");
+            }
           }
         );
         peerConnectionRef.current.addEventListener(
@@ -325,28 +347,6 @@ function Main() {
         //     voiceActivityDetection: true,
         //   },
         // };
-
-        const sessionConstraints = {
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: false,
-        } as RTCOfferOptions;
-
-        try {
-          const offer = await peerConnectionRef.current.createOffer(
-            sessionConstraints
-          );
-          await peerConnectionRef.current.setLocalDescription(
-            new WebRTCSessionDescription(offer)
-          );
-          console.log("Sending offer: ", offer, wsRef.current.readyState);
-          wsRef.current?.send(
-            JSON.stringify(
-              rtcMsg(partyName, "s3cr3t", { rtcType: "offer", offer: offer })
-            )
-          );
-        } catch (err) {
-          console.log("Error creating offer");
-        }
       } catch (err) {
         // Handle Error
         console.log("Err: ", err);

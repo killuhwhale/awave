@@ -257,7 +257,11 @@ const Home = () => {
       event.streams[0].getAudioTracks().forEach((track) => {
         console.log("Audio enabled: ", track.enabled);
       });
-      console.log("Track: ", event.streams[0].getTracks()[0]);
+      console.log(
+        "Track/ streams: ",
+        event.streams,
+        event.streams[0].getTracks()
+      );
 
       if (micStreamRef.current) {
         micStreamRef.current.srcObject = event.streams[0];

@@ -146,9 +146,18 @@ function Main() {
               "Recv'd answer! Setting Remote Description: ",
               data.clientName
             );
-            await peerConnectionRef.current.setRemoteDescription(
-              new RTCSessionDescription(data.answer)
-            );
+
+            try {
+              await peerConnectionRef.current.setRemoteDescription(
+                new RTCSessionDescription(data.answer)
+              );
+            } catch (err) {
+              console.log(
+                "error setting remote: ",
+                peerConnectionRef.current,
+                err
+              );
+            }
             break;
           case "candidate":
             console.log("Adding ice candidate from: ", data.clientName);

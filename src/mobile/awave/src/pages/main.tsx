@@ -119,36 +119,39 @@ function Main() {
         console.log("Recv'd msg:", data);
         switch (data.rtcType) {
           case "offer":
-            console.log("received offer");
-            await peerConnectionRef.current.setLocalDescription(
-              new RTCSessionDescription(data.offer)
-            );
+            // console.log("received offer");
+            // await peerConnectionRef.current.setLocalDescription(
+            //   new RTCSessionDescription(data.offer)
+            // );
 
-            peerConnectionRef.current
-              .createAnswer()
-              .then((answer) => {
-                // peerConnectionRef.current.setLocalDescription(answer);
-                console.log("Sending answer: ", answer);
-                wsRef.current?.send(
-                  JSON.stringify(
-                    rtcMsg(partyName, "s3cr3t", {
-                      rtcType: "answer",
-                      answer: answer,
-                      clientName: "controller",
-                    })
-                  )
-                );
-              })
-              .catch((error) => console.error("Answer error: ", error));
+            // peerConnectionRef.current
+            //   .createAnswer()
+            //   .then((answer) => {
+            //     // peerConnectionRef.current.setLocalDescription(answer);
+            //     console.log("Sending answer: ", answer);
+            //     wsRef.current?.send(
+            //       JSON.stringify(
+            //         rtcMsg(partyName, "s3cr3t", {
+            //           rtcType: "answer",
+            //           answer: answer,
+            //           clientName: "controller",
+            //         })
+            //       )
+            //     );
+            //   })
+            //   .catch((error) => console.error("Answer error: ", error));
             break;
           case "answer":
-            console.log("Recv'd answer! Setting Remote Description");
+            console.log(
+              "Recv'd answer! Setting Remote Description: ",
+              data.clientName
+            );
             await peerConnectionRef.current.setRemoteDescription(
               new RTCSessionDescription(data.answer)
             );
             break;
           case "candidate":
-            console.log("Recv'd candidate! Adding ice candidate");
+            console.log("Adding ice candidate from: ", data.clientName);
             await peerConnectionRef.current.addIceCandidate(
               new RTCIceCandidate(data.candidate)
             );

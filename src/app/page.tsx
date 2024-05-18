@@ -150,49 +150,10 @@ const Home = () => {
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
 
   useEffect(() => {
-    const setListPath = `setlists/${partyName}/setlists`;
-    console.log("loading setlists: ", setListPath);
-    const _ = async () => {
-      console.log("Getting doc...");
-      const setlistDocs = await getDocs(collection(db, setListPath));
-      console.log("Got doc:", setlistDocs);
-
-      // const allSetlists: Setlist[] = [] as Setlist[];
-
-      const allSetlists = await Promise.all(
-        setlistDocs.docs.map(async (doc) => {
-          // console.log("Setlist: ", doc.data());
-          const setlistData = doc.data() as Setlist;
-
-          const songDocs = await getDocs(
-            collection(db, `${setListPath}/${setlistData.title}/songs`)
-          );
-
-          const allSongs = [] as SongProps[];
-          songDocs.docs.forEach((songDoc) => {
-            const songData = songDoc.data() as SongProps;
-            allSongs.push({
-              ...songData,
-              src: `http://${host}:3001/${encodeURIComponent(
-                songData["name"]
-              )}`,
-            });
-          });
-
-          return {
-            ...setlistData,
-            songs: allSongs,
-          } as Setlist;
-        })
-      );
-
-      console.log("Setting setlists: ", allSetlists);
-      allSetlists.sort((a, b) => (a.order > b.order ? 1 : -1));
-      setSetlists(allSetlists);
-      setlistsRef.current = allSetlists;
-    };
-    _().then(() => {});
-  }, []);
+    if (ws.current === null) {
+      return connectToWebSocket();
+    }
+  }, [ws]);
 
   const connectToWebSocket = () => {
     if (ws.current) return;
@@ -293,7 +254,6 @@ const Home = () => {
 
     peerConnectionRef.current.addEventListener("track", async (event) => {
       console.log("Send stream to RTCView: ", event.streams[0]);
-      console.log("Enabled: ");
       event.streams[0].getAudioTracks().forEach((track) => {
         console.log("Audio enabled: ", track.enabled);
       });
@@ -427,10 +387,49 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (ws.current === null) {
-      return connectToWebSocket();
-    }
-  }, [ws]);
+    const setListPath = `setlists/${partyName}/setlists`;
+    console.log("loading setlists: ", setListPath);
+    const _ = async () => {
+      console.log("Getting doc...");
+      const setlistDocs = await getDocs(collection(db, setListPath));
+      console.log("Got doc:", setlistDocs);
+
+      // const allSetlists: Setlist[] = [] as Setlist[];
+
+      const allSetlists = await Promise.all(
+        setlistDocs.docs.map(async (doc) => {
+          // console.log("Setlist: ", doc.data());
+          const setlistData = doc.data() as Setlist;
+
+          const songDocs = await getDocs(
+            collection(db, `${setListPath}/${setlistData.title}/songs`)
+          );
+
+          const allSongs = [] as SongProps[];
+          songDocs.docs.forEach((songDoc) => {
+            const songData = songDoc.data() as SongProps;
+            allSongs.push({
+              ...songData,
+              src: `http://${host}:3001/${encodeURIComponent(
+                songData["name"]
+              )}`,
+            });
+          });
+
+          return {
+            ...setlistData,
+            songs: allSongs,
+          } as Setlist;
+        })
+      );
+
+      console.log("Setting setlists: ", allSetlists);
+      allSetlists.sort((a, b) => (a.order > b.order ? 1 : -1));
+      setSetlists(allSetlists);
+      setlistsRef.current = allSetlists;
+    };
+    _().then(() => {});
+  }, []);
 
   const initLoadingRef = useRef(false);
 

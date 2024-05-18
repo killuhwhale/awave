@@ -241,7 +241,7 @@ function Main() {
         };
 
         peerConnection = new WebRTCPeerConnection(peerConstraints);
-        streamRef.current = stream;
+
         console.log("Adding stream tracks to peerCon: ", stream);
         stream.getTracks().forEach((track) => {
           console.log("Adding track to stream: ", track);
@@ -337,6 +337,7 @@ function Main() {
           console.log("Error creating offer");
         }
 
+        streamRef.current = stream;
         peerConnectionRef.current = peerConnection;
       } catch (err) {
         // Handle Error
@@ -444,7 +445,7 @@ function Main() {
         value={secretCode}
         onChange={(ev) => setSecretCode(ev.nativeEvent.text)}
       />
-      <WebRTCView stream={streamRef.current} />
+      {/* <WebRTCView stream={streamRef.current} /> */}
       <Button title="Play" onPress={sendPlay} />
       <Button title="Pause" onPress={sendPause} />
       <Button title="Next" onPress={sendNext} />

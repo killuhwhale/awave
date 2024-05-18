@@ -93,6 +93,30 @@ function Main() {
   const connectToWebSocket = () => {
     console.log("Attempting to connec to wss...");
     if (wsRef.current) return;
+
+    const turnConfig = {
+      urls: config["urls"],
+      username: "a",
+      credential: "a",
+      // username: config["username"],
+      // credential: config["credential"],
+    };
+
+    console.log("peerConstraint TURN: ", turnConfig);
+
+    let peerConstraints = {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+        turnConfig,
+      ],
+    };
+
+    if (!peerConnectionRef.current) {
+      peerConnectionRef.current = new WebRTCPeerConnection(peerConstraints);
+    }
+
     console.log("Connecting to wss...");
     let cleanupwebRTC;
     try {
@@ -195,7 +219,7 @@ function Main() {
   };
 
   const setupWebRTC = () => {
-    let peerConnection: WebRTCPeerConnection;
+    // let peerConnection: WebRTCPeerConnection;
 
     console.log("Is ws ready?...", wsRef.current, wsRef.current?.readyState);
 
@@ -211,30 +235,6 @@ function Main() {
 
       try {
         const stream = await WebmediaDevices.getUserMedia(mediaConstraints);
-
-        const turnConfig = {
-          urls: config["urls"],
-          username: "a",
-          credential: "a",
-          // username: config["username"],
-          // credential: config["credential"],
-        };
-
-        console.log("peerConstraint TURN: ", turnConfig);
-
-        let peerConstraints = {
-          iceServers: [
-            {
-              urls: "stun:stun.l.google.com:19302",
-            },
-            turnConfig,
-          ],
-        };
-
-        if (!peerConnectionRef.current) {
-          peerConnection = new WebRTCPeerConnection(peerConstraints);
-          peerConnectionRef.current = peerConnection;
-        }
 
         console.log("Adding stream tracks to peerCon: ", stream);
         stream.getTracks().forEach((track) => {
@@ -353,7 +353,7 @@ function Main() {
         }
 
         streamRef.current = stream;
-        peerConnectionRef.current = peerConnection;
+        // peerConnectionRef.current = peerConnection;
       } catch (err) {
         // Handle Error
         console.log("Err: ", err);

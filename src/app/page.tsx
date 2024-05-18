@@ -902,6 +902,7 @@ const Home = () => {
       id="pageRoot"
       className="flex min-h-screen h-screen max-h-screen  flex-col items-center justify-between ml-8 mr-8"
     >
+      <audio id="audioPlayer" controls ref={micStreamRef}></audio>
       <div className="flex flex-col justify-center  w-full h-3/6 max-h-3/6 min-h-3/6 ">
         <div className="flex flex-col justify-center  w-full h-3/6 ">
           <div className="flex  w-full">
@@ -969,8 +970,6 @@ const Home = () => {
           <UilSkipForwardAlt size="120" color="#61DAFB" onClick={masterNext} />
         </div>
       </div>
-
-      <audio id="audioPlayer" controls ref={micStreamRef}></audio>
 
       {/* <video id="videoPlayer" controls ref={vidStreamRef}></video> */}
 

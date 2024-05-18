@@ -222,19 +222,24 @@ function Main() {
           ],
         };
 
-        peerConnection = new WebRTCPeerConnection(peerConstraints);
+        if (!peerConnectionRef.current) {
+          peerConnection = new WebRTCPeerConnection(peerConstraints);
+        }
 
         console.log("Adding stream tracks to peerCon: ", stream);
         stream.getTracks().forEach((track) => {
           console.log("Adding track to stream: ", track);
-          peerConnection.addTrack(track, stream);
+          peerConnectionRef.current.addTrack(track, stream);
         });
 
-        peerConnection.addEventListener("connectionstatechange", (event) => {
-          console.log("connectionstatechange:", event);
-        });
+        peerConnectionRef.current.addEventListener(
+          "connectionstatechange",
+          (event) => {
+            console.log("connectionstatechange:", event);
+          }
+        );
 
-        peerConnection.addEventListener("icecandidate", (event) => {
+        peerConnectionRef.current.addEventListener("icecandidate", (event) => {
           console.log("onCandidate:", event, event.candidate);
           if (event.candidate && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current?.send(
@@ -248,28 +253,43 @@ function Main() {
             );
           }
         });
-        peerConnection.addEventListener("icecandidateerror", (event) => {
-          console.log("icecandidateerror:", event);
-        });
+        peerConnectionRef.current.addEventListener(
+          "icecandidateerror",
+          (event) => {
+            console.log("icecandidateerror:", event);
+          }
+        );
 
-        peerConnection.addEventListener("iceconnectionstatechange", (event) => {
-          console.log("iceconnectionstatechange:", event);
-        });
-        peerConnection.addEventListener("icegatheringstatechange", (event) => {
-          console.log("icegatheringstatechange:", event);
-        });
-        peerConnection.addEventListener("negotiationneeded", (event) => {
-          console.log("negotiationneeded:", event);
-        });
-        peerConnection.addEventListener("signalingstatechange", (event) => {
-          console.log("signalingstatechange:", event);
-        });
-        peerConnection.addEventListener("track", (event) => {
+        peerConnectionRef.current.addEventListener(
+          "iceconnectionstatechange",
+          (event) => {
+            console.log("iceconnectionstatechange:", event);
+          }
+        );
+        peerConnectionRef.current.addEventListener(
+          "icegatheringstatechange",
+          (event) => {
+            console.log("icegatheringstatechange:", event);
+          }
+        );
+        peerConnectionRef.current.addEventListener(
+          "negotiationneeded",
+          (event) => {
+            console.log("negotiationneeded:", event);
+          }
+        );
+        peerConnectionRef.current.addEventListener(
+          "signalingstatechange",
+          (event) => {
+            console.log("signalingstatechange:", event);
+          }
+        );
+        peerConnectionRef.current.addEventListener("track", (event) => {
           console.log("addEventListener track:", event);
         });
 
-        peerConnection.onconnectionstatechange = function (event) {
-          switch (peerConnection.connectionState) {
+        peerConnectionRef.current.onconnectionstatechange = function (event) {
+          switch (peerConnectionRef.current.connectionState) {
             case "connected":
               console.log(
                 "The peer connection is directly connected with the other peer."
@@ -295,7 +315,8 @@ function Main() {
           offerToReceiveVideo: false,
         } as RTCOfferOptions;
 
-        let datachannel = peerConnection.createDataChannel("my_channel");
+        let datachannel =
+          peerConnectionRef.current.createDataChannel("my_channel");
 
         datachannel.addEventListener("open", (event) => {
           console.log("Data channel open");
@@ -307,8 +328,10 @@ function Main() {
         datachannel.addEventListener("message", (message) => {});
 
         try {
-          const offer = await peerConnection.createOffer(sessionConstraints);
-          await peerConnection.setLocalDescription(offer);
+          const offer = await peerConnectionRef.current.createOffer(
+            sessionConstraints
+          );
+          await peerConnectionRef.current.setLocalDescription(offer);
           console.log("Sending offer: ", offer, wsRef.current.readyState);
           wsRef.current?.send(
             JSON.stringify(

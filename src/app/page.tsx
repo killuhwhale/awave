@@ -301,13 +301,21 @@ const Home = () => {
 
       if (micStreamRef.current) {
         micStreamRef.current.srcObject = event.streams[0];
-        micStreamRef.current.play();
+        micStreamRef.current.muted = false;
         micStreamRef.current.volume = 0.95;
+        micStreamRef.current.play();
       }
       if (vidStreamRef.current) {
         vidStreamRef.current.srcObject = event.streams[0];
-        vidStreamRef.current.play();
-        vidStreamRef.current.volume = 0.95;
+        try {
+          const res = await vidStreamRef.current.play();
+          vidStreamRef.current.volume = 0.95;
+          vidStreamRef.current.muted = false;
+
+          console.log("Playing from mic: ", res);
+        } catch (err) {
+          console.log("Error playing from mic: ", err);
+        }
       }
     });
 
@@ -355,7 +363,7 @@ const Home = () => {
             break;
           case "candidate":
             console.log("Adding candidate from", data.clientName);
-            peerConnectionRef.current?.addIceCandidate(
+            await peerConnectionRef.current?.addIceCandidate(
               new RTCIceCandidate(data.candidate)
             );
             break;
@@ -959,8 +967,9 @@ const Home = () => {
         </div>
       </div>
 
-      {/* <audio id="audioPlayer" controls ref={micStreamRef}></audio> */}
-      <video id="videoPlayer" controls ref={vidStreamRef}></video>
+      <audio id="audioPlayer" controls ref={micStreamRef}></audio>
+
+      {/* <video id="videoPlayer" controls ref={vidStreamRef}></video> */}
 
       <div className="flex  items-center justify-center w-full space-x-12 max-h-3/6 min-h-3/6 h-3/6">
         <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">

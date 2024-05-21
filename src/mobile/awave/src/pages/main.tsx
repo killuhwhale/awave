@@ -294,25 +294,25 @@ function Main() {
               offerToReceiveVideo: false,
             } as RTCOfferOptions;
 
-            try {
-              const offer = await peerConnectionRef.current.createOffer(
-                sessionConstraints
-              );
-              await peerConnectionRef.current.setLocalDescription(
-                new WebRTCSessionDescription(offer)
-              );
-              console.log("Sending offer: ", offer, wsRef.current.readyState);
-              wsRef.current?.send(
-                JSON.stringify(
-                  rtcMsg(partyName, "s3cr3t", {
-                    rtcType: "offer",
-                    offer: peerConnectionRef.current.localDescription,
-                  })
-                )
-              );
-            } catch (err) {
-              console.log("Error creating offer:"), err;
-            }
+            // try {
+            //   const offer = await peerConnectionRef.current.createOffer(
+            //     sessionConstraints
+            //   );
+            //   await peerConnectionRef.current.setLocalDescription(
+            //     new WebRTCSessionDescription(offer)
+            //   );
+            //   console.log("Sending offer: ", offer, wsRef.current.readyState);
+            //   wsRef.current?.send(
+            //     JSON.stringify(
+            //       rtcMsg(partyName, "s3cr3t", {
+            //         rtcType: "offer",
+            //         offer: peerConnectionRef.current.localDescription,
+            //       })
+            //     )
+            //   );
+            // } catch (err) {
+            //   console.log("Error creating offer:"), err;
+            // }
           }
         );
         peerConnectionRef.current.addEventListener(

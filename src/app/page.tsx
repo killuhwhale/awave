@@ -160,6 +160,7 @@ const Home = () => {
     if (ws.current) return;
 
     if (!peerConnectionRef.current) {
+      console.log("Connecting to RTCPeer");
       const turnConfig = {
         urls: config["urls"],
         username: "a",
@@ -173,10 +174,78 @@ const Home = () => {
           {
             urls: "stun:stun.l.google.com:19302",
           },
-          // turnConfig,
+          turnConfig,
         ],
       };
       peerConnectionRef.current = new RTCPeerConnection(peerConstraints);
+      peerConnectionRef.current.onicecandidate = (event) => {
+        console.log("onCandidate:", event.candidate);
+        if (event.candidate) {
+          wss?.send(
+            JSON.stringify(
+              rtcMsg(partyName, "s3cr3t", {
+                rtcType: "candidate",
+                candidate: event.candidate,
+              })
+            )
+          );
+        }
+      };
+
+      peerConnectionRef.current.onicecandidateerror = (event) => {
+        console.log("icecandidateerror:", event);
+      };
+      peerConnectionRef.current.onnegotiationneeded = (event) => {
+        console.log("onnegotiationneeded:", event);
+      };
+      peerConnectionRef.current.onicegatheringstatechange = (event) => {
+        console.log("icegatheringstatechange:", event);
+      };
+      peerConnectionRef.current.onsignalingstatechange = (event) => {
+        console.log("onsignalingstatechange:", event);
+      };
+      peerConnectionRef.current.oniceconnectionstatechange = (event) => {
+        console.log("iceconnectionstatechange:", event);
+      };
+      peerConnectionRef.current.onconnectionstatechange = (event) => {
+        console.log("onconnectionstatechange:", event);
+      };
+      peerConnectionRef.current.ontrack = (event) => {
+        console.log("ontrack:", event);
+        console.log("Send stream to RTCView: ", event.streams[0]);
+        event.streams[0].getAudioTracks().forEach((track) => {
+          console.log("Audio enabled: ", track.enabled);
+        });
+        console.log(
+          "Track/ streams: ",
+          event.streams,
+          event.streams[0].getTracks()
+        );
+
+        if (micStreamRef.current) {
+          const mediaStream = event.streams[0];
+
+          micStreamRef.current.srcObject = mediaStream;
+
+          // micStreamRef.current.srcObject = event.streams[0];
+          micStreamRef.current.muted = false;
+          micStreamRef.current.volume = 0.95;
+          // micStreamRef.current.play();
+        }
+        if (vidStreamRef.current) {
+          vidStreamRef.current.srcObject = event.streams[0];
+          try {
+            vidStreamRef.current.play();
+            vidStreamRef.current.volume = 0.95;
+            vidStreamRef.current.muted = false;
+          } catch (err) {
+            console.log("Error playing from mic: ", err);
+          }
+        }
+      };
+
+      peerConnectionRef.current.addEventListener("track", async (event) => {});
+      console.log("Done setting RTC Listeners...", peerConnectionRef.current);
     }
 
     const wss = new WebSocket(WSURL);
@@ -193,59 +262,6 @@ const Home = () => {
         })
       );
     };
-
-    peerConnectionRef.current.addEventListener("icecandidate", (event) => {
-      console.log("onCandidate:", event.candidate);
-      if (event.candidate) {
-        wss?.send(
-          JSON.stringify(
-            rtcMsg(partyName, "s3cr3t", {
-              rtcType: "candidate",
-              candidate: event.candidate,
-            })
-          )
-        );
-      }
-    });
-
-    peerConnectionRef.current.addEventListener("icecandidateerror", (event) => {
-      console.log("icecandidateerror:", event);
-    });
-
-    peerConnectionRef.current.addEventListener("track", async (event) => {
-      console.log("Send stream to RTCView: ", event.streams[0]);
-      event.streams[0].getAudioTracks().forEach((track) => {
-        console.log("Audio enabled: ", track.enabled);
-      });
-      console.log(
-        "Track/ streams: ",
-        event.streams,
-        event.streams[0].getTracks()
-      );
-
-      if (micStreamRef.current) {
-        const mediaStream = event.streams[0];
-
-        micStreamRef.current.srcObject = mediaStream;
-
-        // micStreamRef.current.srcObject = event.streams[0];
-        micStreamRef.current.muted = false;
-        micStreamRef.current.volume = 0.95;
-        // micStreamRef.current.play();
-      }
-      if (vidStreamRef.current) {
-        vidStreamRef.current.srcObject = event.streams[0];
-        try {
-          const res = await vidStreamRef.current.play();
-          vidStreamRef.current.volume = 0.95;
-          vidStreamRef.current.muted = false;
-
-          console.log("Playing from mic: ", res);
-        } catch (err) {
-          console.log("Error playing from mic: ", err);
-        }
-      }
-    });
 
     wss.onmessage = async (ev) => {
       const data = JSON.parse(ev.data);

@@ -109,7 +109,7 @@ function Main() {
         {
           urls: "stun:stun.l.google.com:19302",
         },
-        // turnConfig,
+        turnConfig,
       ],
     };
 

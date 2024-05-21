@@ -6,6 +6,7 @@ import {
   TextInput,
   Button,
   TouchableHighlight,
+  PermissionsAndroid,
 } from "react-native";
 import fbApp from "../firebase/firebaseApp";
 
@@ -17,36 +18,23 @@ import {
   getDoc,
 } from "firebase/firestore/lite";
 
+import {
+  RTCPeerConnection,
+  RTCIceCandidate,
+  RTCSessionDescription,
+  mediaDevices,
+  registerGlobals,
+} from "react-native-webrtc";
+
 // import {
-//   ScreenCapturePickerView,
 //   RTCPeerConnection,
 //   RTCIceCandidate,
 //   RTCSessionDescription,
-//   RTCView,
-//   MediaStream,
-//   MediaStreamTrack,
-//   mediaDevices,
-//   registerGlobals,
-// } from "react-native-webrtc";
+//   mediaDevices
+// } from "react-native-webrtc-web-shim";
 
-import {
-  RTCPeerConnection as WebRTCPeerConnection,
-  RTCIceCandidate as WebRTCIceCandidate,
-  RTCSessionDescription as WebRTCSessionDescription,
-  RTCRtpTransceiver as WebRTCRtpTransceiver,
-  RTCRtpReceiver as WebRTCRtpReceiver,
-  RTCRtpSender as WebRTCRtpSender,
-  RTCErrorEvent as WebRTCErrorEvent,
-  MediaStream as WebMediaStream,
-  MediaStreamTrack as WebMediaStreamTrack,
-  mediaDevices as WebmediaDevices,
-  permissions as Webpermissions,
-  registerGlobals as WebregisterGlobals,
-  RTCView as WebRTCView,
-} from "react-native-webrtc-web-shim";
-
-import config from "../../config.json";
-import { rtcMsg } from "../utils/utils";
+import { requestPermissions, rtcMsg } from "../utils/utils";
+import config from "../utils/config";
 
 // You'll only really need to use this function if you are mixing project development with libraries that use browser based WebRTC functions. Also applies if you are making your project compatible with react-native-web.
 // registerGlobals();
@@ -88,7 +76,7 @@ function Main() {
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
   const [currentSetlist, setCurrentSetlist] = useState<Setlist | null>(null);
   const streamRef = useRef<any | null>(null);
-  const peerConnectionRef = useRef<WebRTCPeerConnection | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
   const connectToWebSocket = () => {
     console.log("Attempting to connec to wss...");
@@ -114,7 +102,7 @@ function Main() {
     };
 
     if (!peerConnectionRef.current) {
-      peerConnectionRef.current = new WebRTCPeerConnection(peerConstraints);
+      peerConnectionRef.current = new RTCPeerConnection(peerConstraints);
     }
 
     console.log("Connecting to wss...");
@@ -172,7 +160,7 @@ function Main() {
                 data.clientName
               );
               await peerConnectionRef.current.setRemoteDescription(
-                new WebRTCSessionDescription(data.answer)
+                new RTCSessionDescription(data.answer)
               );
             } catch (err) {
               console.log(
@@ -185,7 +173,7 @@ function Main() {
           case "candidate":
             console.log("Adding ice candidate from: ", data.clientName);
             await peerConnectionRef.current.addIceCandidate(
-              new WebRTCIceCandidate(data.candidate)
+              new RTCIceCandidate(data.candidate)
             );
             break;
         }
@@ -233,7 +221,7 @@ function Main() {
       try {
         let stream;
         try {
-          stream = await WebmediaDevices.getUserMedia(mediaConstraints);
+          stream = await mediaDevices.getUserMedia(mediaConstraints);
           streamRef.current = stream;
         } catch (err) {
           console.log("Err getting media: ", err);
@@ -299,7 +287,7 @@ function Main() {
                 sessionConstraints
               );
               await peerConnectionRef.current.setLocalDescription(
-                new WebRTCSessionDescription(offer)
+                new RTCSessionDescription(offer)
               );
               console.log("Sending offer: ", offer, wsRef.current.readyState);
               wsRef.current?.send(
@@ -325,27 +313,23 @@ function Main() {
           console.log("addEventListener track:", event);
         });
 
-        peerConnectionRef.current.onconnectionstatechange = function (event) {
-          switch (peerConnectionRef.current.connectionState) {
-            case "connected":
-              console.log(
-                "The peer connection is directly connected with the other peer."
-              );
+        peerConnectionRef.current.addEventListener(
+          "onconnectionstatechange",
+          function (event) {
+            switch (peerConnectionRef.current.connectionState) {
+              case "connected":
+                console.log(
+                  "The peer connection is directly connected with the other peer."
+                );
 
-              break;
-            case "disconnected":
-            case "failed":
-              console.error("Connection state is failed/disconnected.");
-              break;
+                break;
+              case "disconnected":
+              case "failed":
+                console.error("Connection state is failed/disconnected.");
+                break;
+            }
           }
-        };
-        // let sessionConstraints = {
-        //   mandatory: {
-        //     offerToReceiveAudio: true,
-        //     offerToReceiveVideo: true,
-        //     voiceActivityDetection: true,
-        //   },
-        // };
+        );
       } catch (err) {
         // Handle Error
         console.log("Err: ", err);
@@ -373,7 +357,9 @@ function Main() {
   useEffect(() => {
     let cleanupWss;
     if (wsRef.current === null) {
-      cleanupWss = connectToWebSocket();
+      if (requestPermissions()) {
+        cleanupWss = connectToWebSocket();
+      }
     }
 
     // return () => {
@@ -433,9 +419,9 @@ function Main() {
       "Sending LoadSetlist",
       partyName,
       secretCode,
-      typeof currentSetlist.order
+      typeof currentSetlist?.order
     );
-    sendCommand(CMD.LOADSETLIST, currentSetlist.order, 0);
+    sendCommand(CMD.LOADSETLIST, currentSetlist?.order, 0);
   };
 
   useEffect(() => {
@@ -483,13 +469,17 @@ function Main() {
         <View>
           <Text>Current Setlist: {currentSetlist?.title}</Text>
         </View>
-        {setlists.map((sl) => {
+        {setlists.map((sl, idx) => {
+          console.log("Setlist: ", sl);
           return (
-            <View style={{ backgroundColor: "black", padding: 8 }}>
+            <View
+              key={`sl_${idx}`}
+              style={{ backgroundColor: "black", padding: 8 }}
+            >
               <TouchableHighlight onPress={() => setCurrentSetlist(sl)}>
                 <Text
                   style={{
-                    color: sl.order == currentSetlist.order ? "white" : "grey",
+                    color: sl.order == currentSetlist?.order ? "white" : "grey",
                   }}
                 >
                   {sl.title} - {sl.order}

@@ -30,7 +30,7 @@ import {
   getDoc,
 } from "firebase/firestore/lite";
 import { rtcMsg } from "./utils/utils";
-const db = getFirestore(fbApp);
+import Commands from "./utils/Commands";
 
 /**
  *
@@ -39,37 +39,16 @@ const db = getFirestore(fbApp);
  *
  */
 
-interface IndexedObject {
-  [key: string]: string; // Index signature
-}
-
-class Commands {
-  PLAY = "play";
-  PAUSE = "pause";
-  NEXT = "next";
-  VOLUP = "volup";
-  VOLDOWN = "voldown";
-  LOADSETLIST = "loadSetlist";
-
-  getCmd: IndexedObject = {
-    "1": this.PLAY,
-    "2": this.PAUSE,
-    "3": this.NEXT,
-    "4": this.VOLUP,
-    "5": this.VOLDOWN,
-    "6": this.LOADSETLIST,
-  };
-}
-
-const CMD = new Commands();
-
-const WSURL = config["wss_url"];
-
 function cleanSongSource(songSrc: string): string {
   return encodeURIComponent(songSrc);
 }
+
+const partyName = "tp";
+const WSURL = config["wss_url"];
 const host = config["host"];
-console.log("hosthosthosthost", host);
+const db = getFirestore(fbApp);
+const CMD = new Commands();
+
 const DEFAULT_SONG = {
   name: "Track 8",
   src: `http://${host}:3001/${cleanSongSource("Track 8.wav")}`,
@@ -117,16 +96,6 @@ const songs: SongProps[] = [
 const PLAYERNAME_LEFT = "p1";
 const PLAYERNAME_RIGHT = "p2";
 
-type CmdMsg = {
-  cmd: number;
-  cmdType: number;
-  partyName: string;
-  secretCode: string;
-  setlist: number;
-  volAmount: number;
-};
-const partyName = "tp";
-
 const Home = () => {
   const currentPlayerRef = useRef<Howl | null>();
   const currentPlayerNameRef = useRef<string>();
@@ -143,7 +112,6 @@ const Home = () => {
 
   const ws = useRef<WebSocket | null>(null);
   const micStreamRef = useRef<HTMLAudioElement | null>(null);
-  const vidStreamRef = useRef<HTMLVideoElement | null>(null);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
@@ -156,99 +124,135 @@ const Home = () => {
     }
   }, [ws]);
 
+  const newPeer = () => {
+    const turnConfig = {
+      urls: config["urls"],
+      username: "a",
+      credential: "a",
+    };
+
+    // console.log("turnConfig: ", turnConfig);
+
+    let peerConstraints = {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+        turnConfig,
+      ],
+    };
+    const peer = new RTCPeerConnection(peerConstraints);
+
+    peer.onicecandidate = (event) => {
+      console.log("onCandidate:", event.candidate);
+      if (event.candidate) {
+        ws.current?.send(
+          JSON.stringify(
+            rtcMsg(partyName, "s3cr3t", {
+              rtcType: "candidate",
+              candidate: event.candidate,
+            })
+          )
+        );
+      }
+    };
+
+    peer.onicecandidateerror = (event) => {
+      console.log("icecandidateerror:", event);
+    };
+    peer.onnegotiationneeded = (event) => {
+      console.log("onnegotiationneeded:", event);
+    };
+    peer.onicegatheringstatechange = (event) => {
+      console.log("icegatheringstatechange:", event);
+    };
+    peer.onsignalingstatechange = (event) => {
+      console.log("onsignalingstatechange:", event);
+    };
+    peer.oniceconnectionstatechange = (event) => {
+      console.log("iceconnectionstatechange:", event);
+    };
+    peer.onconnectionstatechange = (event) => {
+      console.log("onconnectionstatechange:", event);
+    };
+    peer.ontrack = (event) => {
+      console.log("ontrack:", event);
+      console.log("Send stream to RTCView: ", event.streams[0]);
+      event.streams[0].getAudioTracks().forEach((track) => {
+        console.log("Audio enabled: ", track.enabled);
+      });
+      console.log(
+        "Track/ streams: ",
+        event.streams,
+        event.streams[0].getTracks()
+      );
+
+      if (micStreamRef.current) {
+        const mediaStream = event.streams[0];
+
+        micStreamRef.current.srcObject = mediaStream;
+
+        // micStreamRef.current.srcObject = event.streams[0];
+        micStreamRef.current.muted = false;
+        micStreamRef.current.volume = 0.95;
+        micStreamRef.current.play();
+      }
+    };
+    return peer;
+  };
+
+  const handleOffer = async (data: any) => {
+    if (!peerConnectionRef.current) return;
+    // handle existing peerConnection
+    if (peerConnectionRef.current.localDescription) {
+      peerConnectionRef.current = newPeer();
+    }
+
+    console.log("handling offer...", data.offer);
+    try {
+      await peerConnectionRef.current?.setRemoteDescription(
+        new RTCSessionDescription(data.offer)
+      );
+      console.log(
+        "peerConnectionRef.current remoteDescription: ",
+        peerConnectionRef.current.remoteDescription
+      );
+      console.log("creating answer...");
+      const answer = await peerConnectionRef.current.createAnswer();
+      console.log("Created answer...", answer);
+
+      await peerConnectionRef.current?.setLocalDescription(
+        new RTCSessionDescription(answer)
+      );
+      console.log(
+        "Sending answer... local desc: ",
+        peerConnectionRef.current?.localDescription
+      );
+
+      ws.current?.send(
+        JSON.stringify(
+          rtcMsg(partyName, "s3cr3t", {
+            rtcType: "answer",
+            answer: peerConnectionRef.current?.localDescription,
+            clientName: "musicplayer",
+          })
+        )
+      );
+    } catch (err) {
+      console.log("Err responding to offer: ", err);
+    }
+  };
+
   const connectToWebSocket = () => {
     if (ws.current) return;
 
     if (!peerConnectionRef.current) {
       console.log("Connecting to RTCPeer");
-      const turnConfig = {
-        urls: config["urls"],
-        username: "a",
-        credential: "a",
-      };
-
-      // console.log("turnConfig: ", turnConfig);
-
-      let peerConstraints = {
-        iceServers: [
-          {
-            urls: "stun:stun.l.google.com:19302",
-          },
-          turnConfig,
-        ],
-      };
-      peerConnectionRef.current = new RTCPeerConnection(peerConstraints);
-      peerConnectionRef.current.onicecandidate = (event) => {
-        console.log("onCandidate:", event.candidate);
-        if (event.candidate) {
-          wss?.send(
-            JSON.stringify(
-              rtcMsg(partyName, "s3cr3t", {
-                rtcType: "candidate",
-                candidate: event.candidate,
-              })
-            )
-          );
-        }
-      };
-
-      peerConnectionRef.current.onicecandidateerror = (event) => {
-        console.log("icecandidateerror:", event);
-      };
-      peerConnectionRef.current.onnegotiationneeded = (event) => {
-        console.log("onnegotiationneeded:", event);
-      };
-      peerConnectionRef.current.onicegatheringstatechange = (event) => {
-        console.log("icegatheringstatechange:", event);
-      };
-      peerConnectionRef.current.onsignalingstatechange = (event) => {
-        console.log("onsignalingstatechange:", event);
-      };
-      peerConnectionRef.current.oniceconnectionstatechange = (event) => {
-        console.log("iceconnectionstatechange:", event);
-      };
-      peerConnectionRef.current.onconnectionstatechange = (event) => {
-        console.log("onconnectionstatechange:", event);
-      };
-      peerConnectionRef.current.ontrack = (event) => {
-        console.log("ontrack:", event);
-        console.log("Send stream to RTCView: ", event.streams[0]);
-        event.streams[0].getAudioTracks().forEach((track) => {
-          console.log("Audio enabled: ", track.enabled);
-        });
-        console.log(
-          "Track/ streams: ",
-          event.streams,
-          event.streams[0].getTracks()
-        );
-
-        if (micStreamRef.current) {
-          const mediaStream = event.streams[0];
-
-          micStreamRef.current.srcObject = mediaStream;
-
-          // micStreamRef.current.srcObject = event.streams[0];
-          micStreamRef.current.muted = false;
-          micStreamRef.current.volume = 0.95;
-          // micStreamRef.current.play();
-        }
-        if (vidStreamRef.current) {
-          vidStreamRef.current.srcObject = event.streams[0];
-          try {
-            vidStreamRef.current.play();
-            vidStreamRef.current.volume = 0.95;
-            vidStreamRef.current.muted = false;
-          } catch (err) {
-            console.log("Error playing from mic: ", err);
-          }
-        }
-      };
-
-      peerConnectionRef.current.addEventListener("track", async (event) => {});
-      console.log("Done setting RTC Listeners...", peerConnectionRef.current);
+      peerConnectionRef.current = newPeer();
     }
 
     const wss = new WebSocket(WSURL);
+    ws.current = wss;
 
     wss.onopen = () => {
       console.log("WSS Connected! Sending register command 0");
@@ -266,7 +270,6 @@ const Home = () => {
     wss.onmessage = async (ev) => {
       const data = JSON.parse(ev.data);
       console.log("Recv'd msg: ", data);
-      const cmd = data["cmd"];
       const cmdType = data["cmdType"];
       console.log("cmdType: ", typeof cmdType, cmdType);
       if (cmdType == 1) {
@@ -274,41 +277,7 @@ const Home = () => {
       } else if (cmdType === 1337) {
         switch (data.rtcType) {
           case "offer":
-            if (!peerConnectionRef.current) return;
-
-            console.log("handling offer...", data.offer);
-            try {
-              await peerConnectionRef.current?.setRemoteDescription(
-                new RTCSessionDescription(data.offer)
-              );
-              console.log(
-                "peerConnectionRef.current remoteDescription: ",
-                peerConnectionRef.current.remoteDescription
-              );
-              console.log("creating answer...");
-              const answer = await peerConnectionRef.current.createAnswer();
-              console.log("Created answer...", answer);
-
-              await peerConnectionRef.current?.setLocalDescription(
-                new RTCSessionDescription(answer)
-              );
-              console.log(
-                "Sending answer... local desc: ",
-                peerConnectionRef.current?.localDescription
-              );
-
-              wss.send(
-                JSON.stringify(
-                  rtcMsg(partyName, "s3cr3t", {
-                    rtcType: "answer",
-                    answer: peerConnectionRef.current?.localDescription,
-                    clientName: "musicplayer",
-                  })
-                )
-              );
-            } catch (err) {
-              console.log("Err responding to offer: ", err);
-            }
+            await handleOffer(data);
             break;
           case "answer":
             break;
@@ -337,7 +306,6 @@ const Home = () => {
       }
     };
 
-    ws.current = wss;
     // return () => {
     //   if ((wss as WebSocket)?.readyState !== WebSocket.CLOSED) {
     //     (wss as WebSocket).close();
@@ -957,8 +925,6 @@ const Home = () => {
           <UilSkipForwardAlt size="120" color="#61DAFB" onClick={masterNext} />
         </div>
       </div>
-
-      {/* <video id="videoPlayer" controls ref={vidStreamRef}></video> */}
 
       <div className="flex  items-center justify-center w-full space-x-12 max-h-3/6 min-h-3/6 h-3/6">
         <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">

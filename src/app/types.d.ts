@@ -1,3 +1,12 @@
+type CmdMsg = {
+  cmd: number;
+  cmdType: number;
+  partyName: string;
+  secretCode: string;
+  setlist: number;
+  volAmount: number;
+};
+
 type SongProps = {
   name: string;
   album?: string;

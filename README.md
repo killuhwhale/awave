@@ -24,10 +24,24 @@ cd ~/ws_node/awave/src/mobile/awave && yarn web
 cd ~/ws_node/awave && npm run dev
 ```
 
+
+# Setup Music Client (Chromebook)
+git clone
+Place Music in dir according to config
+config.json in ./awave/src
+cd ./awave && npm install
+cd ./awave/src/fileServer && npm install
+
+
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
 
 # Build Android
 JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  eas build --platform android --local
+
+## Build APK from AAB
+java -jar ~/Downloads/bundletool-all-1.16.0.jar build-apks --bundle=/home/killuh/ws_node/awave/src/mobile/awave/build-1716313595711.aab --output=awave.apks --mode=universal
+
+## Extract APK from .apks created from bundletool
 
 ## Run android locally
 cd ~/ws_node/awave/src/mobile/awave && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  npx expo run:android

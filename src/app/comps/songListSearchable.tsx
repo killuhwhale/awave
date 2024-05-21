@@ -165,10 +165,10 @@ const SongListSearchable = ({
       </div>
 
       <div className="overflow-y-auto flex flex-col w-full p-1">
-        {filteredSongs.map((song) => {
+        {filteredSongs.map((song, idx) => {
           const curDecorName = filteredSongNamesDecoratedStings.get(song.name);
           return song.name.startsWith("--") ? (
-            <></>
+            <div key={`${idx}_mt`}></div>
           ) : (
             <div
               key={song.src}

@@ -61,11 +61,12 @@ const SongListOnDeck = ({
       <div className="h-4/6 overflow-y-auto flex flex-col w-full ">
         {songs.map((song, idx) => {
           return song.name.startsWith("--") ? (
-            <></>
+            <div key={`${idx}_mt`}></div>
           ) : (
             <div
               className="group flex justify-between  border-b-1 border border-neutral-500"
               onClick={() => confirmRemoveOnDeckSong(song)}
+              key={`${idx}_rmondeck`}
             >
               <div
                 className="p-4 w-11/12 hover:bg-slate-600 "

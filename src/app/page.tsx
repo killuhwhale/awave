@@ -145,26 +145,7 @@ const Home = () => {
   const micStreamRef = useRef<HTMLAudioElement | null>(null);
   const vidStreamRef = useRef<HTMLVideoElement | null>(null);
 
-  const turnConfig = {
-    urls: config["urls"],
-    username: "a",
-    credential: "a",
-  };
-
-  // console.log("turnConfig: ", turnConfig);
-
-  let peerConstraints = {
-    iceServers: [
-      {
-        urls: "stun:stun.l.google.com:19302",
-      },
-      // turnConfig,
-    ],
-  };
-
-  const peerConnectionRef = useRef<RTCPeerConnection>(
-    new RTCPeerConnection(peerConstraints)
-  );
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
   const setlistsRef = useRef<Setlist[]>([] as Setlist[]);
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
@@ -177,6 +158,26 @@ const Home = () => {
 
   const connectToWebSocket = () => {
     if (ws.current) return;
+
+    if (!peerConnectionRef.current) {
+      const turnConfig = {
+        urls: config["urls"],
+        username: "a",
+        credential: "a",
+      };
+
+      // console.log("turnConfig: ", turnConfig);
+
+      let peerConstraints = {
+        iceServers: [
+          {
+            urls: "stun:stun.l.google.com:19302",
+          },
+          // turnConfig,
+        ],
+      };
+      peerConnectionRef.current = new RTCPeerConnection(peerConstraints);
+    }
 
     const wss = new WebSocket(WSURL);
 
@@ -264,39 +265,36 @@ const Home = () => {
               await peerConnectionRef.current?.setRemoteDescription(
                 new RTCSessionDescription(data.offer)
               );
+              console.log(
+                "peerConnectionRef.current remoteDescription: ",
+                peerConnectionRef.current.remoteDescription
+              );
               console.log("creating answer...");
+              const answer = await peerConnectionRef.current.createAnswer();
+              console.log("Created answer...", answer);
 
-              peerConnectionRef.current.createAnswer().then((answer) => {
-                console.log("Created answer...", answer);
-                peerConnectionRef.current
-                  ?.setLocalDescription(new RTCSessionDescription(answer))
-                  .then(() => {
-                    console.log(
-                      "Sending answer... local desc: ",
-                      peerConnectionRef.current?.localDescription
-                    );
+              await peerConnectionRef.current?.setLocalDescription(
+                new RTCSessionDescription(answer)
+              );
+              console.log(
+                "Sending answer... local desc: ",
+                peerConnectionRef.current?.localDescription
+              );
 
-                    wss.send(
-                      JSON.stringify(
-                        rtcMsg(partyName, "s3cr3t", {
-                          rtcType: "answer",
-                          answer: peerConnectionRef.current?.localDescription,
-                          clientName: "musicplayer",
-                        })
-                      )
-                    );
+              wss.send(
+                JSON.stringify(
+                  rtcMsg(partyName, "s3cr3t", {
+                    rtcType: "answer",
+                    answer: peerConnectionRef.current?.localDescription,
+                    clientName: "musicplayer",
                   })
-                  .catch((error) => console.error("Answer error: ", error));
-              });
+                )
+              );
             } catch (err) {
               console.log("Err responding to offer: ", err);
             }
             break;
           case "answer":
-            // console.log("Setting local description from answer");
-            // peerConnection.setRemoteDescription(
-            //   new RTCSessionDescription(data.answer)
-            // );
             break;
           case "candidate":
             console.log("Adding candidate from", data.clientName);
@@ -1040,6 +1038,7 @@ const Home = () => {
             {combinedSetlists.map((setlist: Setlist, idx: number) => {
               return (
                 <SongListSearchable
+                  key={`${idx}_SongListSearchable`}
                   hidden={idx !== curSetListIdx}
                   title={setlist.title}
                   songs={setlist.songs}

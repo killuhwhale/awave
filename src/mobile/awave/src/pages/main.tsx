@@ -167,7 +167,10 @@ function Main() {
             break;
           case "answer":
             try {
-              console.log("Recv'd answer! Setting Remote Description: ", data.clientName);
+              console.log(
+                "Recv'd answer! Setting Remote Description: ",
+                data.clientName
+              );
               await peerConnectionRef.current.setRemoteDescription(
                 new WebRTCSessionDescription(data.answer)
               );
@@ -308,7 +311,7 @@ function Main() {
                 )
               );
             } catch (err) {
-              console.log("Error creating offer": ), err;
+              console.log("Error creating offer:"), err;
             }
           }
         );

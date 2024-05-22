@@ -24,6 +24,14 @@ cd ~/ws_node/awave/src/mobile/awave && yarn web
 cd ~/ws_node/awave && npm run dev
 ```
 
+# TODO()
+<!-- - start/stop webrtc call - Mobile -->
+<!-- - Enter partyName via controller w/ localstorage - Mobile UI -->
+<!-- - Enter secret via controller w/ localstorage - Mobile UI -->
+<!-- - Enter partyName via config.json - Pre Configure by me -->
+- Enter secret via config.json - Pre Configure by me
+- Enforce Secret Code on Server or Client?
+
 
 # Setup Music Client (Chromebook)
 git clone
@@ -36,15 +44,17 @@ cd ./awave/src/fileServer && npm install
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
 
 # Build Android
-JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  eas build --platform android --local
+cd src/mobile/awave
+bash build.sh android &&  JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  eas build --platform android --local
+### Output => build-1716313595711.aab
 
 ## Build APK from AAB
 java -jar ~/Downloads/bundletool-all-1.16.0.jar build-apks --bundle=/home/killuh/ws_node/awave/src/mobile/awave/build-1716313595711.aab --output=awave.apks --mode=universal
 
-## Extract APK from .apks created from bundletool
+## Extract APK from .apks created from bundletool and ADB install
 
 ## Run android locally
-cd ~/ws_node/awave/src/mobile/awave && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  npx expo run:android
+cd ~/ws_node/awave/src/mobile/awave && bash build.sh android && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  npx expo run:android
 
 ## PM2 ts wss
 # Install PM2 globally

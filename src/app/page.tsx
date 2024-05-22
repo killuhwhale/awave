@@ -43,7 +43,7 @@ function cleanSongSource(songSrc: string): string {
   return encodeURIComponent(songSrc);
 }
 
-const partyName = "tp";
+const partyName = config["partyName"];
 const WSURL = config["wss_url"];
 const host = config["host"];
 const db = getFirestore(fbApp);

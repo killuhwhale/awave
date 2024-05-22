@@ -1,6 +1,17 @@
-import { PermissionsAndroid } from 'react-native';
+import { Platform } from 'react-native';
 
-export function rtcMsg(partyName, secretCode, rtcData){
+let requestPermissions,  RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices, registerGlobals;
+
+if (Platform.OS === 'web') {
+
+  // Web-specific imports
+  ({ RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices } = require('react-native-webrtc-web-shim'));
+  requestPermissions = async () => {
+    return true
+  }
+}
+
+function rtcMsg(partyName, secretCode, rtcData){
     return {
         cmd: 1337,
         cmdType: 1337,
@@ -15,24 +26,6 @@ export function rtcMsg(partyName, secretCode, rtcData){
 
 
 
-const requestPermissions = async () => {
-    try {
-        return await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.CAMERA,
-            {
-              title: 'Allow Microphone?',
-              message:
-                'Allows you to use this phone as a microphone for Awave!',
-              buttonNeutral: 'Ask Me Later',
-              buttonNegative: 'Cancel',
-              buttonPositive: 'Allow',
-            },
-          );
-    } catch (err) {
-      console.warn(err);
-    }
-    return false
-  };
 
 
-  export { requestPermissions }
+  export {rtcMsg, requestPermissions, RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices, registerGlobals }

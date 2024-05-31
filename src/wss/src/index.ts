@@ -100,7 +100,8 @@ wss.on("connection", (ws: WebSocket) => {
             // If cmd is Admmin only send down to player client type
             // Else send to everyone in party but self
             if (data.cmd == 420) {
-              if (client.clientType === "player") {
+              // Only send to the wssClient on the player device.
+              if (client.clientType === "admin") {
                 client.conn.send(JSON.stringify(data), (err) => {
                   if (err) {
                     console.error("Error writing json:", err, data);

@@ -159,7 +159,6 @@ function Main() {
               rtcMsg(partyName, "s3cr3t", {
                 rtcType: "candidate",
                 candidate: event.candidate,
-                clientName: "controller",
                 secretCode: secretCode,
               })
             )
@@ -282,33 +281,10 @@ function Main() {
         switch (data.rtcType) {
           case "offer":
             // console.log("received offer");
-            // await peerConnectionRef.current.setLocalDescription(
-            //   new RTCSessionDescription(data.offer)
-            // );
-
-            // peerConnectionRef.current
-            //   .createAnswer()
-            //   .then((answer) => {
-            //     // peerConnectionRef.current.setLocalDescription(answer);
-            //     console.log("Sending answer: ", answer);
-            //     wsRef.current?.send(
-            //       JSON.stringify(
-            //         rtcMsg(partyName, "s3cr3t", {
-            //           rtcType: "answer",
-            //           answer: answer,
-            //           clientName: "controller",
-            //         })
-            //       )
-            //     );
-            //   })
-            //   .catch((error) => console.error("Answer error: ", error));
             break;
           case "answer":
             try {
-              console.log(
-                "Recv'd answer! Setting Remote Description: ",
-                data.clientName
-              );
+              console.log("Recv'd answer! Setting Remote Description: ", data);
               await peerConnectionRef.current.setRemoteDescription(
                 new RTCSessionDescription(data.answer)
               );
@@ -321,7 +297,6 @@ function Main() {
             }
             break;
           case "candidate":
-            console.log("Adding ice candidate from: ", data.clientName);
             await peerConnectionRef.current.addIceCandidate(
               new RTCIceCandidate(data.candidate)
             );

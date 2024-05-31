@@ -184,7 +184,6 @@ const Home: React.FC = () => {
           rtcMsg(partyName, "s3cr3t", {
             rtcType: "answer",
             answer: peerConnectionRef.current?.localDescription,
-            clientName: "musicplayer",
           })
         )
       );
@@ -236,7 +235,7 @@ const Home: React.FC = () => {
           case "answer":
             break;
           case "candidate":
-            console.log("Adding candidate from", data.clientName);
+            console.log("Adding candidate from", data);
             await peerConnectionRef.current?.addIceCandidate(
               new RTCIceCandidate(data.candidate)
             );

@@ -1,0 +1,20 @@
+import { RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices, registerGlobals } from 'react-native-webrtc-web-shim';
+
+const  requestPermissions = async () => {
+   return true
+}
+
+function rtcMsg(partyName, secretCode, rtcData){
+    return {
+        cmd: 1337,
+        cmdType: 1337,
+        partyName,
+        secretCode,
+        setlist: -1,
+        volAmount: -1,
+        clientType: "controller",
+        ...rtcData,
+    }
+}
+
+export {rtcMsg, requestPermissions, RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices, registerGlobals }

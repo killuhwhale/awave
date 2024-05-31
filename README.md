@@ -24,6 +24,14 @@ config.json in ./awave/src
 cd ./awave && npm install
 cd ./awave/src/fileServer && npm install
 
+# Setup wssClient (Chromebook)
+ cd ~/ws_node/awave/src/appControlCenter$
+ bash wssMusicClient.sh
+ systemctl --user enable wssMusicClient.service
+ systemctl --user start wssMusicClient.service
+ systemctl --user stop wssMusicClient.service
+
+
 
 # Generate SSL
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes

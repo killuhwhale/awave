@@ -77,11 +77,9 @@ const Home: React.FC = () => {
   const newPeer = () => {
     const turnConfig = {
       urls: CONFIG["urls"],
-      username: "a",
-      credential: "a",
+      username: CONFIG["turn_username"],
+      credential: CONFIG["credential"],
     };
-
-    // console.log("turnConfig: ", turnConfig);
 
     let peerConstraints = {
       iceServers: [
@@ -918,7 +916,12 @@ const Home: React.FC = () => {
           {isLeftPlaying || isRightPlaying ? (
             <UilPauseCircle size="120" color="#61DAFB" onClick={masterPause} />
           ) : (
-            <UilPlayCircle size="120" color="#61DAFB" onClick={masterPlay} />
+            <UilPlayCircle
+              size="120"
+              color="#61DAFB"
+              id="mainPlay"
+              onClick={masterPlay}
+            />
           )}
           <UilSkipForwardAlt size="120" color="#61DAFB" onClick={masterNext} />
         </div>

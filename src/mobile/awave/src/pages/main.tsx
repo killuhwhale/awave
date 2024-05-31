@@ -112,13 +112,9 @@ function Main() {
   const newPeer = async () => {
     const turnConfig = {
       urls: config["urls"],
-      username: "a",
-      credential: "a",
-      // username: config["username"],
-      // credential: config["credential"],
+      username: config["turn_username"],
+      credential: config["credential"],
     };
-
-    console.log("peerConstraint TURN: ", turnConfig);
 
     let peerConstraints = {
       iceServers: [

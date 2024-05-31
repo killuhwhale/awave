@@ -25,12 +25,12 @@ cd ~/ws_node/awave && npm run dev
 ```
 
 # TODO()
-<!-- - start/stop webrtc call - Mobile -->
-<!-- - Enter partyName via controller w/ localstorage - Mobile UI -->
-<!-- - Enter secret via controller w/ localstorage - Mobile UI -->
-<!-- - Enter partyName via config.json - Pre Configure by me -->
-- Enter secret via config.json - Pre Configure by me
-- Enforce Secret Code on Server or Client?
+Create websocket clinet to restart server (systemd) and browser (python3 script on systemd).
+Create systemd service to start server: npm run dev
+So we will have two services, one to start the server and one to launch the browser and a user interactaion
+
+Browser Client
+Needs to go fullscreen and close Browser Dialog "This is being controlled by automation"
 
 
 # Setup Music Client (Chromebook)

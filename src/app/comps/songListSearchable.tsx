@@ -11,8 +11,23 @@ import {
   UilPauseCircle,
   UilFileImport,
   UilImport,
+  UilExport,
 } from "@iconscout/react-unicons";
 import { debounce, filter, filterOptions } from "../utils/utils";
+
+import CONFIG from "../../../config.json";
+
+import {
+  getFirestore,
+  setDoc,
+  collection,
+  doc,
+  deleteDoc,
+} from "firebase/firestore/lite";
+import fbApp from "../utils/firebase";
+import ActionCancelModal from "./modals/ActionCancelModal";
+
+const db = getFirestore(fbApp);
 
 const SongListSearchable = ({
   songs,
@@ -24,6 +39,7 @@ const SongListSearchable = ({
   leftPlayerRef,
   isLeftPlaying,
   confirmLoadSetlist,
+  masterPause,
 }: SongListSearchProps) => {
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
   const [
@@ -31,9 +47,10 @@ const SongListSearchable = ({
     setFilteredSongNamesDecoratedStings,
   ] = useState<Map<string, string>>(new Map());
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
 
   useLayoutEffect(() => {
+    if (!songs) return;
     setFilteredSongIdxs(
       Array.from(Array(songs.length).keys()).map((idx) => idx)
     );
@@ -81,42 +98,69 @@ const SongListSearchable = ({
 
   const debFilterText = debounce(filterText, 350);
 
-  const filteredSongs = songs.filter(
+  const filteredSongs = songs?.filter(
     (_, i: number) => filteredSongIdxs.indexOf(i) >= 0
   );
 
-  const downloadSetlist = () => {
-    const jsonString = JSON.stringify(
-      {
-        title,
-        songs: songs.map((song) => {
-          const obj = { ...song } as any;
-          delete obj["src"];
-          return obj;
-        }),
-      },
-      null,
-      2
+  const downloadSetlist = async () => {
+    const setListCollection = collection(
+      db,
+      `setlists/${CONFIG["partyName"]}/setlists`
     );
 
-    // Create a Blob with the JSON content
-    const blob = new Blob([jsonString], { type: "application/json" });
+    setDoc(doc(setListCollection, title), { title });
 
-    // Create a URL for the blob
-    const blobURL = URL.createObjectURL(blob);
+    const setListSongsCollection = collection(
+      db,
+      `setlists/${CONFIG["partyName"]}/setlists/${title}/songs`
+    );
 
-    // Create a temporary anchor element and trigger the download
-    const anchorElement = document.createElement("a");
-    anchorElement.href = blobURL;
-    anchorElement.download = `${title}_setlist.json`;
+    const addDocPromises = songs.map((song) => {
+      return setDoc(doc(setListSongsCollection, song.fileName), song);
+    });
 
-    // Append the anchor element to the body, click it, and then remove it
-    document.body.appendChild(anchorElement); // Required for Firefox
-    anchorElement.click();
-    document.body.removeChild(anchorElement);
+    try {
+      await Promise.all(addDocPromises);
+    } catch (err) {
+      console.log("Error adding setlist: ", err);
+    }
+  };
 
-    // Release the blob URL
-    URL.revokeObjectURL(blobURL);
+  useEffect(() => {
+    console.log("SongListSearchable setlist change", title);
+  }, [title]);
+
+  const [rmSong, setRmSong] = useState<SongProps | null>(null);
+  const [showRmSong, setShowRmSong] = useState(false);
+
+  const removeSong = async () => {
+    if (!rmSong) return;
+    const setlistName = title;
+    const partyName = CONFIG["partyName"];
+    console.log("Removing sonf from setlist", rmSong, setlistName);
+    const songPath = `setlists/${CONFIG["partyName"]}/setlists/${setlistName}/songs/${rmSong.fileName}`;
+    const songDoc = doc(db, songPath);
+    try {
+      let songIdx = -1;
+      let c = 0;
+      // Find song in songs and remove it
+      for (const song of songs) {
+        if (song.name === rmSong.name) {
+          songIdx = c;
+        }
+        c++;
+      }
+
+      if (songIdx >= 0) {
+        const removedSong = songs.splice(songIdx, 1);
+        console.log("removedSong: ", removedSong);
+      }
+
+      await deleteDoc(songDoc);
+      setShowRmSong(false);
+    } catch (err) {
+      console.log("Error removing song from setlist", err);
+    }
   };
 
   return (
@@ -144,11 +188,11 @@ const SongListSearchable = ({
               onClick={downloadSetlist}
               className="cursor-pointer flex items-center"
             >
-              <UilImport
+              <UilExport
                 size="35"
                 className="bg-emerald-400 hover:bg-emerald-700 text-slate-200 font-bold pl-1 pr-1"
               />
-              <p className="pl-2">Download</p>
+              <p className="pl-2">Upload To Firebase</p>
             </div>
           )}
         </div>
@@ -165,7 +209,7 @@ const SongListSearchable = ({
       </div>
 
       <div className="overflow-y-auto flex flex-col w-full p-1">
-        {filteredSongs.map((song, idx) => {
+        {filteredSongs?.map((song, idx) => {
           const curDecorName = filteredSongNamesDecoratedStings.get(song.name);
           return song.name.startsWith("--") ? (
             <div key={`${idx}_mt`}></div>
@@ -179,6 +223,12 @@ const SongListSearchable = ({
               <p
                 key={`SLS_${song.src}`}
                 className="p-4 "
+                onClick={() => {
+                  if (title === "All Songs") return;
+                  setRmSong(song);
+                  setShowRmSong(true);
+                }}
+                style={{ width: "100%" }}
                 dangerouslySetInnerHTML={{
                   __html:
                     curDecorName && curDecorName.length > 0
@@ -197,7 +247,8 @@ const SongListSearchable = ({
                       className="mr-4 hover:text-emerald-700 cursor-pointer"
                       size="40"
                       onClick={() => {
-                        setNewPlayer(song);
+                        // setNewPlayer(song);
+                        if (masterPause) masterPause();
                       }}
                     />
                   ) : (
@@ -205,7 +256,10 @@ const SongListSearchable = ({
                       className="mr-4 hover:text-emerald-700 cursor-pointer"
                       size="40"
                       onClick={() => {
+                        // if (masterPause) masterPause();
                         setNewPlayer(song);
+
+                        // if (leftPlayerRef) leftPlayerRef?.current?.play();
                       }}
                     />
                   )}
@@ -217,6 +271,19 @@ const SongListSearchable = ({
           );
         })}
       </div>
+
+      <ActionCancelModal
+        isOpen={showRmSong}
+        message={`Are you sure you want to remove "${rmSong?.name}" from ${title}`}
+        onAction={removeSong}
+        actionText="Remove"
+        onClose={() => {
+          setShowRmSong(false);
+        }}
+        key={`rmSL_${rmSong?.name}`}
+        note={`${rmSong?.fileName}`}
+        btnStyle="bg-rose-700 text-slate-200"
+      />
     </div>
   );
 };

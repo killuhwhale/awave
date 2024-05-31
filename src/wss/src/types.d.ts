@@ -3,7 +3,7 @@ export type WSMessage = {
   cmdType: number;
   partyName: string;
   secretCode: string;
-  setlist: number;
+  setlist: string; // name of setlist
   volAmount: number;
   clientName: string;
   rtcType?: string;

@@ -1,25 +1,28 @@
 "use client";
-import React, {
-  useState,
-  useEffect,
-  ChangeEvent,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+
 import { Howl } from "howler";
-import SongPlayer from "./../comps/SongPlayer";
-import SongList from "./../comps/songListSearchable";
+import fbApp from "../utils/firebase";
 import SongListSearchable from "./../comps/songListSearchable";
 import SongListOnDeck from "./../comps/songListOnDeck";
 import config from "../../../config.json";
 import {
   UilPlayCircle,
   UilPauseCircle,
-  UilSkipForwardAlt,
   UilArrowLeft,
   UilArrowRight,
+  UilMultiply,
 } from "@iconscout/react-unicons";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  getFirestore,
+} from "firebase/firestore/lite";
+
 import ActionCancelModal from "./../comps/modals/ActionCancelModal";
+import { DEFAULT_SONG, getSongs } from "../utils/utils";
 
 /**
  *
@@ -28,97 +31,87 @@ import ActionCancelModal from "./../comps/modals/ActionCancelModal";
  *
  */
 
-function cleanSongSource(songSrc: string): string {
-  return encodeURIComponent(songSrc);
-}
+const db = getFirestore(fbApp);
 const host = config["host"];
-console.log("hosthosthosthost", host);
-const DEFAULT_SONG = {
-  name: "Track 8",
-  src: `http://${host}:3001/${cleanSongSource("Track 8.wav")}`,
-};
-
-const songs: SongProps[] = [
-  {
-    name: "Track5 This is a really long track name that should be truncated and not be long that roughly seventy- two charactes",
-    album: "Debut Album",
-    artist: "Unlucky 17",
-    src: `http://${host}:3001/${cleanSongSource("Track5.wav")}`,
-  },
-  {
-    name: "Track 1",
-    artist: "Unlucky 17",
-    src: `http://${host}:3001/${cleanSongSource("Track 1.wav")}`,
-  },
-  {
-    name: "Track 3",
-    album: "Debut Album",
-    src: `http://${host}:3001/${cleanSongSource("Track 3.wav")}`,
-  },
-  {
-    name: "Track 4",
-    src: `http://${host}:3001/${cleanSongSource("Track 4.wav")}`,
-  },
-  {
-    name: "Apt 6 - T2",
-    src: `http://${host}:3001/${cleanSongSource("Apt 6 - T2.wav")}`,
-  },
-  {
-    name: "Track 6",
-    src: `http://${host}:3001/${cleanSongSource("Track6.wav")}`,
-  },
-];
+const partyName = config["partyName"];
 
 const Home = () => {
   const leftPlayerRef = useRef<Howl | null>();
   const [leftSong, setLeftSong] = useState<SongProps | null>(null);
-  const [leftMusicVolume, setLeftMusicVolume] = useState(50);
+  // const [leftMusicVolume, setLeftMusicVolume] = useState(50);
   const [leftDuration, setLeftDuration] = useState(0);
   const leftDurationRef = useRef(0);
   const [isLeftPlaying, setIsLeftPlaying] = useState(false);
 
   const setNewPlayer = (newSong: SongProps) => {
-    console.log("Attempting Loading new song and player");
-    console.log(newSong.src, leftSong?.src);
+    console.log(
+      "Attempting Loading new song and player",
+      leftPlayerRef.current?.state()
+    );
+    console.log(newSong, leftSong?.src);
 
     if (!newSong) return;
 
-    if (newSong.src === leftSong?.src) {
+    if (
+      newSong.src === leftSong?.src &&
+      leftPlayerRef &&
+      leftPlayerRef.current
+    ) {
+      console.log("Requested same song, Not starting new player!");
+
       if (leftPlayerRef.current?.playing()) {
+        console.log("Pausing because audio is playing");
         setIsLeftPlaying(false);
         return leftPlayerRef.current?.pause();
       } else if (!leftPlayerRef.current?.playing()) {
+        console.log("Resuming");
         setIsLeftPlaying(true);
         return leftPlayerRef.current?.play();
       }
     }
 
-    if (leftPlayerRef.current) {
+    if (leftPlayerRef.current && leftPlayerRef.current.state() === "loaded") {
+      console.log("Stopping current player and resetting");
       leftPlayerRef.current.pause();
       setIsLeftPlaying(false);
       leftPlayerRef.current.unload();
+      leftPlayerRef.current = null;
     }
 
     const newPlayer = new Howl({
       src: newSong.src,
       html5: true, // Allows playing from a file/blob
     });
+    leftPlayerRef.current = newPlayer;
+    console.log("Loading new song", leftPlayerRef.current.state());
 
-    newPlayer?.once("load", function () {
+    leftPlayerRef.current.once("load", () => {
       const dur = newPlayer.duration();
-
+      console.log("new Song loaded", dur);
       setLeftDuration(dur);
-      leftPlayerRef.current = newPlayer;
       leftDurationRef.current = dur;
-    });
 
-    newPlayer.play();
-    setLeftSong(newSong);
-    setIsLeftPlaying(true);
+      try {
+        console.log("pressin play");
+        leftPlayerRef?.current?.play();
+        setLeftSong(newSong);
+        setIsLeftPlaying(true);
+      } catch (err) {
+        console.log("Error playing new song: ", err);
+      }
+    });
   };
 
   const [onDeckSongs, setOnDeckSongs] = useState([] as SongProps[]);
-  const [allSongs, setAllSongs] = useState(songs);
+  const [allSongs, setAllSongs] = useState<SongProps[] | null>(null);
+
+  useEffect(() => {
+    getSongs().then((songs) => {
+      console.log("Init load for songs!!");
+      setAllSongs(songs);
+      allSongsSetlistRef.current.songs = songs;
+    });
+  }, []);
 
   const onDragStart = (e: any, song: SongProps) => {
     e.dataTransfer.setData("song", JSON.stringify(song));
@@ -204,10 +197,6 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {}, []);
-
-  // useEffect(() => {}, [leftSong.src, rightSong.src]);
-
   const masterPlay = () => {
     if (leftPlayerRef.current && !leftPlayerRef.current?.playing()) {
       setIsLeftPlaying(true);
@@ -273,41 +262,121 @@ const Home = () => {
     if (scrollIntervalID) clearInterval(scrollIntervalID);
   }, [scrollIntervalID]);
 
-  const allSongsSetlist = {
+  const allSongsSetlistRef = useRef({
     title: "All Songs",
     songs: allSongs,
     order: 0,
-  };
+  });
 
-  const combinedSetlists = [
-    allSongsSetlist,
-    ...(setlistFileNames?.files ?? ([] as Setlist[])),
-  ];
+  // const combinedSetlists = [
+  //   allSongsSetlist,
+  //   ...(setlistFileNames ?? ([] as Setlist[])),
+  // ];
 
   const addOnDeckToNewSetlist = (title: string) => {
     if (onDeckSongs.length > 0) {
       console.log("Adding onDeck to setlistFileNames");
       const newSetlists = [
-        ...(setlistFileNames?.files ?? ([] as Setlist[])),
+        ...(setlistFileNames ?? ([] as Setlist[])),
         { title, songs: onDeckSongs },
       ] as Setlist[];
-      setSetlistFileNames({ files: newSetlists });
+      setSetlistFileNames(newSetlists);
       setOnDeckSongs([]);
     }
   };
 
-  const [rmSetlist, setRmSetlist] = useState<number>(0);
-  const removeSetlist = () => {
-    console.log("Removing setlist: ", rmSetlist);
-    if (rmSetlist !== 0) {
-      const setlists = setlistFileNames?.files ?? ([] as Setlist[]);
-      const newSetlist = {
-        files: [
-          ...setlists.slice(0, rmSetlist - 1), // mins 1 because we manually add allsongs to index 0
-          ...setlists.slice(rmSetlist, setlists.length),
-        ],
-      };
+  useEffect(() => {
+    const setListPath = `setlists/${partyName}/setlists`;
+    console.log("loading setlists: ", setListPath);
+    const _ = async () => {
+      console.log("Getting doc...");
+      const setlistDocs = await getDocs(collection(db, setListPath));
+      console.log("Got doc:", setlistDocs);
+
+      // const allSetlists: Setlist[] = [] as Setlist[];
+
+      const allSetlists = await Promise.all(
+        setlistDocs.docs.map(async (doc, idx) => {
+          // console.log("Setlist: ", doc.data());
+          const setlistData = doc.data() as Setlist;
+
+          const songDocs = await getDocs(
+            collection(db, `${setListPath}/${doc.id}/songs`)
+          );
+
+          const allSongs = [] as SongProps[];
+          songDocs.docs.forEach((songDoc) => {
+            const songData = songDoc.data() as SongProps;
+            console.log("songDoc: ", songData);
+            allSongs.push({
+              ...songData,
+              src: `http://${host}:3001/${encodeURIComponent(
+                songData["fileName"]
+              )}`,
+            });
+          });
+
+          return {
+            title: doc.id,
+            order: idx,
+            songs: allSongs,
+          } as Setlist;
+        })
+      );
+
+      console.log("Setting setlists: ", allSetlists);
+      allSetlists.sort((a, b) => (a.order > b.order ? 1 : -1));
+
+      setSetlistFileNames([allSongsSetlistRef.current, ...allSetlists]);
+      // setlistsRef.current = allSetlists;
+    };
+    _().then(() => {});
+  }, []);
+
+  const [rmSetlist, setRmSetlist] = useState("");
+
+  const removeSetlist = async () => {
+    console.log("Removing setlist: ", rmSetlist, setlistFileNames);
+
+    if (rmSetlist && rmSetlist != "All Songs") {
+      const setlists = setlistFileNames ?? ([] as Setlist[]);
+
+      // Get setlist index by name
+
+      let slIdx = 1; // skip "All Songs"
+      let c = 1;
+      for (const sl of setlists) {
+        if (sl.title === rmSetlist) {
+          slIdx = c;
+        }
+        c++;
+      }
+      console.log("Removing setlist idx: ", slIdx);
+      const newSetlist = [
+        ...setlists.slice(0, slIdx - 1), // mins 1 because we manually add allsongs to index 0
+        ...setlists.slice(slIdx, setlists.length),
+      ];
       console.log("NewSetList after remove: ", setlists, newSetlist);
+
+      // Delete collection at `setlists/${partyName}/setlists/${setlistName}/songs`;
+      // Delete doc at `setlists/${partyName}/setlists/${setlistName}`;
+      const setListPath = `setlists/${partyName}/setlists/${rmSetlist}/songs`;
+      const setListDocPath = `setlists/${partyName}/setlists/${rmSetlist}`;
+      const songCollection = collection(db, setListPath);
+      const setlistDoc = doc(db, setListDocPath);
+      const songDocs = await getDocs(songCollection);
+
+      try {
+        const songDocDeletePromises = [] as Promise<void>[];
+        songDocs.docs.forEach((doc) => {
+          songDocDeletePromises.push(deleteDoc(doc.ref));
+        });
+        await Promise.all(songDocDeletePromises);
+        await deleteDoc(setlistDoc);
+      } catch (err) {
+        console.log("Error removing setlist from firebase: ", err);
+      }
+
       setSetlistFileNames(newSetlist);
       setShowRemoveSetlist(false);
       setCurSetListIdx(0);
@@ -373,42 +442,53 @@ const Home = () => {
               ref={setListScrollRef}
             >
               <div className="w-full flex">
-                {combinedSetlists.map((setlist: Setlist, idx: number) => {
-                  return (
-                    <div
-                      key={`${idx}_setlist`}
-                      className={`flex items-center ${
-                        idx === curSetListIdx
-                          ? "text-rose-700"
-                          : "text-neutral-400"
-                      }`}
-                      onClick={() => {
-                        setCurSetListIdx(idx);
-                      }}
-                    >
-                      <p
-                        className={`p-4 border-b-2 ${
+                {setlistFileNames ? (
+                  setlistFileNames.map((setlist: Setlist, idx: number) => {
+                    return (
+                      <div
+                        key={`${idx}_setlist`}
+                        className={`flex items-center ${
+                          idx === curSetListIdx
+                            ? "text-rose-700"
+                            : "text-neutral-400"
+                        } p-4 border-b-2 ${
                           idx === curSetListIdx
                             ? "border-rose-700"
                             : "border-neutral-400"
                         }`}
+                        onClick={() => {
+                          setCurSetListIdx(idx);
+                        }}
                       >
-                        {setlist.title}
-                      </p>
-                      {setlist.title !== "All Songs" ? (
-                        <div
-                          className="w-[15px] h-[15px] bg-red-500"
-                          onClick={() => {
-                            setRmSetlist(idx);
-                            setShowRemoveSetlist(true);
-                          }}
-                        ></div>
-                      ) : (
-                        <></>
-                      )}
-                    </div>
-                  );
-                })}
+                        <p
+                          className={`p-4 border-b-2 ${
+                            idx === curSetListIdx
+                              ? "border-rose-700"
+                              : "border-neutral-400"
+                          }`}
+                        >
+                          {setlist.title}
+                        </p>
+                        <div>
+                          {setlist.title !== "All Songs" ? (
+                            <UilMultiply
+                              size="24"
+                              color="#be123c"
+                              onClick={() => {
+                                setRmSetlist(setlist.title);
+                                setShowRemoveSetlist(true);
+                              }}
+                            />
+                          ) : (
+                            <></>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <></>
+                )}
               </div>
             </div>
 
@@ -433,21 +513,49 @@ const Home = () => {
               />
             </div>
           </div>
+          {/*
           <div className="flex flex-auto h-5/6 overflow-y-auto">
-            {combinedSetlists.map((setlist: Setlist, idx: number) => {
-              return (
-                <SongListSearchable
-                  hidden={idx !== curSetListIdx}
-                  title={setlist.title}
-                  songs={setlist.songs}
-                  onDragStart={onDragStart}
-                  setNewPlayer={setNewPlayer}
-                  leftPlayerRef={leftPlayerRef}
-                  leftSong={leftSong}
-                  isLeftPlaying={isLeftPlaying}
-                />
-              );
-            })}
+            {setlistFileNames && setlistFileNames[curSetListIdx] ? (
+              <SongListSearchable
+                // hidden={idx !== curSetListIdx}
+                hidden={false}
+                key={`${setlistFileNames[curSetListIdx].title}_setlist`}
+                title={setlistFileNames[curSetListIdx].title}
+                songs={setlistFileNames[curSetListIdx].songs ?? []}
+                onDragStart={onDragStart}
+                setNewPlayer={setNewPlayer}
+                masterPause={masterPause}
+                leftPlayerRef={leftPlayerRef}
+                leftSong={leftSong}
+                isLeftPlaying={isLeftPlaying}
+              />
+            ) : (
+              <></>
+            )}
+          </div> */}
+          <div className="flex flex-auto h-5/6 overflow-y-auto">
+            {setlistFileNames ? (
+              setlistFileNames.map((setlist: Setlist, idx: number) => {
+                return !setlist.songs ? (
+                  <></>
+                ) : (
+                  <SongListSearchable
+                    hidden={idx !== curSetListIdx}
+                    key={`${setlist.title}_setlist_${idx}`}
+                    title={setlist.title}
+                    songs={setlist.songs}
+                    onDragStart={onDragStart}
+                    setNewPlayer={setNewPlayer}
+                    masterPause={masterPause}
+                    leftPlayerRef={leftPlayerRef}
+                    leftSong={leftSong}
+                    isLeftPlaying={isLeftPlaying}
+                  />
+                );
+              })
+            ) : (
+              <></>
+            )}
           </div>
         </div>
       </div>
@@ -466,16 +574,14 @@ const Home = () => {
       />
       <ActionCancelModal
         isOpen={showRemoveSetlist}
-        message={`Are you sure you want to remove "${
-          setlistFileNames?.files[rmSetlist - 1]?.title
-        }"`}
+        message={`Are you sure you want to remove "${rmSetlist}"`}
         onAction={removeSetlist}
         actionText="Remove"
         onClose={() => {
           setShowRemoveSetlist(false);
         }}
-        key={`rmSL_${setlistFileNames?.files[rmSetlist - 1]?.title}`}
-        note={`${setlistFileNames?.files[rmSetlist - 1]?.title}`}
+        key={`rmSL_${rmSetlist}`}
+        note={`${rmSetlist}`}
         btnStyle="bg-rose-700 text-slate-200"
       />
     </div>

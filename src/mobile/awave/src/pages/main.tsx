@@ -8,9 +8,9 @@ import {
   TouchableHighlight,
   View,
 } from "react-native";
-import fbApp from "../firebase/firebaseApp";
 
 import { collection, getDocs, getFirestore } from "firebase/firestore/lite";
+import fbApp from "../firebase/firebaseApp";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -23,29 +23,10 @@ import {
 } from "../utils/utils";
 
 import config from "../utils/config";
+import CMD from "../utils/helpers";
 
 const db = getFirestore(fbApp);
 const WSURL = config["wss_url"];
-
-class Commands {
-  cmds = {
-    play: 1,
-    pause: 2,
-    next: 3,
-    volup: 4,
-    voldown: 5,
-    loadSetlist: 6,
-  };
-
-  PLAY = "play";
-  PAUSE = "pause";
-  NEXT = "next";
-  VOLUP = "volup";
-  VOLDOWN = "voldown";
-  LOADSETLIST = "loadSetlist";
-}
-
-const CMD = new Commands();
 
 const storeData = async (partyName: string, secret: string) => {
   try {
@@ -69,10 +50,10 @@ const getData = async () => {
   return { partyName: "", secret: "" };
 };
 
-type Setlist = {
-  order: number;
-  title: string;
-};
+// type Setlist = {
+//   order: number;
+//   title: string;
+// };
 
 const debounce = (fn, timeout = 500) => {
   let timer;
@@ -107,6 +88,7 @@ const CTLBTN: React.FC<{ fn: any; text: string }> = ({ fn, text }) => {
 
 function Main() {
   const [partyName, setPartyName] = useState("");
+  const [adminCode, setAdminCode] = useState("");
   const [secretCode, setSecretCode] = useState("");
   const updatePartyName = useCallback(debounce(storeData, 3000), []);
   const updateSecretCode = useCallback(debounce(storeData, 3000), []);
@@ -286,7 +268,7 @@ function Main() {
             cmdType: 0,
             partyName: partyName,
             secretCode: secretCode,
-            clientName: "controller",
+            clientType: "controller",
           })
         );
       };
@@ -400,10 +382,15 @@ function Main() {
     // };
   }, [wsRef.current, partyName, secretCode]);
 
-  const sendCommand = (cmdKey, setlist: number = 0, volAmount: number = 12) => {
+  const sendCommand = (
+    cmdKey,
+    setlist: string = "All Songs",
+    volAmount: number = 12,
+    cmdType: number = 1
+  ) => {
     if (wsRef.current) {
       const cmd = {
-        cmdType: 1,
+        cmdType: cmdType,
         cmd: CMD.cmds[cmdKey],
         partyName,
         secretCode,
@@ -440,6 +427,15 @@ function Main() {
     sendCommand(CMD.VOLDOWN);
   };
 
+  const resetPlayer = () => {
+    console.log("Sending pause", partyName, secretCode);
+    try {
+      sendCommand(CMD.RESET, null, null, parseInt(adminCode));
+    } catch (err) {
+      console.log("Error sending reset command", err);
+    }
+  };
+
   const sendLoadSetlist = () => {
     console.log(
       "Sending LoadSetlist",
@@ -447,10 +443,11 @@ function Main() {
       secretCode,
       typeof currentSetlist?.order
     );
-    sendCommand(CMD.LOADSETLIST, currentSetlist?.order, 0);
+    sendCommand(CMD.LOADSETLIST, currentSetlist?.title, 0);
   };
 
   useEffect(() => {
+    if (!partyName) return;
     const setListPath = `setlists/${partyName}/setlists`;
     console.log("loading setlists: ", setListPath);
     const _ = async () => {
@@ -482,10 +479,33 @@ function Main() {
       contentContainerStyle={{ flexGrow: 1 }}
     >
       <View id="row1" style={{ flex: 2, flexDirection: "column" }}>
-        <Text style={{ fontSize: 24 }}>Connection</Text>
+        <Text style={{ fontSize: 24, color: "white", marginBottom: 12 }}>
+          Connection Details
+        </Text>
         <View style={{ flex: 1, flexDirection: "row" }}>
           <View style={{ flex: 1, flexDirection: "column" }}>
-            <Text style={{ textAlign: "center" }}>Party Name</Text>
+            <Text style={{ textAlign: "center", color: "white" }}>Admin</Text>
+            <TextInput
+              style={{
+                width: "100%",
+                backgroundColor: "black",
+                color: "white",
+                padding: 4,
+              }}
+              placeholder="Admin Code"
+              value={adminCode}
+              onChange={(ev) => {
+                setAdminCode(ev.nativeEvent.text);
+              }}
+            />
+            <Button title="Reset Player" onPress={resetPlayer} />
+          </View>
+        </View>
+        <View style={{ flex: 1, flexDirection: "row" }}>
+          <View style={{ flex: 1, flexDirection: "column" }}>
+            <Text style={{ textAlign: "center", color: "white" }}>
+              Party Name
+            </Text>
             <TextInput
               style={{
                 width: "100%",
@@ -503,7 +523,7 @@ function Main() {
           </View>
 
           <View style={{ flex: 1, flexDirection: "column" }}>
-            <Text style={{ textAlign: "center" }}>Secret</Text>
+            <Text style={{ textAlign: "center", color: "white" }}>Secret</Text>
             <TextInput
               style={{
                 width: "100%",
@@ -523,7 +543,7 @@ function Main() {
       </View>
 
       <View id="row2" style={{ flex: 3 }}>
-        <Text style={{ fontSize: 24 }}>Microphone</Text>
+        <Text style={{ fontSize: 24, color: "white" }}>Microphone</Text>
         <View
           style={{
             backgroundColor: onCallColor,
@@ -553,7 +573,7 @@ function Main() {
       </View>
 
       <View id="row3" style={{ flex: 3 }}>
-        <Text style={{ fontSize: 24 }}>Controls</Text>
+        <Text style={{ fontSize: 24, color: "white" }}>Controls</Text>
         <View style={{ flexDirection: "row" }}>
           <CTLBTN fn={sendPlay} text="Play" />
           <CTLBTN fn={sendPause} text="Pause" />
@@ -571,27 +591,33 @@ function Main() {
       <View style={{ flex: 3 }}>
         <View style={{ flex: 1 }}>
           <View style={{ flex: 1, justifyContent: "center" }}>
-            <Text style={{ fontSize: 24 }}>Setlist</Text>
-            <Text style={{ fontSize: 16 }}>
+            <Text style={{ fontSize: 24, color: "white" }}>Setlist</Text>
+            <Text style={{ fontSize: 16, color: "white" }}>
               Current Setlist: {currentSetlist?.title}
             </Text>
           </View>
-          <View style={{ flex: 3 }}>
+          <View style={{ flex: 3, gap: 10 }}>
             {setlists.map((sl, idx) => {
               console.log("Setlist: ", sl);
               return (
                 <View
                   key={`sl_${idx}`}
-                  style={{ backgroundColor: "black", padding: 8 }}
+                  style={{
+                    borderRadius: 8,
+                    backgroundColor:
+                      currentSetlist?.title === sl.title ? "green" : "black",
+                    padding: 8,
+                  }}
                 >
                   <TouchableHighlight onPress={() => setCurrentSetlist(sl)}>
                     <Text
                       style={{
                         color:
                           sl.order == currentSetlist?.order ? "white" : "grey",
+                        textAlign: "center",
                       }}
                     >
-                      {sl.title} - {sl.order}
+                      {sl.title}
                     </Text>
                   </TouchableHighlight>
                 </View>

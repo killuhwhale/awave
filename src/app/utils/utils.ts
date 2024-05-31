@@ -1,3 +1,5 @@
+import CONFIG from "../../../config.json";
+
 interface Matches {
   items: number[];
   marks: string[];
@@ -22,6 +24,46 @@ export function rtcMsg(partyName: string, secretCode: string, rtcData: any) {
     volAmount: -1,
     ...rtcData,
   };
+}
+
+function cleanSongSource(songSrc: string): string {
+  return encodeURIComponent(songSrc);
+}
+
+export const DEFAULT_SONG = {
+  name: "Track 8",
+  src: `http://${CONFIG["host"]}:3001/${cleanSongSource("Track 8.wav")}`,
+} as SongProps;
+
+export function SongProp(fileName: string) {
+  const name = fileName.split(".")[0];
+  return {
+    name: name,
+    fileName: fileName,
+    src: `http://${CONFIG["host"]}:3001/${encodeURIComponent(fileName)}`,
+  } as SongProps;
+}
+
+export const getSongs = async () => {
+  let songs = [] as SongProps[];
+  try {
+    const url = `http://${CONFIG["host"]}:3001/`;
+
+    console.log("URL: ", url);
+
+    const songNames = await (await fetch(url)).json();
+    console.log("songNames", songNames);
+    for (const song of songNames) {
+      songs.push(SongProp(song));
+    }
+  } catch (err) {
+    console.log("Error gettings all songs: ", err);
+  }
+  return songs;
+};
+
+export function isGoodSecret(secret: string, userSecret: string) {
+  return secret === userSecret;
 }
 
 const makePrefix = (color: string) => {

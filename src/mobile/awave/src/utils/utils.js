@@ -1,14 +1,7 @@
-import { Platform } from 'react-native';
+import { RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices, registerGlobals } from 'react-native-webrtc-web-shim';
 
-let requestPermissions,  RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices, registerGlobals;
-
-if (Platform.OS === 'web') {
-
-  // Web-specific imports
-  ({ RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices } = require('react-native-webrtc-web-shim'));
-  requestPermissions = async () => {
-    return true
-  }
+const  requestPermissions = async () => {
+   return true
 }
 
 function rtcMsg(partyName, secretCode, rtcData){
@@ -24,8 +17,4 @@ function rtcMsg(partyName, secretCode, rtcData){
     }
 }
 
-
-
-
-
-  export {rtcMsg, requestPermissions, RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices, registerGlobals }
+export {rtcMsg, requestPermissions, RTCPeerConnection, RTCIceCandidate, RTCSessionDescription, mediaDevices, registerGlobals }

@@ -1,4 +1,5 @@
 "use client";
+
 import React, {
   useState,
   useEffect,
@@ -6,12 +7,9 @@ import React, {
   useRef,
   useCallback,
 } from "react";
+
 import { Howl } from "howler";
-import SongPlayer from "./comps/SongPlayer";
-import SongList from "./comps/songListSearchable";
-import SongListSearchable from "./comps/songListSearchable";
-import SongListOnDeck from "./comps/songListOnDeck";
-import config from "../../config.json";
+
 import {
   UilPlayCircle,
   UilPauseCircle,
@@ -19,18 +17,18 @@ import {
   UilArrowLeft,
   UilArrowRight,
 } from "@iconscout/react-unicons";
+
+import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
+
+import SongPlayer from "./comps/SongPlayer";
+import SongListSearchable from "./comps/songListSearchable";
+import SongListOnDeck from "./comps/songListOnDeck";
 import ActionCancelModal from "./comps/modals/ActionCancelModal";
 import fbApp from "./utils/firebase";
 
-import {
-  getFirestore,
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-} from "firebase/firestore/lite";
-import { rtcMsg } from "./utils/utils";
+import { DEFAULT_SONG, getSongs, isGoodSecret, rtcMsg } from "./utils/utils";
 import Commands from "./utils/Commands";
+import CONFIG from "../../config.json";
 
 /**
  *
@@ -39,64 +37,16 @@ import Commands from "./utils/Commands";
  *
  */
 
-function cleanSongSource(songSrc: string): string {
-  return encodeURIComponent(songSrc);
-}
-
-const partyName = config["partyName"];
-const WSURL = config["wss_url"];
-const host = config["host"];
+const partyName = CONFIG["partyName"];
+const WSURL = CONFIG["wss_url"];
+const host = CONFIG["host"];
 const db = getFirestore(fbApp);
 const CMD = new Commands();
-
-const DEFAULT_SONG = {
-  name: "Track 8",
-  src: `http://${host}:3001/${cleanSongSource("Track 8.wav")}`,
-};
-
-const songs: SongProps[] = [
-  {
-    name: "--Dumby1",
-    src: `http://${host}:3001/${cleanSongSource("Dumby1.wav")}`,
-  },
-  {
-    name: "--Dumby2",
-    src: `http://${host}:3001/${cleanSongSource("Dumby2.wav")}`,
-  },
-  {
-    name: "Track5",
-    album: "Debut Album",
-    artist: "Unlucky 17",
-    src: `http://${host}:3001/${cleanSongSource("Track5.wav")}`,
-  },
-  {
-    name: "Track 1",
-    artist: "Unlucky 17",
-    src: `http://${host}:3001/${cleanSongSource("Track 1.wav")}`,
-  },
-  {
-    name: "Track 3",
-    album: "Debut Album",
-    src: `http://${host}:3001/${cleanSongSource("Track 3.wav")}`,
-  },
-  {
-    name: "Track 4",
-    src: `http://${host}:3001/${cleanSongSource("Track 4.wav")}`,
-  },
-  {
-    name: "Apt 6 - T2",
-    src: `http://${host}:3001/${cleanSongSource("Apt 6 - T2.wav")}`,
-  },
-  {
-    name: "Track 6",
-    src: `http://${host}:3001/${cleanSongSource("Track6.wav")}`,
-  },
-];
 
 const PLAYERNAME_LEFT = "p1";
 const PLAYERNAME_RIGHT = "p2";
 
-const Home = () => {
+const Home: React.FC = () => {
   const currentPlayerRef = useRef<Howl | null>();
   const currentPlayerNameRef = useRef<string>();
 
@@ -126,7 +76,7 @@ const Home = () => {
 
   const newPeer = () => {
     const turnConfig = {
-      urls: config["urls"],
+      urls: CONFIG["urls"],
       username: "a",
       credential: "a",
     };
@@ -262,7 +212,7 @@ const Home = () => {
           cmd: 0,
           cmdType: 0,
           partyName: partyName,
-          clientName: "musicplayer",
+          clientType: "player",
         })
       );
     };
@@ -271,7 +221,11 @@ const Home = () => {
       const data = JSON.parse(ev.data);
       console.log("Recv'd msg: ", data);
       const cmdType = data["cmdType"];
+      const userSecret = data["secretCode"];
       console.log("cmdType: ", typeof cmdType, cmdType);
+
+      if (!isGoodSecret(CONFIG.secret, userSecret)) return;
+
       if (cmdType == 1) {
         executeCmd(data);
       } else if (cmdType === 1337) {
@@ -356,27 +310,29 @@ const Home = () => {
       // const allSetlists: Setlist[] = [] as Setlist[];
 
       const allSetlists = await Promise.all(
-        setlistDocs.docs.map(async (doc) => {
+        setlistDocs.docs.map(async (doc, idx) => {
           // console.log("Setlist: ", doc.data());
           const setlistData = doc.data() as Setlist;
 
           const songDocs = await getDocs(
-            collection(db, `${setListPath}/${setlistData.title}/songs`)
+            collection(db, `${setListPath}/${doc.id}/songs`)
           );
 
           const allSongs = [] as SongProps[];
           songDocs.docs.forEach((songDoc) => {
             const songData = songDoc.data() as SongProps;
+            console.log("songDoc: ", songData);
             allSongs.push({
               ...songData,
               src: `http://${host}:3001/${encodeURIComponent(
-                songData["name"]
+                songData["fileName"]
               )}`,
             });
           });
 
           return {
-            ...setlistData,
+            title: doc.id,
+            order: idx,
             songs: allSongs,
           } as Setlist;
         })
@@ -449,9 +405,37 @@ const Home = () => {
     }
   };
 
-  const [onDeckSongs, setOnDeckSongs] = useState(songs);
-  const onDeckSongsRef = useRef(songs);
-  const [allSongs, setAllSongs] = useState(songs);
+  const [onDeckSongs, setOnDeckSongs] = useState<SongProps[] | null>(null);
+  const onDeckSongsRef = useRef<SongProps[] | null>(null);
+  const [allSongs, setAllSongs] = useState<SongProps[] | null>(null);
+
+  useEffect(() => {
+    if (onDeckSongsRef.current) return;
+    getSongs().then((songs) => {
+      onDeckSongsRef.current = songs;
+      setOnDeckSongs(songs);
+      setAllSongs(songs);
+
+      console.log("Init load for songs!!");
+      if (!leftPlayerRef.current) {
+        console.log("Getting next left song", leftPlayerRef.current);
+        const nextLeftSong = getNextSong();
+
+        setNewPlayer(PLAYERNAME_LEFT, nextLeftSong, true);
+
+        if (!leftSong) setLeftSong(nextLeftSong);
+      }
+
+      if (!rightPlayerRef.current) {
+        console.log("Getting next right song", rightPlayerRef.current);
+        const nextRightSong = getNextSong();
+        setNewPlayer(PLAYERNAME_RIGHT, nextRightSong, true);
+
+        if (!rightSong) setRightSong(nextRightSong);
+      }
+      initLoadingRef.current = false;
+    });
+  }, []);
 
   const onDragStart = (e: any, song: SongProps) => {
     e.dataTransfer.setData("song", JSON.stringify(song));
@@ -481,12 +465,19 @@ const Home = () => {
       if (onDeckSongsFiltered.length === 0) {
         if (onDeckSongsRef.current.length === 0) {
           setOnDeckSongs((prevSongs) => {
+            if (!prevSongs) {
+              return [draggedSong];
+            }
             const s = [...prevSongs, draggedSong];
             onDeckSongsRef.current = s;
             return s;
           });
         } else {
           setOnDeckSongs((prevSongs) => {
+            if (!prevSongs) {
+              return [draggedSong];
+            }
+
             const s = [
               ...prevSongs.slice(0, dropIndex),
               draggedSong,
@@ -531,6 +522,10 @@ const Home = () => {
         dropIndex
       );
       setOnDeckSongs((prevSongs) => {
+        if (!prevSongs) {
+          return [draggedSong];
+        }
+
         const newSongs = [...prevSongs];
         newSongs.splice(dropIndex, 0, draggedSong);
         console.log("Dropped songs 1: ", newSongs);
@@ -549,15 +544,23 @@ const Home = () => {
     }
   };
 
-  const getNextSong = () => {
+  const getNextSong = (): SongProps => {
     console.log("Getting next song from: ", onDeckSongs);
-    const nextSong = { ...onDeckSongsRef.current[0] };
-    setOnDeckSongs(onDeckSongsRef.current.slice(1, onDeckSongs.length));
+    if (!onDeckSongsRef.current) return DEFAULT_SONG;
+    if (onDeckSongsRef.current.length === 0) return DEFAULT_SONG;
+
+    let nextSong = { ...onDeckSongsRef.current[0] } as SongProps;
+
+    setOnDeckSongs(
+      onDeckSongsRef.current.slice(1, onDeckSongsRef.current.length)
+    );
+
     onDeckSongsRef.current = onDeckSongsRef.current.slice(
       1,
-      onDeckSongs.length
+      onDeckSongsRef.current.length
     );
-    if (!nextSong.name) return DEFAULT_SONG;
+
+    if (!nextSong) nextSong = DEFAULT_SONG;
     return nextSong;
   };
 
@@ -620,26 +623,9 @@ const Home = () => {
     setTimeout(() => clearInterval(intervalId), SLIDE_DURATION);
   };
 
-  useEffect(() => {
-    console.log("Init load for songs!!");
-    if (!leftPlayerRef.current) {
-      console.log("Getting next left song", leftPlayerRef.current);
-      const nextLeftSong = getNextSong();
+  // useEffect(() => {
 
-      setNewPlayer(PLAYERNAME_LEFT, nextLeftSong, true);
-
-      if (!leftSong) setLeftSong(nextLeftSong);
-    }
-
-    if (!rightPlayerRef.current) {
-      console.log("Getting next right song", rightPlayerRef.current);
-      const nextRightSong = getNextSong();
-      setNewPlayer(PLAYERNAME_RIGHT, nextRightSong, true);
-
-      if (!rightSong) setRightSong(nextRightSong);
-    }
-    initLoadingRef.current = false;
-  }, []);
+  // }, []);
 
   const autoNextSong = (playerName: string) => {
     console.log("AUTONEXTSONG called.");
@@ -765,6 +751,10 @@ const Home = () => {
   const removeOnDeckSong = () => {
     console.log("Removing: ", rmOnDeckSong?.src);
     setOnDeckSongs((prevSongs) => {
+      if (!prevSongs) {
+        return [];
+      }
+
       const newSongs = [...prevSongs];
       const fNewSongs = newSongs.filter(
         (song) => song.src !== rmOnDeckSong?.src
@@ -823,22 +813,31 @@ const Home = () => {
     setSetlistToLoad(idx);
   };
 
-  const unconfirmedLoadSetlist = (unconfirmedSetlist: number) => {
+  const unconfirmedLoadSetlist = (unconfirmedSetlist: string) => {
     console.log(
       "unconfirmedLoadSetlist unconfirmedSetlist:",
       unconfirmedSetlist,
       setlists
     );
-    const setlist =
-      unconfirmedSetlist === -1
-        ? allSongsSetlist
-        : setlistsRef.current[unconfirmedSetlist - 1];
+
+    let setlistIdx = 0;
+    let c = 0;
+    const allSetlists = [allSongsSetlist, ...setlistsRef.current];
+
+    for (const sl of allSetlists) {
+      if (sl.title == unconfirmedSetlist) {
+        setlistIdx = c;
+      }
+      c++;
+    }
+
+    const setlist = allSetlists[setlistIdx];
 
     console.log("unconfirmedLoadSetlist ", setlist);
     if (setlist) {
       setOnDeckSongs(setlist.songs);
       onDeckSongsRef.current = setlist.songs;
-      setCurSetListIdx(unconfirmedSetlist);
+      setCurSetListIdx(setlistIdx);
     }
   };
 
@@ -928,15 +927,19 @@ const Home = () => {
 
       <div className="flex  items-center justify-center w-full space-x-12 max-h-3/6 min-h-3/6 h-3/6">
         <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">
-          <SongListOnDeck
-            songs={onDeckSongs}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            onDragStartRearrangeDeck={onDragStartRearrangeDeck}
-            onDragOverRearrangeDeck={onDragOverRearrangeDeck}
-            onDropRearrangeDeck={onDropRearrangeDeck}
-            confirmRemoveOnDeckSong={confirmRemoveOnDeckSong}
-          />
+          {onDeckSongs ? (
+            <SongListOnDeck
+              songs={onDeckSongs}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              onDragStartRearrangeDeck={onDragStartRearrangeDeck}
+              onDragOverRearrangeDeck={onDragOverRearrangeDeck}
+              onDropRearrangeDeck={onDropRearrangeDeck}
+              confirmRemoveOnDeckSong={confirmRemoveOnDeckSong}
+            />
+          ) : (
+            <></>
+          )}
         </div>
 
         <div className=" bg-neutral-800 w-1/2 text-emerald-300 text-sm font-bold h-full rounded-md ">
@@ -967,31 +970,35 @@ const Home = () => {
               ref={setListScrollRef}
             >
               <div className="w-full flex">
-                {combinedSetlists?.map((setList: Setlist, idx: number) => {
-                  return (
-                    <div
-                      key={`${idx}_setlist`}
-                      className={`flex ${
-                        idx === curSetListIdx
-                          ? "text-rose-700"
-                          : "text-neutral-400"
-                      }`}
-                      onClick={() => {
-                        setCurSetListIdx(idx);
-                      }}
-                    >
-                      <p
-                        className={`p-4 border-b-2 ${
+                {!combinedSetlists ? (
+                  <></>
+                ) : (
+                  combinedSetlists.map((setList: Setlist, idx: number) => {
+                    return (
+                      <div
+                        key={`${idx}_setlist`}
+                        className={`flex ${
                           idx === curSetListIdx
-                            ? "border-rose-700"
-                            : "border-neutral-400"
+                            ? "text-rose-700"
+                            : "text-neutral-400"
                         }`}
+                        onClick={() => {
+                          setCurSetListIdx(idx);
+                        }}
                       >
-                        {setList.title}
-                      </p>
-                    </div>
-                  );
-                })}
+                        <p
+                          className={`p-4 border-b-2 ${
+                            idx === curSetListIdx
+                              ? "border-rose-700"
+                              : "border-neutral-400"
+                          }`}
+                        >
+                          {setList.title}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -1018,7 +1025,9 @@ const Home = () => {
           </div>
           <div className="flex flex-auto h-5/6 overflow-y-auto">
             {combinedSetlists.map((setlist: Setlist, idx: number) => {
-              return (
+              return !setlist.songs ? (
+                <></>
+              ) : (
                 <SongListSearchable
                   key={`${idx}_SongListSearchable`}
                   hidden={idx !== curSetListIdx}

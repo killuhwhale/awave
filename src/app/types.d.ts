@@ -3,12 +3,14 @@ type CmdMsg = {
   cmdType: number;
   partyName: string;
   secretCode: string;
-  setlist: number;
+  setlist: string;
   volAmount: number;
+  clientType?: string;
 };
 
 type SongProps = {
   name: string;
+  fileName: string;
   album?: string;
   artist?: string;
   src: string;
@@ -24,6 +26,7 @@ type SongListSearchProps = {
   leftSong?: SongProps | null;
   isLeftPlaying?: boolean;
   confirmLoadSetlist?(): void;
+  masterPause?(): void;
 };
 
 type SongListOnDeckProps = {
@@ -57,8 +60,6 @@ type SongPlayerProps = {
 type Setlist = {
   title: string;
   order: number;
-  songs: SongProps[];
+  songs: SongProps[] | null;
 };
-type Setlists = {
-  files: Setlist[];
-};
+type Setlists = Setlist[];

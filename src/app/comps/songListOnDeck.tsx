@@ -59,7 +59,7 @@ const SongListOnDeck = ({
         </p>
       </div>
       <div className="h-4/6 overflow-y-auto flex flex-col w-full ">
-        {songs.map((song, idx) => {
+        {songs?.map((song, idx) => {
           return song.name.startsWith("--") ? (
             <div key={`${idx}_mt`}></div>
           ) : (

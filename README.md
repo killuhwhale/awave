@@ -42,7 +42,7 @@ bash build.sh android &&  JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  eas buil
 ## Output => build-1716313595711.aab
 
 ## Build APK from AAB
-java -jar ~/Downloads/bundletool-all-1.16.0.jar build-apks --bundle=/home/killuh/ws_node/awave/src/mobile/awave/build-1716313595711.aab --output=awave.apks --mode=universal
+java -jar ~/Downloads/bundletool-all-1.16.0.jar build-apks --bundle=/home/killuh/ws_node/awave/src/mobile/awave/*.aab --output=awave.apks --mode=universal
 
 ## Extract APK from .apks created from bundletool and ADB install
 

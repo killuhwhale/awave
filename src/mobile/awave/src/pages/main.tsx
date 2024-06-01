@@ -24,7 +24,9 @@ import {
 
 import config from "../utils/config";
 import CMD from "../utils/helpers";
+import { User, getAuth, signInAnonymously } from "firebase/auth";
 
+const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const WSURL = config["wss_url"];
 
@@ -99,6 +101,30 @@ function Main() {
   const [currentSetlist, setCurrentSetlist] = useState<Setlist | null>(null);
   const streamRef = useRef<any | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((fbUser) => {
+      if (fbUser) {
+        setUser(fbUser);
+      } else {
+        setUser(null);
+      }
+    });
+
+    if (!user) {
+      signInAnonymously(auth)
+        .then((creds) => {
+          console.log("Signing in res: ", creds);
+          setUser(creds.user);
+        })
+        .catch((err) => {
+          console.log("Error signing in!");
+        });
+    }
+    return () => unsub();
+  }, [user]);
 
   useEffect(() => {
     console.log("On Call effect: ", peerConnectionRef.current, isOnCall);
@@ -202,7 +228,7 @@ function Main() {
         console.log("addEventListener track:", event);
       });
 
-      peer.addEventListener("connectionstatechange", function (event) {
+      peer.addEventListener("connectionstatechange", async function (event) {
         switch (peer.connectionState) {
           case "connected":
             console.log(
@@ -213,8 +239,10 @@ function Main() {
             break;
           case "disconnected":
             setIsOnCall(false);
+            await hangUp();
           case "failed":
             setIsOnCall(false);
+            await hangUp();
             console.error("Connection state is failed/disconnected.");
             break;
         }
@@ -234,6 +262,7 @@ function Main() {
 
   const hangUp = async () => {
     if (streamRef && streamRef.current) {
+      console.log("Stopping tracks!");
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }

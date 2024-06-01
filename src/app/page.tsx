@@ -19,6 +19,7 @@ import {
 } from "@iconscout/react-unicons";
 
 import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
+import { User, getAuth, signInAnonymously } from "firebase/auth";
 
 import SongPlayer from "./comps/SongPlayer";
 import SongListSearchable from "./comps/songListSearchable";
@@ -41,8 +42,8 @@ const partyName = CONFIG["partyName"];
 const WSURL = CONFIG["wss_url"];
 const host = CONFIG["host"];
 const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
 const CMD = new Commands();
-
 const PLAYERNAME_LEFT = "p1";
 const PLAYERNAME_RIGHT = "p2";
 
@@ -64,6 +65,7 @@ const Home: React.FC = () => {
   const micStreamRef = useRef<HTMLAudioElement | null>(null);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const setlistsRef = useRef<Setlist[]>([] as Setlist[]);
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
@@ -296,6 +298,30 @@ const Home: React.FC = () => {
     }
   };
 
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((fbUser) => {
+      if (fbUser) {
+        setUser(fbUser);
+      } else {
+        setUser(null);
+      }
+    });
+
+    if (!user) {
+      signInAnonymously(auth)
+        .then((creds) => {
+          console.log("Signing in res: ", creds);
+          setUser(creds.user);
+        })
+        .catch((err) => {
+          console.log("Error signing in!");
+        });
+    }
+    return () => unsub();
+  }, [user]);
+
   useEffect(() => {
     const setListPath = `setlists/${partyName}/setlists`;
     console.log("loading setlists: ", setListPath);
@@ -345,6 +371,28 @@ const Home: React.FC = () => {
 
   const initLoadingRef = useRef(false);
 
+  const checkRemTime = () => {
+    // Set an interval to check the current playback time every 10 seconds
+    if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
+
+    checkIntervalRef.current = setInterval(function () {
+      if (currentPlayerRef.current) {
+        var currentTime = currentPlayerRef.current.seek(); // Get the current playback time in seconds
+        var timeRemaining = currentPlayerRef.current.duration() - currentTime;
+        console.log("Time remaining: " + timeRemaining.toFixed(2) + " seconds");
+
+        // If the remaining time is less than 10 seconds, log it to the console
+        if (timeRemaining <= 10) {
+          console.log(
+            "The song will end in " + timeRemaining.toFixed(2) + " seconds!"
+          );
+          masterNext();
+          //  clearInterval(checkInterval); // Stop checking once we are within the last 10 seconds
+        }
+      }
+    }, 10000); // Check every 10 seconds
+  };
+
   const setNewPlayer = (
     playerName: string,
     newSong: SongProps,
@@ -374,6 +422,7 @@ const Home: React.FC = () => {
     newPlayer?.once("load", function () {
       const dur = newPlayer.duration();
 
+      checkRemTime();
       if (playerName === PLAYERNAME_LEFT) {
         setLeftDuration(dur);
         leftPlayerRef.current = newPlayer;
@@ -385,7 +434,9 @@ const Home: React.FC = () => {
       }
     });
 
-    //   newPlayer.on("", () => {});
+    newPlayer.on("end", () => {
+      masterNext();
+    });
 
     // setPlayer(newPlayer);
   };

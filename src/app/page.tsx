@@ -851,7 +851,8 @@ const Home: React.FC = () => {
   return (
     <div
       id="pageRoot"
-      className="flex min-h-screen h-screen max-h-screen  flex-col items-center justify-between ml-8 mr-8"
+      style={{ background: "black" }}
+      className="flex min-h-screen h-screen max-h-screen bg-slate-900 flex-col items-center justify-between ml-8 mr-8"
     >
       <audio id="audioPlayer" controls ref={micStreamRef}></audio>
       <div className="flex flex-col justify-center  w-full h-3/6 max-h-3/6 min-h-3/6 ">

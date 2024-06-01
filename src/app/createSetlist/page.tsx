@@ -6,13 +6,16 @@ import fbApp from "../utils/firebase";
 import SongListSearchable from "./../comps/songListSearchable";
 import SongListOnDeck from "./../comps/songListOnDeck";
 import config from "../../../config.json";
+
+import CIcon from "@coreui/icons-react";
 import {
-  UilPlayCircle,
-  UilPauseCircle,
-  UilArrowLeft,
-  UilArrowRight,
-  UilMultiply,
-} from "@iconscout/react-unicons";
+  cilMediaPlay,
+  cilMediaPause,
+  cilArrowLeft,
+  cilArrowRight,
+  cilX,
+} from "@coreui/icons";
+
 import {
   collection,
   deleteDoc,
@@ -20,9 +23,10 @@ import {
   getDocs,
   getFirestore,
 } from "firebase/firestore/lite";
+import { User, getAuth, signInAnonymously } from "firebase/auth";
 
 import ActionCancelModal from "./../comps/modals/ActionCancelModal";
-import { DEFAULT_SONG, getSongs } from "../utils/utils";
+import { DEFAULT_SONG, MD_BTN_SIZE, getSongs } from "../utils/utils";
 
 /**
  *
@@ -32,6 +36,7 @@ import { DEFAULT_SONG, getSongs } from "../utils/utils";
  */
 
 const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
 const host = config["host"];
 const partyName = config["partyName"];
 
@@ -42,6 +47,30 @@ const Home = () => {
   const [leftDuration, setLeftDuration] = useState(0);
   const leftDurationRef = useRef(0);
   const [isLeftPlaying, setIsLeftPlaying] = useState(false);
+
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((fbUser) => {
+      if (fbUser) {
+        setUser(fbUser);
+      } else {
+        setUser(null);
+      }
+    });
+
+    if (!user) {
+      signInAnonymously(auth)
+        .then((creds) => {
+          console.log("Signing in res: ", creds);
+          setUser(creds.user);
+        })
+        .catch((err) => {
+          console.log("Error signing in!");
+        });
+    }
+    return () => unsub();
+  }, [user]);
 
   const setNewPlayer = (newSong: SongProps) => {
     console.log(
@@ -393,9 +422,19 @@ const Home = () => {
       <div className="flex flex-col justify-center  w-full h-1/6 max-h-1/6 min-h-1/6 ">
         <div className="flex w-full justify-center items-center space-x-24 h-3/6">
           {isLeftPlaying ? (
-            <UilPauseCircle size="120" color="#61DAFB" onClick={masterPause} />
+            <CIcon
+              icon={cilMediaPause}
+              width={MD_BTN_SIZE * 2}
+              color="#61DAFB"
+              onClick={masterPause}
+            />
           ) : (
-            <UilPlayCircle size="120" color="#61DAFB" onClick={masterPlay} />
+            <CIcon
+              icon={cilMediaPlay}
+              width={MD_BTN_SIZE * 2}
+              color="#61DAFB"
+              onClick={masterPlay}
+            />
           )}
         </div>
       </div>
@@ -424,11 +463,11 @@ const Home = () => {
               onPointerLeave={() => handleMouseLeave()}
               className="flex-1 flex justify-center"
             >
-              <UilArrowLeft
-                size="50"
+              <CIcon
+                icon={cilArrowLeft}
+                size="xl"
                 color="#61DAFB"
                 onClick={() => {
-                  console.log("Scrolling: ", setListScrollRef.current);
                   setListScrollRef.current?.scrollBy({
                     left: -50,
                     behavior: "smooth",
@@ -471,8 +510,9 @@ const Home = () => {
                         </p>
                         <div>
                           {setlist.title !== "All Songs" ? (
-                            <UilMultiply
-                              size="24"
+                            <CIcon
+                              icon={cilX}
+                              size="xl"
                               color="#be123c"
                               onClick={() => {
                                 setRmSetlist(setlist.title);
@@ -500,11 +540,11 @@ const Home = () => {
               onPointerLeave={() => handleMouseLeave()}
               className="flex-1  flex justify-center"
             >
-              <UilArrowRight
-                size="50"
+              <CIcon
+                icon={cilArrowRight}
+                size="xl"
                 color="#61DAFB"
                 onClick={() => {
-                  console.log("Scrolling: ", setListScrollRef.current);
                   setListScrollRef.current?.scrollBy({
                     left: 50,
                     behavior: "smooth",
@@ -513,26 +553,7 @@ const Home = () => {
               />
             </div>
           </div>
-          {/*
-          <div className="flex flex-auto h-5/6 overflow-y-auto">
-            {setlistFileNames && setlistFileNames[curSetListIdx] ? (
-              <SongListSearchable
-                // hidden={idx !== curSetListIdx}
-                hidden={false}
-                key={`${setlistFileNames[curSetListIdx].title}_setlist`}
-                title={setlistFileNames[curSetListIdx].title}
-                songs={setlistFileNames[curSetListIdx].songs ?? []}
-                onDragStart={onDragStart}
-                setNewPlayer={setNewPlayer}
-                masterPause={masterPause}
-                leftPlayerRef={leftPlayerRef}
-                leftSong={leftSong}
-                isLeftPlaying={isLeftPlaying}
-              />
-            ) : (
-              <></>
-            )}
-          </div> */}
+
           <div className="flex flex-auto h-5/6 overflow-y-auto">
             {setlistFileNames ? (
               setlistFileNames.map((setlist: Setlist, idx: number) => {

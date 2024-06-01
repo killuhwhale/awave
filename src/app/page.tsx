@@ -10,13 +10,15 @@ import React, {
 
 import { Howl } from "howler";
 
+import CIcon from "@coreui/icons-react";
 import {
-  UilPlayCircle,
-  UilPauseCircle,
-  UilSkipForwardAlt,
-  UilArrowLeft,
-  UilArrowRight,
-} from "@iconscout/react-unicons";
+  cilMediaPlay,
+  cilMediaPause,
+  cilMediaSkipForward,
+  cilMediaSkipBackward,
+  cilArrowLeft,
+  cilArrowRight,
+} from "@coreui/icons";
 
 import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
 import { User, getAuth, signInAnonymously } from "firebase/auth";
@@ -46,6 +48,7 @@ const auth = getAuth(fbApp);
 const CMD = new Commands();
 const PLAYERNAME_LEFT = "p1";
 const PLAYERNAME_RIGHT = "p2";
+const TIME_REMAINING_BEFORE_PLAYING_NEXT = 19;
 
 const Home: React.FC = () => {
   const currentPlayerRef = useRef<Howl | null>();
@@ -382,7 +385,7 @@ const Home: React.FC = () => {
         console.log("Time remaining: " + timeRemaining.toFixed(2) + " seconds");
 
         // If the remaining time is less than 10 seconds, log it to the console
-        if (timeRemaining <= 10) {
+        if (timeRemaining <= TIME_REMAINING_BEFORE_PLAYING_NEXT) {
           console.log(
             "The song will end in " + timeRemaining.toFixed(2) + " seconds!"
           );
@@ -898,6 +901,7 @@ const Home: React.FC = () => {
     }
     setShowSetlistToLoadConfirm(false);
   };
+  const LG_BTN_SIZE = 140;
 
   return (
     <div
@@ -965,17 +969,33 @@ const Home: React.FC = () => {
         </div>
 
         <div className="flex w-full justify-center items-center space-x-24 h-3/6">
-          {isLeftPlaying || isRightPlaying ? (
-            <UilPauseCircle size="120" color="#61DAFB" onClick={masterPause} />
+          <CIcon
+            icon={
+              isLeftPlaying || isRightPlaying ? cilMediaPause : cilMediaPlay
+            }
+            height={LG_BTN_SIZE}
+            width={LG_BTN_SIZE}
+            color="#61DAFB"
+            onClick={isLeftPlaying || isRightPlaying ? masterPause : masterPlay}
+          />
+          {/* {isLeftPlaying || isRightPlaying ? (
           ) : (
-            <UilPlayCircle
-              size="120"
+            <CIcon
+              icon={cilMediaPlay}
+              height={LG_BTN_SIZE}
+              width={LG_BTN_SIZE}
               color="#61DAFB"
               id="mainPlay"
               onClick={masterPlay}
             />
-          )}
-          <UilSkipForwardAlt size="120" color="#61DAFB" onClick={masterNext} />
+          )} */}
+          <CIcon
+            icon={cilMediaSkipForward}
+            height={LG_BTN_SIZE}
+            width={LG_BTN_SIZE}
+            color="#61DAFB"
+            onClick={masterNext}
+          />
         </div>
       </div>
 
@@ -1006,11 +1026,11 @@ const Home: React.FC = () => {
               onPointerLeave={() => handleMouseLeave()}
               className="flex-1 flex justify-center"
             >
-              <UilArrowLeft
-                size="50"
+              <CIcon
+                icon={cilArrowLeft}
+                size="lg"
                 color="#61DAFB"
                 onClick={() => {
-                  console.log("Scrolling: ", setListScrollRef.current);
                   setListScrollRef.current?.scrollBy({
                     left: -50,
                     behavior: "smooth",
@@ -1064,11 +1084,11 @@ const Home: React.FC = () => {
               onPointerLeave={() => handleMouseLeave()}
               className="flex-1  flex justify-center"
             >
-              <UilArrowRight
-                size="50"
+              <CIcon
+                icon={cilArrowRight}
+                size="lg"
                 color="#61DAFB"
                 onClick={() => {
-                  console.log("Scrolling: ", setListScrollRef.current);
                   setListScrollRef.current?.scrollBy({
                     left: 50,
                     behavior: "smooth",
@@ -1080,7 +1100,7 @@ const Home: React.FC = () => {
           <div className="flex flex-auto h-5/6 overflow-y-auto">
             {combinedSetlists.map((setlist: Setlist, idx: number) => {
               return !setlist.songs ? (
-                <></>
+                <div key={`${idx}_SongListSearchable`}></div>
               ) : (
                 <SongListSearchable
                   key={`${idx}_SongListSearchable`}

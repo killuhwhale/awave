@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { UilMultiply } from "@iconscout/react-unicons";
+
+import CIcon from "@coreui/icons-react";
+import { cilX } from "@coreui/icons";
 
 const SongListOnDeck = ({
   songs,
@@ -88,10 +90,11 @@ const SongListOnDeck = ({
                 <p>{song.src}</p>
               </div>
               <div className="w-1/12 justify-center content-center flex items-center align-middle">
-                <UilMultiply
+                <CIcon
+                  icon={cilX}
+                  size="xl"
                   onClick={() => confirmRemoveOnDeckSong(song)}
                   className=" hidden group-hover:block"
-                  size="35"
                   color="#be123c"
                 />
               </div>

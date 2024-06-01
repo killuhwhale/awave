@@ -10,7 +10,8 @@
     "ts:check": "tsc"
   },
   "dependencies": {
-    "@iconscout/react-unicons": "^2.0.2",
+    "@coreui/icons": "^3.0.1",
+    "@coreui/icons-react": "^2.2.1",
     "firebase": "^10.11.0",
     "firestore": "^1.1.6",
     "howler": "^2.2.4",

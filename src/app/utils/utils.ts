@@ -26,6 +26,8 @@ export function rtcMsg(partyName: string, secretCode: string, rtcData: any) {
   };
 }
 
+export const MD_BTN_SIZE = 36;
+
 function cleanSongSource(songSrc: string): string {
   return encodeURIComponent(songSrc);
 }

@@ -6,14 +6,16 @@ import React, {
   ChangeEvent,
   useLayoutEffect,
 } from "react";
+
+import { MD_BTN_SIZE, debounce, filter, filterOptions } from "../utils/utils";
+import CIcon from "@coreui/icons-react";
 import {
-  UilPlayCircle,
-  UilPauseCircle,
-  UilFileImport,
-  UilImport,
-  UilExport,
-} from "@iconscout/react-unicons";
-import { debounce, filter, filterOptions } from "../utils/utils";
+  cilMediaPause,
+  cilMediaPlay,
+  cilVerticalAlignBottom,
+  cilVerticalAlignTop,
+  cilX,
+} from "@coreui/icons";
 
 import CONFIG from "../../../config.json";
 
@@ -177,8 +179,9 @@ const SongListSearchable = ({
               onClick={confirmLoadSetlist}
               className="cursor-pointer flex items-center"
             >
-              <UilFileImport
-                size="35"
+              <CIcon
+                icon={cilVerticalAlignBottom}
+                width={MD_BTN_SIZE * 1.5}
                 className="bg-emerald-400 hover:bg-emerald-700 text-slate-200 font-bold pl-1 pr-1"
               />
               <p className="pl-2">Load</p>
@@ -188,8 +191,9 @@ const SongListSearchable = ({
               onClick={downloadSetlist}
               className="cursor-pointer flex items-center"
             >
-              <UilExport
-                size="35"
+              <CIcon
+                icon={cilVerticalAlignTop}
+                width={MD_BTN_SIZE * 1.5}
                 className="bg-emerald-400 hover:bg-emerald-700 text-slate-200 font-bold pl-1 pr-1"
               />
               <p className="pl-2">Upload To Firebase</p>
@@ -243,18 +247,20 @@ const SongListSearchable = ({
                   leftPlayerRef?.current?.playing() &&
                   leftSong &&
                   leftSong.src === song.src ? (
-                    <UilPauseCircle
+                    <CIcon
+                      icon={cilMediaPause}
+                      width={MD_BTN_SIZE * 0.75}
                       className="mr-4 hover:text-emerald-700 cursor-pointer"
-                      size="40"
                       onClick={() => {
                         // setNewPlayer(song);
                         if (masterPause) masterPause();
                       }}
                     />
                   ) : (
-                    <UilPlayCircle
+                    <CIcon
+                      icon={cilMediaPlay}
+                      width={MD_BTN_SIZE * 0.75}
                       className="mr-4 hover:text-emerald-700 cursor-pointer"
-                      size="40"
                       onClick={() => {
                         // if (masterPause) masterPause();
                         setNewPlayer(song);

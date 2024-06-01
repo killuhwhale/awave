@@ -1,6 +1,10 @@
 "use client";
 import React, { useEffect } from "react";
-import { UilPlay } from "@iconscout/react-unicons";
+
+import CIcon from "@coreui/icons-react";
+import { cilMediaPlay } from "@coreui/icons";
+import { MD_BTN_SIZE } from "../utils/utils";
+
 const SongPlayer = ({
   song,
   bgColor,
@@ -55,11 +59,13 @@ const SongPlayer = ({
     >
       <div>
         <div className="w-full justify-center items-center">
-          <div className="h-[22px]">
+          <div className="h-[42px] mb-2">
             {isPlaying ? (
-              <UilPlay
+              <CIcon
+                icon={cilMediaPlay}
+                height={MD_BTN_SIZE}
+                width={MD_BTN_SIZE}
                 className="text-center w-full"
-                size="20"
                 color="#61DAFB"
               />
             ) : (

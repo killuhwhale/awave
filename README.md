@@ -7,8 +7,6 @@ cd ~/ws_node/awave && npm run dev
 ```
 
 #  TODO()
-1. Remote start - wssClient tracking PID of python browser client
-2. Browser Client - Needs to go fullscreen and close Browser Dialog "This is being controlled by automation"
 3. [Security] Check TURN server with credentials; need to lock down.
 4. [Performance_Testing] Test Large Setlist 5k songs? and playing for 5 hours straight
 5. Add fixIconScout.sh to build steps
@@ -33,8 +31,14 @@ cd ./awave/src/fileServer && npm install
 
 
 
+
+
 # Generate SSL
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+
+# Build ios
+
+bash build.sh android && eas build -p ios
 
 # Build Android
 cd src/mobile/awave
@@ -43,6 +47,7 @@ bash build.sh android &&  JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  eas buil
 
 ## Build APK from AAB
 java -jar ~/Downloads/bundletool-all-1.16.0.jar build-apks --bundle=/home/killuh/ws_node/awave/src/mobile/awave/*.aab --output=awave.apks --mode=universal
+unzip awave.apks -d .
 
 ## Extract APK from .apks created from bundletool and ADB install
 

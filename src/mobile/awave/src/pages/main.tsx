@@ -22,7 +22,7 @@ import {
   rtcMsg,
 } from "@root/utils/utils";
 
-import config from "@root/utils/config"
+import config from "@root/utils/config";
 import CMD from "@root/utils/helpers";
 import { User, getAuth, signInAnonymously } from "firebase/auth";
 
@@ -175,7 +175,7 @@ function Main() {
 
       peer.addEventListener("icecandidate", (event) => {
         console.log("onCandidate:", event, event.candidate);
-        if (event.candidate && wsRef.current.readyState === WebSocket.OPEN) {
+        if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current?.send(
             JSON.stringify(
               rtcMsg(partyName, "s3cr3t", {
@@ -207,7 +207,7 @@ function Main() {
         try {
           const offer = await peer.createOffer(sessionConstraints);
           await peer.setLocalDescription(new RTCSessionDescription(offer));
-          console.log("Sending offer: ", offer, wsRef.current.readyState);
+          console.log("Sending offer: ", offer, wsRef.current?.readyState);
           wsRef.current?.send(
             JSON.stringify({
               ...rtcMsg(partyName, "s3cr3t", {
@@ -331,7 +331,7 @@ function Main() {
 
       wss.onerror = (error) => {
         console.log("WebSocket Error ", error);
-        if (wsRef.current && wsRef.current.readyState !== WebSocket.OPEN) {
+        if (wsRef.current && wsRef.current?.readyState !== WebSocket.OPEN) {
           wsRef.current = null;
         }
       };
@@ -398,7 +398,7 @@ function Main() {
         volAmount,
       };
       console.log("Command: ", cmd);
-      wsRef.current.send(JSON.stringify(cmd));
+      wsRef.current?.send(JSON.stringify(cmd));
     }
   };
 
@@ -470,18 +470,196 @@ function Main() {
       .catch((err) => console.error(err));
   }, [partyName]);
 
-  const onCallColor = isOnCall ? "red" : "green";
+  const onCallColor = isOnCall ? "#9f1239" : "#166534";
   const onCallText = isOnCall ? "Connected" : "Not Connected";
   return (
-    <ScrollView
-      id="mainscroll"
-      style={{ flex: 1 }}
-      contentContainerStyle={{ flexGrow: 1 }}
-    >
-      <View id="row1" style={{ flex: 2, flexDirection: "column" }}>
-        <Text style={{ fontSize: 24, color: "white", marginBottom: 12 }}>
-          Connection Details
-        </Text>
+    <View style={{ height: "100%", paddingTop: 42, marginBottom: 20 }}>
+      <ScrollView
+        id="mainscroll"
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        <View
+          id="row1"
+          style={{
+            flex: 2,
+            flexDirection: "column",
+            padding: 8,
+            marginTop: 8,
+            marginBottom: 8,
+          }}
+        >
+          <Text style={{ fontSize: 24, color: "white", marginBottom: 12 }}>
+            Connection Details
+          </Text>
+
+          <View style={{ flex: 1, flexDirection: "row", padding: 8 }}>
+            <View style={{ flex: 1, flexDirection: "column" }}>
+              <Text style={{ textAlign: "center", color: "white" }}>
+                Party Name
+              </Text>
+              <TextInput
+                style={{
+                  width: "100%",
+                  backgroundColor: "black",
+                  color: "white",
+                  padding: 4,
+                }}
+                placeholder="Party Name"
+                value={partyName}
+                onChange={(ev) => {
+                  setPartyName(ev.nativeEvent.text);
+                  updatePartyName(ev.nativeEvent.text, secretCode);
+                }}
+              />
+            </View>
+
+            <View style={{ flex: 1, flexDirection: "column" }}>
+              <Text style={{ textAlign: "center", color: "white" }}>
+                Secret
+              </Text>
+              <TextInput
+                style={{
+                  width: "100%",
+                  backgroundColor: "black",
+                  color: "white",
+                  padding: 4,
+                }}
+                placeholder="Secret Code"
+                value={secretCode}
+                onChange={(ev) => {
+                  setSecretCode(ev.nativeEvent.text);
+                  updateSecretCode(partyName, ev.nativeEvent.text);
+                }}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View
+          id="row2"
+          style={{ flex: 3, padding: 8, marginTop: 8, marginBottom: 8 }}
+        >
+          <Text style={{ fontSize: 24, color: "white" }}>Microphone</Text>
+          <View
+            style={{
+              backgroundColor: onCallColor,
+              borderRadius: 12,
+              justifyContent: "center",
+              alignContent: "center",
+              alignItems: "center",
+              padding: 12,
+            }}
+          >
+            <Text
+              style={{
+                textAlign: "center",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            >
+              {onCallText}
+            </Text>
+          </View>
+
+          {isOnCall ? (
+            <View style={{ margin: 4, backgroundColor: "#be123c" }}>
+              <Button title="Hang Up" onPress={hangUp} color="white" />
+            </View>
+          ) : (
+            <View style={{ margin: 4, backgroundColor: "#0e7490" }}>
+              <Button title="Call" onPress={callMusicPlayer} color="white" />
+            </View>
+          )}
+        </View>
+
+        <View
+          id="row3"
+          style={{
+            flex: 4,
+            width: "100%",
+            padding: 8,
+            marginTop: 8,
+            marginBottom: 8,
+          }}
+        >
+          <Text style={{ fontSize: 24, color: "white" }}>Controls</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
+            <CTLBTN fn={sendPlay} text="Play" />
+            <CTLBTN fn={sendPause} text="Pause" />
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
+            <CTLBTN fn={sendPause} text="Pause" />
+            <CTLBTN fn={sendNext} text="Next" />
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
+            <CTLBTN fn={sendVolDown} text="Vol Down" />
+            <CTLBTN fn={sendVolUp} text="Vol Up" />
+          </View>
+        </View>
+
+        <View style={{ flex: 4, padding: 8, marginTop: 8, marginBottom: 8 }}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, justifyContent: "center" }}>
+              <Text style={{ fontSize: 24, color: "white" }}>Setlist</Text>
+              <Text style={{ fontSize: 16, color: "white" }}>
+                Current Setlist: {currentSetlist?.title}
+              </Text>
+            </View>
+            <View style={{ flex: 3, gap: 10 }}>
+              {setlists.map((sl, idx) => {
+                console.log("Setlist: ", sl);
+                return (
+                  <View
+                    key={`sl_${idx}`}
+                    style={{
+                      borderRadius: 8,
+                      backgroundColor:
+                        currentSetlist?.title === sl.title
+                          ? "#166534"
+                          : "black",
+                      padding: 8,
+                    }}
+                  >
+                    <TouchableHighlight onPress={() => setCurrentSetlist(sl)}>
+                      <Text
+                        style={{
+                          color:
+                            sl.order == currentSetlist?.order
+                              ? "white"
+                              : "grey",
+                          textAlign: "center",
+                        }}
+                      >
+                        {sl.title}
+                      </Text>
+                    </TouchableHighlight>
+                  </View>
+                );
+              })}
+              <Button title="Load Current Setlist" onPress={sendLoadSetlist} />
+            </View>
+          </View>
+        </View>
+
         <View style={{ flex: 1, flexDirection: "row" }}>
           <View style={{ flex: 1, flexDirection: "column" }}>
             <Text style={{ textAlign: "center", color: "white" }}>Admin</Text>
@@ -501,133 +679,8 @@ function Main() {
             <Button title="Reset Player" onPress={resetPlayer} />
           </View>
         </View>
-        <View style={{ flex: 1, flexDirection: "row" }}>
-          <View style={{ flex: 1, flexDirection: "column" }}>
-            <Text style={{ textAlign: "center", color: "white" }}>
-              Party Name
-            </Text>
-            <TextInput
-              style={{
-                width: "100%",
-                backgroundColor: "black",
-                color: "white",
-                padding: 4,
-              }}
-              placeholder="Party Name"
-              value={partyName}
-              onChange={(ev) => {
-                setPartyName(ev.nativeEvent.text);
-                updatePartyName(ev.nativeEvent.text, secretCode);
-              }}
-            />
-          </View>
-
-          <View style={{ flex: 1, flexDirection: "column" }}>
-            <Text style={{ textAlign: "center", color: "white" }}>Secret</Text>
-            <TextInput
-              style={{
-                width: "100%",
-                backgroundColor: "black",
-                color: "white",
-                padding: 4,
-              }}
-              placeholder="Secret Code"
-              value={secretCode}
-              onChange={(ev) => {
-                setSecretCode(ev.nativeEvent.text);
-                updateSecretCode(partyName, ev.nativeEvent.text);
-              }}
-            />
-          </View>
-        </View>
-      </View>
-
-      <View id="row2" style={{ flex: 3 }}>
-        <Text style={{ fontSize: 24, color: "white" }}>Microphone</Text>
-        <View
-          style={{
-            backgroundColor: onCallColor,
-            borderRadius: 12,
-            justifyContent: "center",
-            alignContent: "center",
-            alignItems: "center",
-            padding: 12,
-          }}
-        >
-          <Text
-            style={{
-              textAlign: "center",
-              color: "white",
-              fontWeight: "bold",
-            }}
-          >
-            {onCallText}
-          </Text>
-        </View>
-        <View style={{ margin: 4 }}>
-          <Button title="Call" onPress={callMusicPlayer} />
-        </View>
-        <View style={{ margin: 4 }}>
-          <Button title="Hang Up" onPress={hangUp} color="#dc2626" />
-        </View>
-      </View>
-
-      <View id="row3" style={{ flex: 3 }}>
-        <Text style={{ fontSize: 24, color: "white" }}>Controls</Text>
-        <View style={{ flexDirection: "row" }}>
-          <CTLBTN fn={sendPlay} text="Play" />
-          <CTLBTN fn={sendPause} text="Pause" />
-        </View>
-        <View style={{ flexDirection: "row" }}>
-          <CTLBTN fn={sendPause} text="Pause" />
-          <CTLBTN fn={sendNext} text="Next" />
-        </View>
-        <View style={{ flexDirection: "row" }}>
-          <CTLBTN fn={sendVolDown} text="Vol Down" />
-          <CTLBTN fn={sendVolUp} text="Vol UP" />
-        </View>
-      </View>
-
-      <View style={{ flex: 3 }}>
-        <View style={{ flex: 1 }}>
-          <View style={{ flex: 1, justifyContent: "center" }}>
-            <Text style={{ fontSize: 24, color: "white" }}>Setlist</Text>
-            <Text style={{ fontSize: 16, color: "white" }}>
-              Current Setlist: {currentSetlist?.title}
-            </Text>
-          </View>
-          <View style={{ flex: 3, gap: 10 }}>
-            {setlists.map((sl, idx) => {
-              console.log("Setlist: ", sl);
-              return (
-                <View
-                  key={`sl_${idx}`}
-                  style={{
-                    borderRadius: 8,
-                    backgroundColor:
-                      currentSetlist?.title === sl.title ? "green" : "black",
-                    padding: 8,
-                  }}
-                >
-                  <TouchableHighlight onPress={() => setCurrentSetlist(sl)}>
-                    <Text
-                      style={{
-                        color:
-                          sl.order == currentSetlist?.order ? "white" : "grey",
-                        textAlign: "center",
-                      }}
-                    >
-                      {sl.title}
-                    </Text>
-                  </TouchableHighlight>
-                </View>
-              );
-            })}
-            <Button title="Load Current Setlist" onPress={sendLoadSetlist} />
-          </View>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

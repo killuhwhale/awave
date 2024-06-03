@@ -9,13 +9,13 @@ if [ -z "$1" ]; then
 fi
 
 # Determine which file to copy based on the argument
-if [ "$1" == "web" ]; then
-  cp ./src/utils//utils.web ./src/utils/utils.js
+if [ "$1" = "web" ]; then
+  cp ./src/utils/utils.web ./src/utils/utils.js
   echo "Copied utils.web to utils.js"
-elif [ "$1" == "android" ]; then
+elif [ "$1" = "android" ]; then
   cp ./src/utils/utils.android ./src/utils/utils.js
   echo "Copied utils.android to utils.js"
-elif [ "$1" == "ios" ]; then
+elif [ "$1" = "ios" ]; then
   cp ./src/utils/utils.ios ./src/utils/utils.js
   echo "Copied utils.ios to utils.js"
 else

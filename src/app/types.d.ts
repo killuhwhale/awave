@@ -6,6 +6,7 @@ type CmdMsg = {
   setlist: string;
   volAmount: number;
   clientType?: string;
+  song?: SongProps;
 };
 
 type SongProps = {
@@ -54,6 +55,7 @@ type SongPlayerProps = {
   isPlaying: boolean;
   setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 
+  setNewPlayer(playerName: string, newSong: SongProps, init?: boolean): void;
   nextSong(playerName: string): void;
 };
 

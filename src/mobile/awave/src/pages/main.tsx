@@ -23,8 +23,9 @@ import {
 } from "@root/utils/utils";
 
 import config from "@root/utils/config";
-import CMD from "@root/utils/helpers";
+import { CMD, debounce } from "@root/utils/helpers";
 import { User, getAuth, signInAnonymously } from "firebase/auth";
+import SongList from "@root/comps/SongList";
 
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
@@ -56,16 +57,6 @@ const getData = async () => {
 //   order: number;
 //   title: string;
 // };
-
-const debounce = (fn, timeout = 500) => {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn.apply(this, args);
-    }, timeout);
-  };
-};
 
 const CTLBTN: React.FC<{ fn: any; text: string }> = ({ fn, text }) => {
   return (
@@ -446,6 +437,22 @@ function Main() {
     sendCommand(CMD.LOADSETLIST, currentSetlist?.title, 0);
   };
 
+  const sendSongToPlayer = (song: SongProps) => {
+    if (wsRef.current) {
+      const cmd = {
+        cmdType: 1,
+        cmd: CMD.cmds[CMD.SENDSONG],
+        partyName,
+        secretCode,
+        setlist: "",
+        volAmount: 0,
+        song,
+      };
+
+      wsRef.current?.send(JSON.stringify(cmd));
+    }
+  };
+
   useEffect(() => {
     if (!partyName) return;
     const setListPath = `setlists/${partyName}/setlists`;
@@ -473,7 +480,14 @@ function Main() {
   const onCallColor = isOnCall ? "#9f1239" : "#166534";
   const onCallText = isOnCall ? "Connected" : "Not Connected";
   return (
-    <View style={{ height: "100%", paddingTop: 42, marginBottom: 20 }}>
+    <View
+      style={{
+        height: "100%",
+        width: "100%",
+        paddingTop: 42,
+        marginBottom: 20,
+      }}
+    >
       <ScrollView
         id="mainscroll"
         style={{ flex: 1 }}
@@ -564,11 +578,11 @@ function Main() {
 
           {isOnCall ? (
             <View style={{ margin: 4, backgroundColor: "#be123c" }}>
-              <Button title="Hang Up" onPress={hangUp} color="white" />
+              <Button title="Hang Up" onPress={hangUp} />
             </View>
           ) : (
             <View style={{ margin: 4, backgroundColor: "#0e7490" }}>
-              <Button title="Call" onPress={callMusicPlayer} color="white" />
+              <Button title="Call" onPress={callMusicPlayer} />
             </View>
           )}
         </View>
@@ -616,6 +630,11 @@ function Main() {
           </View>
         </View>
 
+        <View style={{ flex: 10, padding: 8, marginTop: 8, marginBottom: 8 }}>
+          <View style={{ maxHeight: 350 }}>
+            <SongList sendSongToPlayer={sendSongToPlayer} />
+          </View>
+        </View>
         <View style={{ flex: 4, padding: 8, marginTop: 8, marginBottom: 8 }}>
           <View style={{ flex: 1 }}>
             <View style={{ flex: 1, justifyContent: "center" }}>

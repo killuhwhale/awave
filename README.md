@@ -29,7 +29,33 @@ cd ./awave/src/fileServer && npm install
  systemctl --user start wssMusicClient.service
  systemctl --user stop wssMusicClient.service
 
+# Song System
+All songs are under root dir: config['musicDir']
+We will write to a file so that on start up and refreshes, it doesnt take time to index all songs
+  - call node indexSongs.js
+  - Writes to config['songFile']
 
+FileServer then will read this file and return results as list of relative file paths.
+
+Then we will also store this data in Firebase by Device Name
+Firebase => /music/{deviceName}/songs/songObject
+
+
+
+
+## How to update
+Update music files at config['musicDir]
+Write to file at config['songFile'] from parsing music dir // node indexSongs.js
+Start fileserver
+Device name reflects storage device aka songs in config['musicDir']
+Send request to save file created in step 1 at firebase via music/{deviceName}/songs/* (reads from config['songFile'])
+Send request to clear collection at firebase via music/{deviceName}/songs/*
+
+node indexSongs.js
+node src/fileServer/src/server.js
+Change device name in ../../config.js
+curl http://localhost:3001/save
+curl http://localhost:3001/clear
 
 
 
@@ -38,7 +64,8 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -node
 
 # Build ios
 
-bash build.sh android && eas build -p ios
+bash build.sh ios && eas build -p ios
+Download .ipa and upload via Transporter app.
 
 # Build Android
 cd src/mobile/awave

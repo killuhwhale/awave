@@ -29,7 +29,13 @@ import SongListOnDeck from "./comps/songListOnDeck";
 import ActionCancelModal from "./comps/modals/ActionCancelModal";
 import fbApp from "./utils/firebase";
 
-import { DEFAULT_SONG, getSongs, isGoodSecret, rtcMsg } from "./utils/utils";
+import {
+  DEFAULT_SONG,
+  SongProp,
+  getSongs,
+  isGoodSecret,
+  rtcMsg,
+} from "./utils/utils";
 import Commands from "./utils/Commands";
 import CONFIG from "../../config.json";
 
@@ -269,6 +275,27 @@ const Home: React.FC = () => {
     // };
   };
 
+  const playRequestedSong = async (song: SongProps) => {
+    console.log("playing request song: ", song);
+
+    if (currentPlayerNameRef.current) {
+      if (currentPlayerNameRef.current == PLAYERNAME_LEFT) {
+        // Song is on left player cuirrently
+        // load song on right player
+
+        await setNewPlayer(PLAYERNAME_RIGHT, song, false);
+      }
+
+      if (currentPlayerNameRef.current == PLAYERNAME_RIGHT) {
+        // Song is on right player cuirrently
+        // load song on left player
+        await setNewPlayer(PLAYERNAME_LEFT, song, false);
+      }
+
+      masterNext();
+    }
+  };
+
   const executeCmd = (data: CmdMsg) => {
     switch (CMD.getCmd[data.cmd]) {
       case CMD.PLAY:
@@ -295,6 +322,10 @@ const Home: React.FC = () => {
       case CMD.LOADSETLIST:
         console.log("LoadSetlist!", data.setlist);
         unconfirmedLoadSetlist(data.setlist);
+        break;
+      case CMD.SENDSONG:
+        console.log("Song sent! Playing now: ", data.song);
+        playRequestedSong(SongProp(data.song?.fileName ?? ""));
         break;
       default:
         break;
@@ -401,47 +432,52 @@ const Home: React.FC = () => {
     newSong: SongProps,
     init = false
   ) => {
-    console.log("Attempting Loading new song and player");
+    return new Promise((res, rej) => {
+      console.log("Attempting Loading new song and player");
 
-    if (!newSong) return;
+      if (!newSong) return;
 
-    if (leftPlayerRef.current && playerName === PLAYERNAME_LEFT) {
-      leftPlayerRef.current.unload();
-    }
-    if (rightPlayerRef.current && playerName === PLAYERNAME_RIGHT) {
-      rightPlayerRef.current.unload();
-    }
-
-    const newPlayer = new Howl({
-      src: newSong.src,
-      html5: true, // Allows playing from a file/blob
-    });
-
-    if (init) {
-      currentPlayerNameRef.current = PLAYERNAME_LEFT;
-      currentPlayerRef.current = newPlayer;
-    }
-
-    newPlayer?.once("load", function () {
-      const dur = newPlayer.duration();
-
-      checkRemTime();
-      if (playerName === PLAYERNAME_LEFT) {
-        setLeftDuration(dur);
-        leftPlayerRef.current = newPlayer;
-        leftDurationRef.current = dur;
-      } else {
-        setRightDuration(newPlayer.duration());
-        rightPlayerRef.current = newPlayer;
-        rightDurationRef.current = dur;
+      if (leftPlayerRef.current && playerName === PLAYERNAME_LEFT) {
+        leftPlayerRef.current.unload();
       }
-    });
+      if (rightPlayerRef.current && playerName === PLAYERNAME_RIGHT) {
+        rightPlayerRef.current.unload();
+      }
 
-    newPlayer.on("end", () => {
-      masterNext();
-    });
+      const newPlayer = new Howl({
+        src: newSong.src,
+        html5: true, // Allows playing from a file/blob
+      });
 
-    // setPlayer(newPlayer);
+      if (init) {
+        currentPlayerNameRef.current = PLAYERNAME_LEFT;
+        currentPlayerRef.current = newPlayer;
+      }
+
+      newPlayer?.once("load", function () {
+        const dur = newPlayer.duration();
+
+        checkRemTime();
+        if (playerName === PLAYERNAME_LEFT) {
+          setLeftDuration(dur);
+          setLeftSong(newSong);
+          leftPlayerRef.current = newPlayer;
+          leftDurationRef.current = dur;
+        } else {
+          setRightDuration(newPlayer.duration());
+          setRightSong(newSong);
+          rightPlayerRef.current = newPlayer;
+          rightDurationRef.current = dur;
+        }
+        res("");
+      });
+
+      newPlayer.on("end", () => {
+        masterNext();
+      });
+
+      // setPlayer(newPlayer);
+    });
   };
 
   const switchCurrentPlayer = (playerName: string) => {
@@ -917,6 +953,7 @@ const Home: React.FC = () => {
               {leftSong ? (
                 <SongPlayer
                   key={`${leftSong.src}_p1`}
+                  setNewPlayer={setNewPlayer}
                   playerName={PLAYERNAME_LEFT}
                   playerRef={leftPlayerRef}
                   duration={leftDuration}
@@ -936,6 +973,7 @@ const Home: React.FC = () => {
               {rightSong ? (
                 <SongPlayer
                   key={`${rightSong.src}_p2`}
+                  setNewPlayer={setNewPlayer}
                   playerName={PLAYERNAME_RIGHT}
                   isPlaying={isRightPlaying}
                   setIsPlaying={setIsRightPlaying}

@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 
 import CIcon from "@coreui/icons-react";
 import { cilMediaPlay } from "@coreui/icons";
-import { MD_BTN_SIZE } from "../utils/utils";
+import { MD_BTN_SIZE, SongProp } from "../utils/utils";
 
 const SongPlayer = ({
   song,
@@ -16,6 +16,7 @@ const SongPlayer = ({
   setIsPlaying,
   playerRef,
   nextSong,
+  setNewPlayer,
 }: SongPlayerProps) => {
   useEffect(() => {
     playerRef.current?.volume(musicVol);
@@ -53,9 +54,37 @@ const SongPlayer = ({
     }
   };
 
+  const loadSong = (song: SongProps) => {
+    console.log("Loading song: ", song);
+    setNewPlayer(playerName, song, false);
+  };
+
+  const onDrop = (e: any) => {
+    e.preventDefault();
+    const dragType = e.dataTransfer.getData("type");
+    console.log("Drag type: ", dragType, typeof dragType);
+    if (["0", "1"].indexOf(dragType) == -1) return;
+
+    try {
+      const draggedSong = JSON.parse(
+        e.dataTransfer.getData("song")
+      ) as SongProps;
+      console.log("draggedSong:", draggedSong);
+      loadSong(draggedSong);
+    } catch (err) {
+      console.log("erro getting dragged song: ", err);
+    }
+  };
+
+  const onDragOver = (e: any) => {
+    e.preventDefault(); // Necessary to allow dropping
+  };
+
   return (
     <div
       className={`p-8 justify-center items-center flex h-full whitespace-nowrap text-center  text-ellipsis ${bgColor}`}
+      onDrop={onDrop}
+      onDragOver={onDragOver}
     >
       <div>
         <div className="w-full justify-center items-center">
@@ -73,8 +102,8 @@ const SongPlayer = ({
             )}
           </div>
           <p>
-            {song.name.slice(0, 52)}
-            {song.name.length > 52 ? "..." : ""}
+            {song.name.slice(0, 26)}
+            {song.name.length > 26 ? "..." : ""}
           </p>
           <p>
             <span className="text-rose-700 font-bold">

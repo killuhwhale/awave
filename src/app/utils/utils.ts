@@ -39,8 +39,9 @@ export const DEFAULT_SONG = {
 
 export function SongProp(fileName: string) {
   const name = fileName.split(".")[0];
+  const songName = name.split("/").slice(-1)[0];
   return {
-    name: name,
+    name: songName,
     fileName: fileName,
     src: `http://${CONFIG["host"]}:3001/${encodeURIComponent(fileName)}`,
   } as SongProps;

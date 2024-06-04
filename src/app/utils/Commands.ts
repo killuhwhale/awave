@@ -9,6 +9,7 @@ class Commands {
   VOLUP = "volup";
   VOLDOWN = "voldown";
   LOADSETLIST = "loadSetlist";
+  SENDSONG = "sendSong";
 
   getCmd: IndexedObject = {
     "1": this.PLAY,
@@ -17,6 +18,7 @@ class Commands {
     "4": this.VOLUP,
     "5": this.VOLDOWN,
     "6": this.LOADSETLIST,
+    "7": this.SENDSONG,
   };
 }
 

@@ -49,8 +49,6 @@ const SongListSearchable = ({
     setFilteredSongNamesDecoratedStings,
   ] = useState<Map<string, string>>(new Map());
 
-  // const [searchTerm, setSearchTerm] = useState("");
-
   useLayoutEffect(() => {
     if (!songs) return;
     setFilteredSongIdxs(
@@ -127,10 +125,6 @@ const SongListSearchable = ({
       console.log("Error adding setlist: ", err);
     }
   };
-
-  useEffect(() => {
-    console.log("SongListSearchable setlist change", title);
-  }, [title]);
 
   const [rmSong, setRmSong] = useState<SongProps | null>(null);
   const [showRmSong, setShowRmSong] = useState(false);

@@ -347,9 +347,14 @@ const Home: React.FC = () => {
 
     if (!user) {
       signInAnonymously(auth)
-        .then((creds) => {
+        .then(async (creds) => {
           console.log("Signing in res: ", creds);
           setUser(creds.user);
+          try {
+            await getSetlists();
+          } catch (err) {
+            console.log("Setlist err: ", err);
+          }
         })
         .catch((err) => {
           console.log("Error signing in!");
@@ -358,10 +363,10 @@ const Home: React.FC = () => {
     return () => unsub();
   }, [user]);
 
-  useEffect(() => {
+  const getSetlists = async () => {
     const setListPath = `setlists/${partyName}/setlists`;
     console.log("loading setlists: ", setListPath);
-    const _ = async () => {
+    try {
       console.log("Getting doc...");
       const setlistDocs = await getDocs(collection(db, setListPath));
       console.log("Got doc:", setlistDocs);
@@ -401,9 +406,10 @@ const Home: React.FC = () => {
       allSetlists.sort((a, b) => (a.order > b.order ? 1 : -1));
       setSetlists(allSetlists);
       setlistsRef.current = allSetlists;
-    };
-    _().then(() => {});
-  }, []);
+    } catch (err) {
+      console.log("Error getting setlist: ", err);
+    }
+  };
 
   const initLoadingRef = useRef(false);
 

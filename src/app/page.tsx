@@ -80,6 +80,16 @@ const Home: React.FC = () => {
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
 
   useEffect(() => {
+    document.addEventListener(
+      "touchstart",
+      function (event) {
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+  });
+
+  useEffect(() => {
     if (ws.current === null) {
       return connectToWebSocket();
     }

@@ -950,8 +950,10 @@ const Home: React.FC = () => {
       className="flex min-h-screen h-screen max-h-screen bg-slate-900 flex-col items-center justify-between ml-8 mr-8"
     >
       <audio id="audioPlayer" controls ref={micStreamRef}></audio>
-      <div className="flex flex-col justify-center  w-full h-3/6 max-h-3/6 min-h-3/6 ">
-        <div className="flex flex-col justify-center  w-full h-3/6 ">
+      <div className="flex flex-col justify-center  w-full h-1/6 max-h-1/6 min-h-1/6 ">
+        <div className="flex flex-col justify-center  w-full h-1/6 ">
+          {/* Row Song Player */}
+
           <div className="flex  w-full">
             <div className="w-1/2">
               {leftSong ? (
@@ -994,6 +996,7 @@ const Home: React.FC = () => {
               )}
             </div>
           </div>
+          {/* Row Balance Slider */}
           <div className="flex w-full flex-col items-center justify-center">
             <input
               className="w-3/4"
@@ -1009,18 +1012,25 @@ const Home: React.FC = () => {
             </p> */}
           </div>
         </div>
+      </div>
 
-        <div className="flex w-full justify-center items-center space-x-24 h-3/6">
-          <CIcon
-            icon={
-              isLeftPlaying || isRightPlaying ? cilMediaPause : cilMediaPlay
-            }
-            height={LG_BTN_SIZE}
-            width={LG_BTN_SIZE}
-            color="#61DAFB"
-            onClick={isLeftPlaying || isRightPlaying ? masterPause : masterPlay}
-          />
-          {/* {isLeftPlaying || isRightPlaying ? (
+      {/* Row On deck */}
+      <div className="flex  items-center justify-center w-full space-x-12 max-h-5/6 min-h-5/6 h-5/6">
+        <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">
+          {/* Row Play/ Pause */}
+          <div className="flex w-full justify-center items-center space-x-24 h-1/6">
+            <CIcon
+              icon={
+                isLeftPlaying || isRightPlaying ? cilMediaPause : cilMediaPlay
+              }
+              height={LG_BTN_SIZE}
+              width={LG_BTN_SIZE}
+              color="#61DAFB"
+              onClick={
+                isLeftPlaying || isRightPlaying ? masterPause : masterPlay
+              }
+            />
+            {/* {isLeftPlaying || isRightPlaying ? (
           ) : (
             <CIcon
               icon={cilMediaPlay}
@@ -1031,31 +1041,30 @@ const Home: React.FC = () => {
               onClick={masterPlay}
             />
           )} */}
-          <CIcon
-            icon={cilMediaSkipForward}
-            height={LG_BTN_SIZE}
-            width={LG_BTN_SIZE}
-            color="#61DAFB"
-            onClick={masterNext}
-          />
-        </div>
-      </div>
-
-      <div className="flex  items-center justify-center w-full space-x-12 max-h-3/6 min-h-3/6 h-3/6">
-        <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">
-          {onDeckSongs ? (
-            <SongListOnDeck
-              songs={onDeckSongs}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-              onDragStartRearrangeDeck={onDragStartRearrangeDeck}
-              onDragOverRearrangeDeck={onDragOverRearrangeDeck}
-              onDropRearrangeDeck={onDropRearrangeDeck}
-              confirmRemoveOnDeckSong={confirmRemoveOnDeckSong}
+            <CIcon
+              icon={cilMediaSkipForward}
+              height={LG_BTN_SIZE}
+              width={LG_BTN_SIZE}
+              color="#61DAFB"
+              onClick={masterNext}
             />
-          ) : (
-            <></>
-          )}
+          </div>
+
+          <div className="flex w-full justify-center items-center space-x-24 h-5/6">
+            {onDeckSongs ? (
+              <SongListOnDeck
+                songs={onDeckSongs}
+                onDragOver={onDragOver}
+                onDrop={onDrop}
+                onDragStartRearrangeDeck={onDragStartRearrangeDeck}
+                onDragOverRearrangeDeck={onDragOverRearrangeDeck}
+                onDropRearrangeDeck={onDropRearrangeDeck}
+                confirmRemoveOnDeckSong={confirmRemoveOnDeckSong}
+              />
+            ) : (
+              <></>
+            )}
+          </div>
         </div>
 
         <div className=" bg-neutral-800 w-1/2 text-emerald-300 text-sm font-bold h-full rounded-md ">

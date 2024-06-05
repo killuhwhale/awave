@@ -15,6 +15,10 @@ cd ~/ws_node/awave && npm run dev
     - Commands, RTC message and WSSTypes all in one spot and shared.
     - Remove hardcoded values like 420, player, controller
 
+# Host Device Setup
+- Disable Gestures https://extensions.gnome.org/extension/4049/disable-gestures-2021/
+
+
 # Setup Music Client (Chromebook)
 git clone
 Place Music in dir according to config

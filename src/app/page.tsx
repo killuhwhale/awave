@@ -38,6 +38,7 @@ import {
 } from "./utils/utils";
 import Commands from "./utils/Commands";
 import CONFIG from "../../config.json";
+import useInterceptBackNavigation from "./comps/interceptBackEvent";
 
 /**
  *
@@ -79,15 +80,14 @@ const Home: React.FC = () => {
   const setlistsRef = useRef<Setlist[]>([] as Setlist[]);
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
 
-  useEffect(() => {
-    document.addEventListener(
-      "touchstart",
-      function (event) {
-        event.preventDefault();
-      },
-      { passive: false }
-    );
-  });
+  const handleBackNavigation = () => {
+    // window.history.pushState(null, null, "http://localhost:3000/");
+    // const confirmed = window.confirm("Are you sure you want to go back?");
+    // if (!confirmed) {
+    // }
+  };
+
+  useInterceptBackNavigation(handleBackNavigation);
 
   useEffect(() => {
     if (ws.current === null) {

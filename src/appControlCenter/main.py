@@ -13,13 +13,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(mess
 
 # Set up Chrome options
 chrome_options = Options()
-chrome_options.add_argument("--start-maximized")  # Start the browser maximized
-chrome_options.add_argument("--disable-dev-shm-usage")  # Start the browser maximized
+# chrome_options.add_argument("--start-maximized")  # Start the browser maximized
+chrome_options.add_argument("--disable-dev-shm-usage")  #
 # chrome_options.add_argument("--no-sandbox")  # Start the browser maximized
-chrome_options.add_argument("--remote-debugging-port=9222")
+# chrome_options.add_argument("--remote-debugging-port=9222")
 chrome_options.add_argument("--kiosk")  # Full-screen mode without toolbars or URL bar
-chrome_options.add_argument("--disable-infobars")  # Disable info bars
-chrome_options.add_argument("--disable-extensions")  # Disable extensions
+# chrome_options.add_argument("--disable-infobars")  # Disable info bars
+# chrome_options.add_argument("--disable-extensions")  # Disable extensions
 
 # Initialize the Chrome driver @
 chrome_driver_path = "/opt/chromedriver"

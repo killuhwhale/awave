@@ -65,6 +65,9 @@ def run_process(cmd, env):
         try:
             output = process.stdout.readline()
             logging.info(f"{output=}")
+            if "Traceback (most recent call last):" in output:
+                output = process.stdout.readlines()
+                logging.info(f"{output=}")
         except Exception as err:
             print("Error decoding message and sending progress: ", err)
             output = process.stdout.readlines() + process.stderr.readline()

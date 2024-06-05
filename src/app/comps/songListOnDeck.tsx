@@ -86,8 +86,8 @@ const SongListOnDeck = ({
                   onDropRearrangeDeck(e, idx);
                 }}
               >
-                <p>{song.name}</p>
-                <p>{song.src}</p>
+                <p className="text-slate-300">{song.name}</p>
+                <p>{song.artist}</p>
               </div>
               <div className="w-1/12 justify-center content-center flex items-center align-middle">
                 <CIcon

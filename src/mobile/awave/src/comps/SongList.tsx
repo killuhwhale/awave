@@ -85,7 +85,9 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
     }
 
     // Updates filtered data.
-    const stringData = songs.map((song: SongProps) => song.name);
+    const stringData = songs.map(
+      (song: SongProps) => `${song.name} ${song.artist}`
+    );
     // console.log("Filter text: ", searchTerm, stringData);
     const options: filterOptions = {
       word: false,

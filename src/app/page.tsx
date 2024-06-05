@@ -54,7 +54,7 @@ const auth = getAuth(fbApp);
 const CMD = new Commands();
 const PLAYERNAME_LEFT = "p1";
 const PLAYERNAME_RIGHT = "p2";
-const TIME_REMAINING_BEFORE_PLAYING_NEXT = 19;
+const TIME_REMAINING_BEFORE_PLAYING_NEXT_DELAY = 19;
 
 const Home: React.FC = () => {
   const currentPlayerRef = useRef<Howl | null>();
@@ -325,7 +325,9 @@ const Home: React.FC = () => {
         break;
       case CMD.SENDSONG:
         console.log("Song sent! Playing now: ", data.song);
-        playRequestedSong(SongProp(data.song?.fileName ?? ""));
+        playRequestedSong(
+          SongProp(data.song?.fileName ?? "", data.song?.artist ?? "")
+        );
         break;
       default:
         break;
@@ -416,7 +418,7 @@ const Home: React.FC = () => {
         console.log("Time remaining: " + timeRemaining.toFixed(2) + " seconds");
 
         // If the remaining time is less than 10 seconds, log it to the console
-        if (timeRemaining <= TIME_REMAINING_BEFORE_PLAYING_NEXT) {
+        if (timeRemaining <= TIME_REMAINING_BEFORE_PLAYING_NEXT_DELAY) {
           console.log(
             "The song will end in " + timeRemaining.toFixed(2) + " seconds!"
           );
@@ -659,7 +661,7 @@ const Home: React.FC = () => {
   const [balance, setBalance] = useState(50);
   const balanceRef = useRef(50);
   const balanceIntervalRef = useRef<NodeJS.Timeout>();
-  const SLIDE_DURATION = 1776;
+  const SLIDE_DURATION = 1776 * 2.5; // Next DELAY
 
   const onVolmeShareChange: React.ChangeEventHandler<HTMLInputElement> = (
     ev: ChangeEvent<HTMLInputElement>
@@ -710,10 +712,6 @@ const Home: React.FC = () => {
     setTimeout(() => clearInterval(intervalId), SLIDE_DURATION);
   };
 
-  // useEffect(() => {
-
-  // }, []);
-
   const autoNextSong = (playerName: string) => {
     console.log("AUTONEXTSONG called.");
     const nextSong = getNextSong();
@@ -731,10 +729,10 @@ const Home: React.FC = () => {
 
       console.log("Setting left song for P1");
 
-      setTimeout(() => {
+      setTimeout(async () => {
         switchCurrentPlayer(PLAYERNAME_RIGHT);
         leftPlayerRef.current?.unload();
-        setNewPlayer(playerName, nextSong);
+        await setNewPlayer(playerName, nextSong);
         setLeftSong(nextSong);
       }, SLIDE_DURATION + 40);
 
@@ -745,12 +743,12 @@ const Home: React.FC = () => {
       setIsLeftPlaying(true);
       setIsRightPlaying(false);
 
-      console.log("Setting right song for P2");
+      console.log("Setting right song for LeftP2");
 
-      setTimeout(() => {
+      setTimeout(async () => {
         switchCurrentPlayer(PLAYERNAME_LEFT);
         rightPlayerRef.current?.unload();
-        setNewPlayer(playerName, nextSong);
+        await setNewPlayer(playerName, nextSong);
         setRightSong(nextSong);
       }, SLIDE_DURATION + 40);
     }
@@ -1000,9 +998,9 @@ const Home: React.FC = () => {
               disabled
               value={balance}
             ></input>
-            <p className="w-full text-center">
+            {/* <p className="w-full text-center">
               Bal: {parseInt(balance.toString())}
-            </p>
+            </p> */}
           </div>
         </div>
 

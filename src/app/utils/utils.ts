@@ -37,12 +37,14 @@ export const DEFAULT_SONG = {
   src: `http://${CONFIG["host"]}:3001/${cleanSongSource("Track 8.wav")}`,
 } as SongProps;
 
-export function SongProp(fileName: string) {
-  const name = fileName.split(".")[0];
+export function SongProp(fileName: string, artist: string) {
+  let name = fileName.split(".").slice(0, -1).join(".");
+
   const songName = name.split("/").slice(-1)[0];
   return {
     name: songName,
     fileName: fileName,
+    artist,
     src: `http://${CONFIG["host"]}:3001/${encodeURIComponent(fileName)}`,
   } as SongProps;
 }
@@ -54,11 +56,15 @@ export const getSongs = async () => {
 
     console.log("URL: ", url);
 
-    const songNames = await (await fetch(url)).json();
-    console.log("songNames", songNames);
-    for (const song of songNames) {
-      songs.push(SongProp(song));
+    // console.log("songData", songData);
+    const songData = await (await fetch(url)).json();
+
+    for (const key of Object.keys(songData)) {
+      const fileName = key;
+      const artist = songData[key];
+      songs.push(SongProp(fileName, artist));
     }
+    console.log("Songs from disk: ", songs);
   } catch (err) {
     console.log("Error gettings all songs: ", err);
   }

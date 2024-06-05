@@ -643,37 +643,51 @@ function Main() {
                 Current Setlist: {currentSetlist?.title}
               </Text>
             </View>
+
             <View style={{ flex: 3, gap: 10 }}>
-              {setlists.map((sl, idx) => {
-                console.log("Setlist: ", sl);
-                return (
-                  <View
-                    key={`sl_${idx}`}
-                    style={{
-                      borderRadius: 8,
-                      backgroundColor:
-                        currentSetlist?.title === sl.title
-                          ? "#166534"
-                          : "black",
-                      padding: 8,
-                    }}
-                  >
-                    <TouchableHighlight onPress={() => setCurrentSetlist(sl)}>
-                      <Text
+              <ScrollView horizontal={true} style={{ flex: 1 }}>
+                <View style={{ flex: 1, flexDirection: "row" }}>
+                  {setlists.map((sl, idx) => {
+                    return (
+                      <View
+                        key={`sl_${idx}`}
                         style={{
-                          color:
-                            sl.order == currentSetlist?.order
-                              ? "white"
-                              : "grey",
-                          textAlign: "center",
+                          flex: 1,
+                          width: 150,
+                          borderRadius: 8,
+                          backgroundColor:
+                            currentSetlist?.title === sl.title
+                              ? "#166534"
+                              : "black",
+                          padding: 8,
                         }}
                       >
-                        {sl.title}
-                      </Text>
-                    </TouchableHighlight>
-                  </View>
-                );
-              })}
+                        <TouchableHighlight
+                          onPress={() => setCurrentSetlist(sl)}
+                          style={{
+                            height: "100%",
+                            width: "100%",
+                            justifyContent: "center",
+                            alignContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color:
+                                sl.order == currentSetlist?.order
+                                  ? "white"
+                                  : "grey",
+                              textAlign: "center",
+                            }}
+                          >
+                            {sl.title}
+                          </Text>
+                        </TouchableHighlight>
+                      </View>
+                    );
+                  })}
+                </View>
+              </ScrollView>
               <Button title="Load Current Setlist" onPress={sendLoadSetlist} />
             </View>
           </View>

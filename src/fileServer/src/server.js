@@ -38,12 +38,12 @@ const db = admin.firestore();
 
 async function saveSongs(songs){
   const collectionName = `music/${config['deviceName']}/songs`
-  const songDocs = songs.map(l => {
-    const fileName = l
-    const name = l.split("/").slice(-1)[0].split(".")[0]
-
+  const songDocs = Object.keys(songs).map(key => {
+    const fileName = key
+    const artist = songs[key]
+    let name = fileName.split("/").slice(-1)[0].split(".").slice(0, -1).join(".");
     return db.collection(collectionName).doc(name).set({
-      name, fileName
+      name, fileName, artist,
     })
   })
 
@@ -59,9 +59,12 @@ async function saveSongs(songs){
 
 
 function getSongs(){
-  const data = fs.readFileSync(config["songFile"], "utf-8")
-  const songs = data.split("\n").map(l => l.trim()).filter(l => l.length > 0)
-  return songs
+  try{
+    const data = fs.readFileSync(config["songFile"], "utf-8")
+    return JSON.parse(data)
+  }catch(err){
+    console.log("err getSongs; ", err)
+  }
 }
 
 async function deleteCollection(collectionPath, batchSize) {

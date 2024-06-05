@@ -22,22 +22,22 @@ const SongPlayer = ({
     playerRef.current?.volume(musicVol);
   });
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const timeRemaining =
-        durationRef.current - (playerRef.current?.seek() ?? 0);
-      //   console.log("Time left:  ", timeRemaining);
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     const timeRemaining =
+  //       durationRef.current - (playerRef.current?.seek() ?? 0);
+  //     //   console.log("Time left:  ", timeRemaining);
 
-      if (timeRemaining < 9 && isPlaying) {
-        console.log("Play next song.");
-        // Tell parent to play the next Song.
-        nextSong(playerName);
-      }
-    }, 1000); // 1000 milliseconds = 1 second
+  //     if (timeRemaining < 9 && isPlaying) {
+  //       console.log("Play next song:", playerName);
+  //       // Tell parent to play the next Song.
+  //       nextSong(playerName);
+  //     }
+  //   }, 1000); // 1000 milliseconds = 1 second
 
-    // Clear the interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
+  //   // Clear the interval on component unmount
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
   const play = () => {
     if (playerRef.current && !playerRef.current.playing()) {

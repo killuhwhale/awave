@@ -23,6 +23,7 @@ cd ~/ws_node/awave && npm run dev
   - pm2 save
   - pm2 startup
   - pm2 unstartup systemd
+  - pm2 delete awave
 
 # Setup Music Client (Chromebook)
 git clone

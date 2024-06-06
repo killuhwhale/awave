@@ -25,7 +25,7 @@ chrome_options.add_argument('--disable-features=TouchpadOverscrollHistoryNavigat
 chrome_options.add_argument('--overscroll-history-navigation=disabled')
 
 # Initialize the Chrome driver @
-chrome_driver_path = "/opt/chromedriver"
+chrome_driver_path = "/home/killuh/chromedriver"
 service = ChromeService(executable_path=chrome_driver_path)
 driver = webdriver.Chrome(service=service, options=chrome_options)
 

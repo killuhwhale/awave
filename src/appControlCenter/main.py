@@ -29,7 +29,7 @@ chrome_options.add_argument('--overscroll-history-navigation=disabled')
 # Initialize the Chrome driver @
 chrome_driver_path = "/opt/chromedriver"
 caps = webdriver.DesiredCapabilities.CHROME.copy()
-caps['overscroll-history-navigation'] = "disabled"
+caps['overscroll-history-navigation'] = 0
 print(f"{caps=}")
 service = ChromeService(executable_path=chrome_driver_path, desired_capabilities=caps)
 driver = webdriver.Chrome(service=service, options=chrome_options)

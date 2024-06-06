@@ -136,7 +136,7 @@ def monitor_process():
         # logging.info(f"Want to check pid... {(process_event.is_set())} - {process_pid} - {not initStarted}")
         # if (process_event.is_set() and process_pid) or not initStarted:
         try:
-            logging.info("Checking pid...")
+            # logging.info("Checking pid...")
             os.kill(process_pid, 0)
         except OSError:
             logging.info("Process died, restarting...")

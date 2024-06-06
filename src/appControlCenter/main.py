@@ -40,7 +40,7 @@ def autoplay():
             ).click()
             logging.info(f"Clicked mainPlay: {err=}")
     except Exception as err:
-            logging.info(f"AUTOPLAY: {err=}")
+            logging.info(f"Failed click AUTOPLAY: {err=}")
 
 
 def click_body():
@@ -49,9 +49,9 @@ def click_body():
             WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.TAG_NAME, "body"))
             ).click()
-            logging.info(f"Clicked mainPlay: {err=}")
+            logging.info(f"Clicked body: {err=}")
     except Exception as err:
-            logging.info(f"AUTOPLAY: {err=}")
+            logging.info(f"failed to click body: {err=}")
 
 
 def main():

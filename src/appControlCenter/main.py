@@ -30,41 +30,45 @@ driver = webdriver.Chrome(service=service, options=chrome_options)
 
 
 def autoplay(driver_ref):
-    driver_ref.find_element(By.ID, "mainPlay").click()
+    try:
+        if "AUTOPLAY" in os.environ:
+            driver_ref.find_element(By.ID, "mainPlay").click()
+    except Exception as err:
+            logging.info(f"AUTOPLAY: {err=}")
 
-try:
-    # Navigate to localhost:3000
-    driver.get("http://localhost:3000")
+def main():
+    try:
+        # Navigate to localhost:3000
+        driver.get("http://localhost:3000")
 
-    driver.implicitly_wait(10)
+        driver.implicitly_wait(10)
 
-    # Example interaction 1: Find a button by its ID and click it
-
-    body = driver.find_element(By.TAG_NAME, "body")
-    body.click()
-
-    if "AUTOPLAY" in os.environ:
+        # Example interaction 1: Find a button by its ID and click i
         autoplay(driver)
 
-    logging.info(f"{os.environ=}")
-    while True:
-        try:
-            logging.info("Chrome music player browser running....")
-            # Check driver to make sure browser is still iopen to localhost:3000
-            current_url = driver.current_url
-            if current_url != "http://localhost:3000/":
-                logging.info("Not at correct url")
-        except NoSuchWindowException as err:
-            logging.info(f"NoSuchWindowException: {err=}")
-            sys.exit(1)
-        except Exception as err:
-            logging.info(f"Err: {err=}")
-        sleep(0.1)
-        pass
+        logging.info(f"{os.environ=}")
+        while True:
+            try:
+                logging.info("Chrome music player browser running....")
+                # Check driver to make sure browser is still iopen to localhost:3000
+                current_url = driver.current_url
+                if current_url != "http://localhost:3000/":
+                    logging.info("Not at correct url")
+            except NoSuchWindowException as err:
+                logging.info(f"NoSuchWindowException: {err=}")
+                sys.exit(1)
+            except Exception as err:
+                logging.info(f"Err: {err=}")
+            sleep(0.1)
+            pass
 
-    # Additional interactions can be added here as needed
+        # Additional interactions can be added here as needed
 
-finally:
-    # Close the browser after a delay to observe the interactions
-    driver.implicitly_wait(15)
-    driver.quit()
+    finally:
+        # Close the browser after a delay to observe the interactions
+        driver.implicitly_wait(15)
+        driver.quit()
+
+
+if __name__ == "__main__":
+    main()

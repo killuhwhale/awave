@@ -1036,6 +1036,7 @@ const Home: React.FC = () => {
               height={LG_BTN_SIZE}
               width={LG_BTN_SIZE}
               color="#61DAFB"
+              id="mainPlay"
               onClick={
                 isLeftPlaying || isRightPlaying ? masterPause : masterPlay
               }

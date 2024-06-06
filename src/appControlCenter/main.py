@@ -34,6 +34,7 @@ def autoplay(driver_ref):
     try:
         if "AUTOPLAY" in os.environ:
             driver_ref.find_element(By.ID, "mainPlay").click()
+            logging.info(f"Clicked mainPlay: {err=}")
     except Exception as err:
             logging.info(f"AUTOPLAY: {err=}")
 

@@ -6,6 +6,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchWindowException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import logging
 
 
@@ -33,7 +35,9 @@ driver = webdriver.Chrome(service=service, options=chrome_options)
 def autoplay(driver_ref):
     try:
         if "AUTOPLAY" in os.environ:
-            driver_ref.find_element(By.ID, "mainPlay").click()
+            WebDriverWait(driver, 20).until(
+                EC.element_to_be_clickable((By.ID, "mainPlay"))
+            ).click()
             logging.info(f"Clicked mainPlay: {err=}")
     except Exception as err:
             logging.info(f"AUTOPLAY: {err=}")

@@ -12,6 +12,7 @@ Description=wssClient Service that will start a python script and manage its PID
 After=network.target
 
 [Service]
+ExecStartPre=/bin/sleep 10  # Delay start by 10 seconds
 WorkingDirectory=/home/$USERNAME/ws_node/awave/src/appControlCenter
 ExecStart=/home/$USERNAME/ws_node/awave/src/appControlCenter/bin/python3 /home/$USERNAME/ws_node/awave/src/appControlCenter/wssClient.py
 Restart=always

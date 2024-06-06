@@ -25,13 +25,15 @@ chrome_options.add_argument("--overscroll-history-navigation=0")  #overscroll hi
 chrome_options.add_argument('--disable-features=TouchpadOverscrollHistoryNavigation')
 chrome_options.add_argument('--overscroll-history-navigation=disabled')
 
+caps = webdriver.DesiredCapabilities.CHROME.copy()
+caps['overscroll-history-navigation'] = False
 
 
 
 # Initialize the Chrome driver @
 chrome_driver_path = "/opt/chromedriver"
 service = ChromeService(executable_path=chrome_driver_path)
-driver = webdriver.Chrome(service=service, options=chrome_options)
+driver = webdriver.Chrome(service=service, options=chrome_options, desired_capabilities=caps)
 
 
 def autoplay(driver_ref):

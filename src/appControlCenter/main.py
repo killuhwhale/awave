@@ -33,6 +33,7 @@ driver = webdriver.Chrome(service=service, options=chrome_options)
 
 
 def autoplay():
+    global driver
     try:
         if "AUTOPLAY" in os.environ:
             WebDriverWait(driver, 20).until(
@@ -44,6 +45,7 @@ def autoplay():
 
 
 def click_body():
+    global driver
     try:
         if "AUTOPLAY" in os.environ:
             WebDriverWait(driver, 20).until(

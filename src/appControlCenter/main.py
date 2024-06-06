@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import logging
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s', filename="/home/killuh/.awave/appController_main.logs")
 
 # Set up Chrome options
 chrome_options = Options()
@@ -59,7 +59,7 @@ def main():
         # Navigate to localhost:3000
         driver.get("http://localhost:3000")
 
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(5)
 
         # Example interaction 1: Find a button by its ID and click i
         autoplay()

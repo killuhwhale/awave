@@ -30,7 +30,7 @@ config_path = "../../config.json"
 CONFIG = None
 with open(config_path, "r", encoding="utf-8") as f:
     CONFIG = json.load(f)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s', filename="/home/killuh/.awave/appController_wssClient.logs")
 
 def cmd():
     return [
@@ -90,7 +90,7 @@ def run_process(cmd, env):
 
 def is_alive(pid):
     try:
-        logging.info("Checking pid...")
+        # logging.info("Checking pid...")
         os.kill(pid, 0)
         return True
     except OSError:
@@ -133,7 +133,7 @@ def monitor_process():
     global process_event, process_monitor_event, process_pid, initStarted
     logging.info("monitor_process pid...")
     while not process_monitor_event.is_set():
-        logging.info(f"Want to check pid... {(process_event.is_set())} - {process_pid} - {not initStarted}")
+        # logging.info(f"Want to check pid... {(process_event.is_set())} - {process_pid} - {not initStarted}")
         # if (process_event.is_set() and process_pid) or not initStarted:
         try:
             logging.info("Checking pid...")

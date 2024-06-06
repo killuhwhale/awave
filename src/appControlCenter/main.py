@@ -32,7 +32,7 @@ service = ChromeService(executable_path=chrome_driver_path)
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 
-def autoplay(driver_ref):
+def autoplay():
     try:
         if "AUTOPLAY" in os.environ:
             WebDriverWait(driver, 20).until(
@@ -42,6 +42,18 @@ def autoplay(driver_ref):
     except Exception as err:
             logging.info(f"AUTOPLAY: {err=}")
 
+
+def click_body():
+    try:
+        if "AUTOPLAY" in os.environ:
+            WebDriverWait(driver, 20).until(
+                EC.element_to_be_clickable((By.TAG_NAME, "body"))
+            ).click()
+            logging.info(f"Clicked mainPlay: {err=}")
+    except Exception as err:
+            logging.info(f"AUTOPLAY: {err=}")
+
+
 def main():
     try:
         # Navigate to localhost:3000
@@ -50,7 +62,8 @@ def main():
         driver.implicitly_wait(10)
 
         # Example interaction 1: Find a button by its ID and click i
-        autoplay(driver)
+        autoplay()
+        click_body()
 
         logging.info(f"{os.environ=}")
         while True:

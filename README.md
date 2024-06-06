@@ -17,7 +17,7 @@ cd ~/ws_node/awave && npm run dev
 
 # Host Device Setup
 - Disable Gestures https://extensions.gnome.org/extension/4049/disable-gestures-2021/
-
+- In Chrome Settings Turn off Swipe between pages Settings > Accessibility > Swipe between pages
 
 # Setup Music Client (Chromebook)
 git clone

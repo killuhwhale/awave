@@ -68,7 +68,6 @@ def main():
         logging.info(f"{os.environ=}")
         while True:
             try:
-                logging.info("Chrome music player browser running....")
                 # Check driver to make sure browser is still iopen to localhost:3000
                 current_url = driver.current_url
                 if current_url != "http://localhost:3000/":

@@ -70,7 +70,11 @@ def run_process(cmd, env):
                 logging.info(f"{output=}")
         except Exception as err:
             print("Error decoding message and sending progress: ", err)
-            output = process.stdout.readlines() + process.stderr.readline()
+            if process.stdout:
+                output = process.stdout.readlines()
+
+            if process.stderr:
+                output += process.stderr.readline()
             logging.info(f"Error: {output=}")
 
 

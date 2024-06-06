@@ -21,7 +21,10 @@ chrome_options.add_argument("--kiosk")  # Full-screen mode without toolbars or U
 # chrome_options.add_argument("--disable-infobars")  # Disable info bars
 # chrome_options.add_argument("--disable-extensions")  # Disable extensions
 chrome_options.add_argument("--disable-pinch")  #
-chrome_options.add_argument("--overscroll-history-navigation=0")  #
+chrome_options.add_argument("--overscroll-history-navigation=0")  #overscroll history navigation
+chrome_options.add_argument('--disable-features=TouchpadOverscrollHistoryNavigation')
+
+
 
 # Initialize the Chrome driver @
 chrome_driver_path = "/opt/chromedriver"

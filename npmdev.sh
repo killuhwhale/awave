@@ -2,9 +2,12 @@
 
 # $! contains the process ID of the most recently executed background pipeline
 
+CONFIG="./config.json"
+USERNAME=$(jq -r '.username' "$CONFIG")
+
 ## Start Servers in background and get PID
 # Start the Music server in the background and get its PID
-node src/fileServer/src/server.js &
+node /home/$USERNAME/ws_node/awave/src/fileServer/src/server.js &
 SERVER_PID=$!
 
 # node src/fileServer/src/serverSetlist.js &

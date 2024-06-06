@@ -48,12 +48,11 @@ def autoplay():
 def click_body():
     global driver
     try:
-        if "AUTOPLAY" in os.environ:
-            el = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable((By.TAG_NAME, "body"))
-            )
-            el.click()
-            logging.info(f"Clicked body: {err=}")
+        el = WebDriverWait(driver, 20).until(
+            EC.element_to_be_clickable((By.TAG_NAME, "body"))
+        )
+        el.click()
+        logging.info(f"Clicked body: {err=}")
     except Exception as err:
             logging.info(f"failed to click body: {err=}")
 

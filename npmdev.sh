@@ -33,4 +33,4 @@ cleanup() {
 trap cleanup EXIT SIGINT SIGTERM
 
 # Start the second server in the foreground
-next dev
+npx next dev

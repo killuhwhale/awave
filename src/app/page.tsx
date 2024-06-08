@@ -812,14 +812,14 @@ const Home: React.FC = () => {
       rightPlayerRef.current?.play();
       setIsRightPlaying(true);
       setIsLeftPlaying(false);
+      leftSongRef.current = nextSong;
+      setLeftSong(nextSong);
 
       console.log("Setting left song for P1");
-      setLeftSong(nextSong);
       setTimeout(async () => {
         switchCurrentPlayer(PLAYERNAME_RIGHT);
         leftPlayerRef.current?.unload();
         await setNewPlayer(playerName, nextSong);
-        leftSongRef.current = nextSong;
       }, SLIDE_DURATION + 40);
 
       // play right track
@@ -828,6 +828,7 @@ const Home: React.FC = () => {
       leftPlayerRef.current?.play();
       setIsLeftPlaying(true);
       setIsRightPlaying(false);
+      rightSongRef.current = nextSong;
       setRightSong(nextSong);
 
       console.log("Setting right song for LeftP2");
@@ -836,7 +837,6 @@ const Home: React.FC = () => {
         switchCurrentPlayer(PLAYERNAME_LEFT);
         rightPlayerRef.current?.unload();
         await setNewPlayer(playerName, nextSong);
-        rightSongRef.current = nextSong;
       }, SLIDE_DURATION + 40);
     }
   };

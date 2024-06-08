@@ -227,7 +227,7 @@ const SongListSearchable = ({
               onDragStart={(e) => onDragStart(e, song)}
               // onTouchStart={(e) => handleTouchStart(e, song)}
               // onTouchEnd={(e) => handleTouchEnd()}
-              className="flex justify-between hover:bg-slate-600 border-b-1 border border-neutral-500 items-center pr-2"
+              className="flex justify-between hover:bg-slate-600 border-b-1 border border-neutral-500 items-center pr-6"
             >
               <p
                 key={`SLS_${song.src}`}
@@ -242,29 +242,36 @@ const SongListSearchable = ({
                 }}
               ></p>
 
-              <>|</>
+              <p
+                className="pr-6 pl-6"
+                onDoubleClick={() => {
+                  // setNewPlayer(song);
+                  if (addSongToTopOfOnDeck) addSongToTopOfOnDeck(song);
+                }}
+              >
+                |
+              </p>
 
               {addSongToTopOfOnDeck ? (
                 <div
                   style={{
-                    width: MD_BTN_SIZE,
-
+                    height: "100%",
+                    width: "100%",
                     flex: 1,
                     justifyContent: "center",
                     alignContent: "center",
                     alignItems: "center",
-                    marginLeft: 12,
+                  }}
+                  onDoubleClick={() => {
+                    // setNewPlayer(song);
+                    if (addSongToTopOfOnDeck) addSongToTopOfOnDeck(song);
                   }}
                 >
                   <div>
                     <CIcon
                       icon={cilArrowCircleLeft}
-                      width={MD_BTN_SIZE * 0.75}
+                      width={MD_BTN_SIZE * 0.92}
                       className="mr-4 hover:text-emerald-700 cursor-pointer"
-                      onDoubleClick={() => {
-                        // setNewPlayer(song);
-                        if (addSongToTopOfOnDeck) addSongToTopOfOnDeck(song);
-                      }}
                     />
                   </div>
                 </div>

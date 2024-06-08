@@ -1,5 +1,9 @@
 import CONFIG from "../../../config.json";
 
+export const MD_BTN_SIZE = 36;
+export const PLAYERNAME_LEFT = "p1";
+export const PLAYERNAME_RIGHT = "p2";
+
 interface Matches {
   items: number[];
   marks: string[];
@@ -25,8 +29,6 @@ export function rtcMsg(partyName: string, secretCode: string, rtcData: any) {
     ...rtcData,
   };
 }
-
-export const MD_BTN_SIZE = 36;
 
 function cleanSongSource(songSrc: string): string {
   return encodeURIComponent(songSrc);

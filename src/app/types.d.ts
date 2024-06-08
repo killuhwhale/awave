@@ -23,11 +23,19 @@ type SongListSearchProps = {
   hidden: boolean;
   onDragStart(e: any, song: SongProps): void;
   setNewPlayer?(newSong: SongProps): void;
+  setNewMultiPlayer?(
+    playerName: string,
+    newSong: SongProps,
+    init?: boolean
+  ): void;
+  currentPlayerNameRef?: React.MutableRefObject<string | undefined>;
   leftPlayerRef?: React.MutableRefObject<Howl | null | undefined>;
   leftSong?: SongProps | null;
   isLeftPlaying?: boolean;
   confirmLoadSetlist?(): void;
   masterPause?(): void;
+  playNextSong?(playerName: string, nextSong: SongProps): void;
+  playRequestedSong?(song: SongProps): Promise<void>;
 };
 
 type SongListOnDeckProps = {
@@ -41,6 +49,13 @@ type SongListOnDeckProps = {
   confirmRemoveOnDeckSong: (rmSong: SongProps) => void;
   addOnDeckToNewSetlist?(title: string): void;
   setNewPlayer?(newSong: SongProps): void;
+  setNewMultiPlayer?(
+    playerName: string,
+    newSong: SongProps,
+    init?: boolean
+  ): void;
+  currentPlayerNameRef?: React.MutableRefObject<string | undefined>;
+  playRequestedSong?(song: SongProps): Promise<void>;
 };
 
 type SongPlayerProps = {

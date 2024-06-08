@@ -7,7 +7,14 @@ import React, {
   useLayoutEffect,
 } from "react";
 
-import { MD_BTN_SIZE, debounce, filter, filterOptions } from "../utils/utils";
+import {
+  MD_BTN_SIZE,
+  PLAYERNAME_LEFT,
+  PLAYERNAME_RIGHT,
+  debounce,
+  filter,
+  filterOptions,
+} from "../utils/utils";
 import CIcon from "@coreui/icons-react";
 import {
   cilMediaPause,
@@ -41,7 +48,10 @@ const SongListSearchable = ({
   leftPlayerRef,
   isLeftPlaying,
   confirmLoadSetlist,
+  setNewMultiPlayer,
+  currentPlayerNameRef,
   masterPause,
+  playRequestedSong,
 }: SongListSearchProps) => {
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
   const [
@@ -161,6 +171,29 @@ const SongListSearchable = ({
     }
   };
 
+  const loadSongFromTouch = (song: SongProps) => {
+    if (playRequestedSong) {
+      playRequestedSong(song);
+    }
+  };
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handleTouchStart = (event: any, song: SongProps) => {
+    timeoutRef.current = setTimeout(() => {
+      console.log("Playing song handleTouchStart: ", song.name);
+      loadSongFromTouch(song);
+    }, 3000);
+  };
+
+  const handleTouchEnd = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  };
+
+  const handleDoubleClick = (song: SongProps) => {
+    console.log("Playing song handleDoubleClick: ", song.name);
+    loadSongFromTouch(song);
+  };
+
   return (
     <div
       className={`w-full h-full p-4 items-center flex flex-col ${
@@ -218,6 +251,9 @@ const SongListSearchable = ({
               key={song.src}
               draggable
               onDragStart={(e) => onDragStart(e, song)}
+              // onTouchStart={(e) => handleTouchStart(e, song)}
+              // onTouchEnd={(e) => handleTouchEnd()}
+              onDoubleClick={(e) => handleDoubleClick(song)}
               className="flex justify-between hover:bg-slate-600 border-b-1 border border-neutral-500 items-center"
             >
               <p

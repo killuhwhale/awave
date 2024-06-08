@@ -31,6 +31,8 @@ import fbApp from "./utils/firebase";
 
 import {
   DEFAULT_SONG,
+  PLAYERNAME_LEFT,
+  PLAYERNAME_RIGHT,
   SongProp,
   getSongs,
   isGoodSecret,
@@ -53,8 +55,7 @@ const host = CONFIG["host"];
 const db = getFirestore(fbApp);
 const auth = getAuth(fbApp);
 const CMD = new Commands();
-const PLAYERNAME_LEFT = "p1";
-const PLAYERNAME_RIGHT = "p2";
+
 const TIME_REMAINING_BEFORE_PLAYING_NEXT_DELAY = 19;
 
 const Home: React.FC = () => {
@@ -80,6 +81,22 @@ const Home: React.FC = () => {
   const setlistsRef = useRef<Setlist[]>([] as Setlist[]);
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
 
+  const [leftSong, setLeftSong] = useState<SongProps | null>(null);
+  const [rightSong, setRightSong] = useState<SongProps | null>(null);
+
+  const [leftMusicVolume, setLeftMusicVolume] = useState(50);
+  const [rightMusicVolume, setRightMusicVolume] = useState(50);
+  const [balance, setBalance] = useState(50);
+  const balanceRef = useRef(50);
+  const balanceIntervalRef = useRef<NodeJS.Timeout>();
+  const SLIDE_DURATION = 1776 * 2.5; // Next DELAY
+
+  const [onDeckSongs, setOnDeckSongs] = useState<SongProps[] | null>(null);
+  const onDeckSongsRef = useRef<SongProps[] | null>(null);
+  const [allSongs, setAllSongs] = useState<SongProps[] | null>(null);
+
+  const [user, setUser] = useState<User | null>(null);
+
   const handleBackNavigation = () => {
     // window.history.pushState(null, null, "http://localhost:3000/");
     // const confirmed = window.confirm("Are you sure you want to go back?");
@@ -87,7 +104,7 @@ const Home: React.FC = () => {
     // }
   };
 
-  useInterceptBackNavigation(handleBackNavigation);
+  // useInterceptBackNavigation(handleBackNavigation);
 
   useEffect(() => {
     if (ws.current === null) {
@@ -285,27 +302,6 @@ const Home: React.FC = () => {
     // };
   };
 
-  const playRequestedSong = async (song: SongProps) => {
-    console.log("playing request song: ", song);
-
-    if (currentPlayerNameRef.current) {
-      if (currentPlayerNameRef.current == PLAYERNAME_LEFT) {
-        // Song is on left player cuirrently
-        // load song on right player
-
-        await setNewPlayer(PLAYERNAME_RIGHT, song, false);
-      }
-
-      if (currentPlayerNameRef.current == PLAYERNAME_RIGHT) {
-        // Song is on right player cuirrently
-        // load song on left player
-        await setNewPlayer(PLAYERNAME_LEFT, song, false);
-      }
-
-      masterNext();
-    }
-  };
-
   const executeCmd = (data: CmdMsg) => {
     switch (CMD.getCmd[data.cmd]) {
       case CMD.PLAY:
@@ -343,8 +339,6 @@ const Home: React.FC = () => {
         break;
     }
   };
-
-  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((fbUser) => {
@@ -445,59 +439,6 @@ const Home: React.FC = () => {
     }, 10000); // Check every 10 seconds
   };
 
-  const setNewPlayer = (
-    playerName: string,
-    newSong: SongProps,
-    init = false
-  ) => {
-    return new Promise((res, rej) => {
-      console.log("Attempting Loading new song and player");
-
-      if (!newSong) return;
-
-      if (leftPlayerRef.current && playerName === PLAYERNAME_LEFT) {
-        leftPlayerRef.current.unload();
-      }
-      if (rightPlayerRef.current && playerName === PLAYERNAME_RIGHT) {
-        rightPlayerRef.current.unload();
-      }
-
-      const newPlayer = new Howl({
-        src: newSong.src,
-        html5: true, // Allows playing from a file/blob
-      });
-
-      if (init) {
-        currentPlayerNameRef.current = PLAYERNAME_LEFT;
-        currentPlayerRef.current = newPlayer;
-      }
-
-      newPlayer?.once("load", function () {
-        const dur = newPlayer.duration();
-
-        checkRemTime();
-        if (playerName === PLAYERNAME_LEFT) {
-          setLeftDuration(dur);
-          setLeftSong(newSong);
-          leftPlayerRef.current = newPlayer;
-          leftDurationRef.current = dur;
-        } else {
-          setRightDuration(newPlayer.duration());
-          setRightSong(newSong);
-          rightPlayerRef.current = newPlayer;
-          rightDurationRef.current = dur;
-        }
-        res("");
-      });
-
-      newPlayer.on("end", () => {
-        masterNext();
-      });
-
-      // setPlayer(newPlayer);
-    });
-  };
-
   const switchCurrentPlayer = (playerName: string) => {
     if (playerName === PLAYERNAME_LEFT) {
       console.log("Switching current player left");
@@ -509,10 +450,6 @@ const Home: React.FC = () => {
       currentPlayerRef.current = rightPlayerRef.current;
     }
   };
-
-  const [onDeckSongs, setOnDeckSongs] = useState<SongProps[] | null>(null);
-  const onDeckSongsRef = useRef<SongProps[] | null>(null);
-  const [allSongs, setAllSongs] = useState<SongProps[] | null>(null);
 
   useEffect(() => {
     if (onDeckSongsRef.current) return;
@@ -669,16 +606,6 @@ const Home: React.FC = () => {
     return nextSong;
   };
 
-  const [leftSong, setLeftSong] = useState<SongProps | null>(null);
-  const [rightSong, setRightSong] = useState<SongProps | null>(null);
-
-  const [leftMusicVolume, setLeftMusicVolume] = useState(50);
-  const [rightMusicVolume, setRightMusicVolume] = useState(50);
-  const [balance, setBalance] = useState(50);
-  const balanceRef = useRef(50);
-  const balanceIntervalRef = useRef<NodeJS.Timeout>();
-  const SLIDE_DURATION = 1776 * 2.5; // Next DELAY
-
   const onVolmeShareChange: React.ChangeEventHandler<HTMLInputElement> = (
     ev: ChangeEvent<HTMLInputElement>
   ) => {
@@ -728,14 +655,90 @@ const Home: React.FC = () => {
     setTimeout(() => clearInterval(intervalId), SLIDE_DURATION);
   };
 
+  // Sets up a new player and set new current song
+  // Sets up auto next on end of song.
+  // Doesnt start playback
+  const setNewPlayer = (
+    playerName: string,
+    newSong: SongProps,
+    init = false
+  ) => {
+    return new Promise((res, rej) => {
+      console.log("Attempting Loading new song and player");
+
+      if (!newSong) return;
+
+      if (leftPlayerRef.current && playerName === PLAYERNAME_LEFT) {
+        leftPlayerRef.current.unload();
+      }
+      if (rightPlayerRef.current && playerName === PLAYERNAME_RIGHT) {
+        rightPlayerRef.current.unload();
+      }
+
+      const newPlayer = new Howl({
+        src: newSong.src,
+        html5: true, // Allows playing from a file/blob
+      });
+
+      if (init) {
+        currentPlayerNameRef.current = PLAYERNAME_LEFT;
+        currentPlayerRef.current = newPlayer;
+      }
+
+      newPlayer?.once("load", function () {
+        const dur = newPlayer.duration();
+
+        checkRemTime();
+        if (playerName === PLAYERNAME_LEFT) {
+          setLeftDuration(dur);
+          setLeftSong(newSong);
+          leftPlayerRef.current = newPlayer;
+          leftDurationRef.current = dur;
+        } else {
+          setRightDuration(newPlayer.duration());
+          setRightSong(newSong);
+          rightPlayerRef.current = newPlayer;
+          rightDurationRef.current = dur;
+        }
+        res("");
+      });
+
+      newPlayer.on("end", () => {
+        masterNext();
+      });
+    });
+  };
+
+  // Sets new player and calls masterNext
+  // Feels like master Next should not be called because it calls autonext, which chooses a song
+  // but it is working....
+  const playRequestedSong = async (song: SongProps) => {
+    console.log("playing request song: ", song);
+
+    if (currentPlayerNameRef.current && !masterNextButtonDisabled.current) {
+      if (currentPlayerNameRef.current == PLAYERNAME_LEFT) {
+        await setNewPlayer(PLAYERNAME_RIGHT, song, false);
+      }
+
+      if (currentPlayerNameRef.current == PLAYERNAME_RIGHT) {
+        await setNewPlayer(PLAYERNAME_LEFT, song, false);
+      }
+
+      masterNext();
+    }
+  };
+
+  // Picks next song from onDeck and plays it on the waiting player
+  // So the next song is played, then we get another song to load on the other player that is not currently playing.
   const autoNextSong = (playerName: string) => {
     console.log("AUTONEXTSONG called.");
     const nextSong = getNextSong();
+    console.log("Playing next song from autoNextSong: ", nextSong);
     playNextSong(playerName, nextSong);
   };
 
-  // Each player will call this with their name
-  // We then need to play the next song on this player.
+  // Sets new player on requested player with requested song.
+  // Sets balance and switches player (update currentPlayerRef)
   const playNextSong = (playerName: string, nextSong: SongProps) => {
     if (playerName === PLAYERNAME_LEFT) {
       slideBalance("right");
@@ -769,8 +772,6 @@ const Home: React.FC = () => {
       }, SLIDE_DURATION + 40);
     }
   };
-
-  // useEffect(() => {}, [leftSong.src, rightSong.src]);
 
   const masterPlay = () => {
     if (currentPlayerNameRef.current) {
@@ -813,6 +814,8 @@ const Home: React.FC = () => {
   };
 
   const masterNextButtonDisabled = useRef(false);
+
+  // Calls autoNextSong and diables the next btn while transitioning between players...
   const masterNext = () => {
     if (
       currentPlayerRef.current &&
@@ -1065,8 +1068,11 @@ const Home: React.FC = () => {
             {onDeckSongs ? (
               <SongListOnDeck
                 songs={onDeckSongs}
+                setNewMultiPlayer={setNewPlayer}
+                playRequestedSong={playRequestedSong}
                 onDragOver={onDragOver}
                 onDrop={onDrop}
+                currentPlayerNameRef={currentPlayerNameRef}
                 onDragStartRearrangeDeck={onDragStartRearrangeDeck}
                 onDragOverRearrangeDeck={onDragOverRearrangeDeck}
                 onDropRearrangeDeck={onDropRearrangeDeck}
@@ -1166,6 +1172,9 @@ const Home: React.FC = () => {
               ) : (
                 <SongListSearchable
                   key={`${idx}_SongListSearchable`}
+                  setNewMultiPlayer={setNewPlayer}
+                  playRequestedSong={playRequestedSong}
+                  currentPlayerNameRef={currentPlayerNameRef}
                   hidden={idx !== curSetListIdx}
                   title={setlist.title}
                   songs={setlist.songs}

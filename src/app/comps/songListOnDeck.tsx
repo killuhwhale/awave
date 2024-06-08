@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 
 import CIcon from "@coreui/icons-react";
 import { cilX } from "@coreui/icons";
+import { PLAYERNAME_LEFT, PLAYERNAME_RIGHT } from "../utils/utils";
 
 const SongListOnDeck = ({
   songs,
@@ -14,8 +15,35 @@ const SongListOnDeck = ({
   onDropRearrangeDeck,
   confirmRemoveOnDeckSong,
   addOnDeckToNewSetlist,
+  currentPlayerNameRef,
+  setNewMultiPlayer,
+  playRequestedSong,
 }: SongListOnDeckProps) => {
   const [setlistName, setSetlistName] = useState("");
+
+  const loadSongFromTouch = (song: SongProps) => {
+    if (playRequestedSong) {
+      playRequestedSong(song);
+    }
+  };
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handleTouchStart = (event: any, song: SongProps) => {
+    timeoutRef.current = setTimeout(() => {
+      console.log("Playing song handleTouchStart: ", song.name);
+      loadSongFromTouch(song);
+    }, 3000);
+  };
+
+  const handleTouchEnd = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  };
+
+  const handleDoubleClick = (song: SongProps) => {
+    console.log("Playing song handleDoubleClick: ", song.name);
+    loadSongFromTouch(song);
+  };
+
   return (
     <div className="w-full h-full pl-4 pr-4 items-center flex flex-col ">
       <div className="flex w-full justify-between">
@@ -67,7 +95,7 @@ const SongListOnDeck = ({
           ) : (
             <div
               className="group flex justify-between  border-b-1 border border-neutral-500"
-              onClick={() => confirmRemoveOnDeckSong(song)}
+              onClick={() => {}}
               key={`${idx}_rmondeck`}
             >
               <div
@@ -85,6 +113,9 @@ const SongListOnDeck = ({
                   onDrop(e, idx);
                   onDropRearrangeDeck(e, idx);
                 }}
+                // onTouchStart={(e) => handleTouchStart(e, song)}
+                // onTouchEnd={(e) => handleTouchEnd()}
+                onDoubleClick={(e) => handleDoubleClick(song)}
               >
                 <p className="text-slate-300">{song.name}</p>
                 <p>{song.artist}</p>

@@ -1,27 +1,14 @@
 "use client";
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  ChangeEvent,
-  useLayoutEffect,
-} from "react";
+import React, { useState, ChangeEvent, useLayoutEffect } from "react";
 
-import {
-  MD_BTN_SIZE,
-  PLAYERNAME_LEFT,
-  PLAYERNAME_RIGHT,
-  debounce,
-  filter,
-  filterOptions,
-} from "../utils/utils";
+import { MD_BTN_SIZE, debounce, filter, filterOptions } from "../utils/utils";
 import CIcon from "@coreui/icons-react";
 import {
   cilMediaPause,
   cilMediaPlay,
   cilVerticalAlignBottom,
   cilVerticalAlignTop,
-  cilX,
+  cilArrowCircleLeft,
 } from "@coreui/icons";
 
 import CONFIG from "../../../config.json";
@@ -48,10 +35,11 @@ const SongListSearchable = ({
   leftPlayerRef,
   isLeftPlaying,
   confirmLoadSetlist,
-  setNewMultiPlayer,
-  currentPlayerNameRef,
   masterPause,
   playRequestedSong,
+  restoreNonPlayingPlayerSongOnDeck,
+  removeOnDeckSong,
+  addSongToTopOfOnDeck,
 }: SongListSearchProps) => {
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
   const [
@@ -172,21 +160,7 @@ const SongListSearchable = ({
   };
 
   const loadSongFromTouch = (song: SongProps) => {
-    if (playRequestedSong) {
-      playRequestedSong(song);
-    }
-  };
-
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const handleTouchStart = (event: any, song: SongProps) => {
-    timeoutRef.current = setTimeout(() => {
-      console.log("Playing song handleTouchStart: ", song.name);
-      loadSongFromTouch(song);
-    }, 3000);
-  };
-
-  const handleTouchEnd = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (playRequestedSong) playRequestedSong(song);
   };
 
   const handleDoubleClick = (song: SongProps) => {
@@ -253,17 +227,12 @@ const SongListSearchable = ({
               onDragStart={(e) => onDragStart(e, song)}
               // onTouchStart={(e) => handleTouchStart(e, song)}
               // onTouchEnd={(e) => handleTouchEnd()}
-              onDoubleClick={(e) => handleDoubleClick(song)}
-              className="flex justify-between hover:bg-slate-600 border-b-1 border border-neutral-500 items-center"
+              className="flex justify-between hover:bg-slate-600 border-b-1 border border-neutral-500 items-center pr-2"
             >
               <p
                 key={`SLS_${song.src}`}
                 className="p-4 "
-                onClick={() => {
-                  if (title === "All Songs") return;
-                  setRmSong(song);
-                  setShowRmSong(true);
-                }}
+                onDoubleClick={(e) => handleDoubleClick(song)}
                 style={{ width: "100%" }}
                 dangerouslySetInnerHTML={{
                   __html:
@@ -272,6 +241,36 @@ const SongListSearchable = ({
                       : `${song.name} - ${song.src} `,
                 }}
               ></p>
+
+              <>|</>
+
+              {addSongToTopOfOnDeck ? (
+                <div
+                  style={{
+                    width: MD_BTN_SIZE,
+
+                    flex: 1,
+                    justifyContent: "center",
+                    alignContent: "center",
+                    alignItems: "center",
+                    marginLeft: 12,
+                  }}
+                >
+                  <div>
+                    <CIcon
+                      icon={cilArrowCircleLeft}
+                      width={MD_BTN_SIZE * 0.75}
+                      className="mr-4 hover:text-emerald-700 cursor-pointer"
+                      onDoubleClick={() => {
+                        // setNewPlayer(song);
+                        if (addSongToTopOfOnDeck) addSongToTopOfOnDeck(song);
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <></>
+              )}
               {setNewPlayer ? (
                 <div>
                   {isLeftPlaying &&

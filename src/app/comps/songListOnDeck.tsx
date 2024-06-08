@@ -15,19 +15,25 @@ const SongListOnDeck = ({
   onDropRearrangeDeck,
   confirmRemoveOnDeckSong,
   addOnDeckToNewSetlist,
-  currentPlayerNameRef,
-  setNewMultiPlayer,
+  removeOnDeckSong,
   playRequestedSong,
+  restoreNonPlayingPlayerSongOnDeck,
 }: SongListOnDeckProps) => {
   const [setlistName, setSetlistName] = useState("");
 
   const loadSongFromTouch = (song: SongProps) => {
     if (playRequestedSong) {
+      // Duering this operation, we lose the non-playing players loaded song.
+      // We should put this song back onDeck at the top.
+      // if (restoreNonPlayingPlayerSongOnDeck)
+      //   restoreNonPlayingPlayerSongOnDeck();
       playRequestedSong(song);
+      // if (removeOnDeckSong) removeOnDeckSong(song); // If we dont remove this, for somereason, the restored song does get saved......
     }
   };
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleTouchStart = (event: any, song: SongProps) => {
     timeoutRef.current = setTimeout(() => {
       console.log("Playing song handleTouchStart: ", song.name);
@@ -73,7 +79,7 @@ const SongListOnDeck = ({
         )}
       </div>
 
-      <div
+      {/* <div
         className="h-1/6 w-full bg-slate-500 flex justify-center items-center"
         onDragOver={(e) => {
           onDragOver(e);
@@ -87,8 +93,8 @@ const SongListOnDeck = ({
         <p className="text-center justify-center items-center  text-sm text-slate-700 tracking-wide">
           Drop Zone - Next Song
         </p>
-      </div>
-      <div className="h-4/6 overflow-y-auto flex flex-col w-full ">
+      </div> */}
+      <div className="overflow-y-auto flex flex-col w-full mb-2 pb-4">
         {songs?.map((song, idx) => {
           return song.name.startsWith("--") ? (
             <div key={`${idx}_mt`}></div>
@@ -134,7 +140,7 @@ const SongListOnDeck = ({
         })}
       </div>
 
-      <div
+      {/* <div
         className="h-1/6 w-full bg-slate-500 flex justify-center items-center"
         onDragOver={(e) => {
           onDragOver(e);
@@ -148,7 +154,7 @@ const SongListOnDeck = ({
         <p className="text-center justify-center items-center text-sm text-slate-700 tracking-wide">
           Drop Zone - Last Song
         </p>
-      </div>
+      </div> */}
     </div>
   );
 };

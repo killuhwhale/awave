@@ -84,6 +84,9 @@ const Home: React.FC = () => {
   const [leftSong, setLeftSong] = useState<SongProps | null>(null);
   const [rightSong, setRightSong] = useState<SongProps | null>(null);
 
+  const leftSongRef = useRef<SongProps | null>(null);
+  const rightSongRef = useRef<SongProps | null>(null);
+
   const [leftMusicVolume, setLeftMusicVolume] = useState(50);
   const [rightMusicVolume, setRightMusicVolume] = useState(50);
   const [balance, setBalance] = useState(50);
@@ -104,6 +107,7 @@ const Home: React.FC = () => {
     // }
   };
 
+  // TODO() uncomment, will help prvent unwanted back nav
   // useInterceptBackNavigation(handleBackNavigation);
 
   useEffect(() => {
@@ -415,11 +419,12 @@ const Home: React.FC = () => {
     }
   };
 
+  // Set an interval to check the current playback time every 10 seconds
   const initLoadingRef = useRef(false);
-
   const checkRemTime = () => {
-    // Set an interval to check the current playback time every 10 seconds
-    if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
+    if (checkIntervalRef.current) {
+      clearInterval(checkIntervalRef.current);
+    }
 
     checkIntervalRef.current = setInterval(function () {
       if (currentPlayerRef.current) {
@@ -456,6 +461,7 @@ const Home: React.FC = () => {
     getSongs().then((songs) => {
       onDeckSongsRef.current = songs;
       setOnDeckSongs(songs);
+      onDeckSongsRef.current = songs;
       setAllSongs(songs);
 
       console.log("Init load for songs!!");
@@ -465,7 +471,10 @@ const Home: React.FC = () => {
 
         setNewPlayer(PLAYERNAME_LEFT, nextLeftSong, true);
 
-        if (!leftSong) setLeftSong(nextLeftSong);
+        if (!leftSong) {
+          leftSongRef.current = nextLeftSong;
+          setLeftSong(nextLeftSong);
+        }
       }
 
       if (!rightPlayerRef.current) {
@@ -473,7 +482,10 @@ const Home: React.FC = () => {
         const nextRightSong = getNextSong();
         setNewPlayer(PLAYERNAME_RIGHT, nextRightSong, true);
 
-        if (!rightSong) setRightSong(nextRightSong);
+        if (!rightSong) {
+          rightSongRef.current = nextRightSong;
+          setRightSong(nextRightSong);
+        }
       }
       initLoadingRef.current = false;
     });
@@ -488,21 +500,28 @@ const Home: React.FC = () => {
     e.preventDefault(); // Necessary to allow dropping
   };
 
+  // onDrop for onDeckSongs
+  // Adds song to on deck
+  // Doesnt work with touch, not going to rely on this.
+
   const onDrop = (e: any, dropIndex: number) => {
     e.preventDefault();
     const dragType = e.dataTransfer.getData("type");
     if (dragType !== "1") return;
+    // Dragged from onDeckSongs
     console.log("DROPPED @: ", dropIndex);
 
     try {
       const draggedSong = JSON.parse(e.dataTransfer.getData("song"));
       if (!onDeckSongsRef.current) return;
+      // Remove song from list
       const onDeckSongsFiltered = onDeckSongsRef.current.filter(
         (onDeckSong) => {
           return onDeckSong.src === draggedSong.src;
         }
       );
 
+      // Add dragged song to correct index
       console.log("Fileted val: ", onDeckSongsFiltered.length);
       if (onDeckSongsFiltered.length === 0) {
         if (onDeckSongsRef.current.length === 0) {
@@ -549,6 +568,7 @@ const Home: React.FC = () => {
     e.preventDefault(); // Necessary to allow dropping
   };
 
+  // Deprecated
   const onDropRearrangeDeck = (e: any, dropIndex: number) => {
     e.preventDefault();
     const dragType = e.dataTransfer.getData("type");
@@ -587,7 +607,7 @@ const Home: React.FC = () => {
   };
 
   const getNextSong = (): SongProps => {
-    console.log("Getting next song from: ", onDeckSongs);
+    console.log("Getting next song from: ", onDeckSongsRef.current);
     if (!onDeckSongsRef.current) return DEFAULT_SONG;
     if (onDeckSongsRef.current.length === 0) return DEFAULT_SONG;
 
@@ -691,11 +711,13 @@ const Home: React.FC = () => {
         checkRemTime();
         if (playerName === PLAYERNAME_LEFT) {
           setLeftDuration(dur);
+          leftSongRef.current = newSong;
           setLeftSong(newSong);
           leftPlayerRef.current = newPlayer;
           leftDurationRef.current = dur;
         } else {
-          setRightDuration(newPlayer.duration());
+          setRightDuration(dur);
+          rightSongRef.current = newSong;
           setRightSong(newSong);
           rightPlayerRef.current = newPlayer;
           rightDurationRef.current = dur;
@@ -709,13 +731,23 @@ const Home: React.FC = () => {
     });
   };
 
+  const requestPlayLockRef = useRef(false);
+
   // Sets new player and calls masterNext
   // Feels like master Next should not be called because it calls autonext, which chooses a song
   // but it is working....
   const playRequestedSong = async (song: SongProps) => {
+    if (requestPlayLockRef.current) return;
+    requestPlayLockRef.current = true;
     console.log("playing request song: ", song);
 
+    // Try everythiong from same function call?
+    //restoreNonPlayingPlayerSongOnDeck
+
     if (currentPlayerNameRef.current && !masterNextButtonDisabled.current) {
+      restoreNonPlayingPlayerSongOnDeck();
+      removeOnDeckSong(song);
+
       if (currentPlayerNameRef.current == PLAYERNAME_LEFT) {
         await setNewPlayer(PLAYERNAME_RIGHT, song, false);
       }
@@ -724,7 +756,42 @@ const Home: React.FC = () => {
         await setNewPlayer(PLAYERNAME_LEFT, song, false);
       }
 
+      // set after enxt is done and ready to play again
+      //requestPlayLockRef.current = false
       masterNext();
+    }
+  };
+
+  // Puts non playing Player's song back on deck
+  const restoreNonPlayingPlayerSongOnDeck = () => {
+    if (currentPlayerRef.current) {
+      let songToGoOnDeck: SongProps | null = null;
+      // Currently playing
+      if (currentPlayerNameRef.current === PLAYERNAME_LEFT) {
+        // Take the song from right player and put on deck
+        songToGoOnDeck = rightSongRef.current;
+      } else {
+        songToGoOnDeck = leftSongRef.current;
+      }
+
+      console.log("restoring song: ", songToGoOnDeck);
+      if (songToGoOnDeck) {
+        addSongToTopOfOnDeck(songToGoOnDeck);
+      }
+    }
+  };
+
+  const addSongToTopOfOnDeck = (songToGoOnDeck: SongProps) => {
+    if (onDeckSongsRef.current && onDeckSongsRef.current.length > 0) {
+      const newSongs = [
+        songToGoOnDeck,
+        ...onDeckSongsRef.current,
+      ] as SongProps[];
+      setOnDeckSongs(newSongs);
+      onDeckSongsRef.current = newSongs;
+    } else {
+      setOnDeckSongs([songToGoOnDeck as SongProps]);
+      onDeckSongsRef.current = [songToGoOnDeck as SongProps];
     }
   };
 
@@ -747,12 +814,12 @@ const Home: React.FC = () => {
       setIsLeftPlaying(false);
 
       console.log("Setting left song for P1");
-
+      setLeftSong(nextSong);
       setTimeout(async () => {
         switchCurrentPlayer(PLAYERNAME_RIGHT);
         leftPlayerRef.current?.unload();
         await setNewPlayer(playerName, nextSong);
-        setLeftSong(nextSong);
+        leftSongRef.current = nextSong;
       }, SLIDE_DURATION + 40);
 
       // play right track
@@ -761,6 +828,7 @@ const Home: React.FC = () => {
       leftPlayerRef.current?.play();
       setIsLeftPlaying(true);
       setIsRightPlaying(false);
+      setRightSong(nextSong);
 
       console.log("Setting right song for LeftP2");
 
@@ -768,7 +836,7 @@ const Home: React.FC = () => {
         switchCurrentPlayer(PLAYERNAME_LEFT);
         rightPlayerRef.current?.unload();
         await setNewPlayer(playerName, nextSong);
-        setRightSong(nextSong);
+        rightSongRef.current = nextSong;
       }, SLIDE_DURATION + 40);
     }
   };
@@ -830,6 +898,7 @@ const Home: React.FC = () => {
       masterNextButtonDisabled.current = true;
       setTimeout(() => {
         masterNextButtonDisabled.current = false;
+        requestPlayLockRef.current = false;
       }, SLIDE_DURATION + 80);
     }
   };
@@ -852,22 +921,27 @@ const Home: React.FC = () => {
   };
 
   // Give to Modal action
-  const removeOnDeckSong = () => {
-    console.log("Removing: ", rmOnDeckSong?.src);
-    setOnDeckSongs((prevSongs) => {
-      if (!prevSongs) {
-        return [];
-      }
+  const removeOnDeckSong = (songToremove: SongProps) => {
+    console.log("Removing: ", songToremove);
 
-      const newSongs = [...prevSongs];
-      const fNewSongs = newSongs.filter(
-        (song) => song.src !== rmOnDeckSong?.src
-      );
-      onDeckSongsRef.current = fNewSongs;
-      return fNewSongs;
+    if (!onDeckSongsRef.current) {
+      return;
+    }
+
+    const newSongs = [...onDeckSongsRef.current];
+    const fNewSongs = newSongs.filter((song) => {
+      // if (song.src === songToremove?.src) {
+      //   console.log("Found to remove: ", song);
+      // }
+      console.log("Found to remove: ", song);
+      return song.fileName !== songToremove?.fileName;
     });
+    onDeckSongsRef.current = fNewSongs;
+    console.log("fNewSongs: ", fNewSongs);
 
-    setShowRemoveOnDeckSong(false);
+    setOnDeckSongs(fNewSongs);
+
+    // setShowRemoveOnDeckSong(false);
   };
 
   const [curSetListIdx, setCurSetListIdx] = useState(0);
@@ -1068,11 +1142,13 @@ const Home: React.FC = () => {
             {onDeckSongs ? (
               <SongListOnDeck
                 songs={onDeckSongs}
-                setNewMultiPlayer={setNewPlayer}
                 playRequestedSong={playRequestedSong}
+                removeOnDeckSong={removeOnDeckSong}
+                restoreNonPlayingPlayerSongOnDeck={
+                  restoreNonPlayingPlayerSongOnDeck
+                }
                 onDragOver={onDragOver}
                 onDrop={onDrop}
-                currentPlayerNameRef={currentPlayerNameRef}
                 onDragStartRearrangeDeck={onDragStartRearrangeDeck}
                 onDragOverRearrangeDeck={onDragOverRearrangeDeck}
                 onDropRearrangeDeck={onDropRearrangeDeck}
@@ -1172,9 +1248,12 @@ const Home: React.FC = () => {
               ) : (
                 <SongListSearchable
                   key={`${idx}_SongListSearchable`}
-                  setNewMultiPlayer={setNewPlayer}
                   playRequestedSong={playRequestedSong}
-                  currentPlayerNameRef={currentPlayerNameRef}
+                  restoreNonPlayingPlayerSongOnDeck={
+                    restoreNonPlayingPlayerSongOnDeck
+                  }
+                  removeOnDeckSong={removeOnDeckSong}
+                  addSongToTopOfOnDeck={addSongToTopOfOnDeck}
                   hidden={idx !== curSetListIdx}
                   title={setlist.title}
                   songs={setlist.songs}
@@ -1192,7 +1271,9 @@ const Home: React.FC = () => {
       <ActionCancelModal
         isOpen={showRemoveOnDeckSong}
         message={`Are you sure you want to remove "${rmOnDeckSong?.name}"`}
-        onAction={removeOnDeckSong}
+        onAction={() => {
+          if (rmOnDeckSong) removeOnDeckSong(rmOnDeckSong);
+        }}
         actionText="Remove"
         onClose={() => {
           setShowRemoveOnDeckSong(false);

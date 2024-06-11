@@ -7,13 +7,16 @@ cd ~/ws_node/awave && npm run dev
 ```
 
 #  TODO()
-3. [Security] Check TURN server with credentials; need to lock down.
-4. [Performance_Testing] Test Large Setlist 5k songs? and playing for 5 hours straight
-5. Add fixIconScout.sh to build steps
-6. System for Global Types and configs
-    - Top lvl config and type.d.ts files to copy to each dir/ project
-    - Commands, RTC message and WSSTypes all in one spot and shared.
-    - Remove hardcoded values like 420, player, controller
+1. [Security] Check TURN server with credentials; need to lock down.
+2. [Performance_Testing] Test Large Setlist 5k songs? and playing for 5 hours straight
+3. [Order_Songs] Create a tool to print list of songs from each set list so I can give it to chat gpt witha prompt to get a good order
+4.   Then the tools should also take a new order of songs and upload to firebase
+        Possibly add to the createSetlist where we use a textArea to transfer state of song list, we need to just keep fileNames
+        This way, I can paste a new list and it will update the list of songs in the setlist, the I just press upload like normal.
+        Also, the drag and drop would also change the same list so again the text area is just a reflection of state, whatever is on the the line represents a fileName (file path from rootDir root music dir)
+
+5.  Get songs from setlists on Mobile
+    Render SongList Search for each setlist and allow send play to play from setlist.
 
 # Host Device Setup
 - Disable Gestures https://extensions.gnome.org/extension/4049/disable-gestures-2021/

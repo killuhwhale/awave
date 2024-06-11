@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import React, { StyleSheet, Text, View } from "react-native";
 
 import Main from "./src/pages/main";
 
@@ -13,8 +13,8 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     height: "100%",
+    width: "100%",
     backgroundColor: "#1e2122",
     color: "#ffffff",
     textDecorationColor: "#fff",

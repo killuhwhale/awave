@@ -297,11 +297,6 @@ const Home = () => {
     order: 0,
   });
 
-  // const combinedSetlists = [
-  //   allSongsSetlist,
-  //   ...(setlistFileNames ?? ([] as Setlist[])),
-  // ];
-
   const addOnDeckToNewSetlist = (title: string) => {
     if (onDeckSongs.length > 0) {
       console.log("Adding onDeck to setlistFileNames");
@@ -442,6 +437,7 @@ const Home = () => {
       <div className="flex  items-center justify-center w-full space-x-12 max-h-5/6 min-h-5/6 h-5/6">
         <div className=" bg-neutral-800 text-rose-700 text-sm  w-1/2  rounded-md font-bold h-full">
           <SongListOnDeck
+            createSetlistPage={true}
             songs={onDeckSongs}
             onDragOver={onDragOver}
             onDrop={onDrop}

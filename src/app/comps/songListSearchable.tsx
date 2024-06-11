@@ -37,8 +37,6 @@ const SongListSearchable = ({
   confirmLoadSetlist,
   masterPause,
   playRequestedSong,
-  restoreNonPlayingPlayerSongOnDeck,
-  removeOnDeckSong,
   addSongToTopOfOnDeck,
 }: SongListSearchProps) => {
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
@@ -115,8 +113,11 @@ const SongListSearchable = ({
       `setlists/${CONFIG["partyName"]}/setlists/${title}/songs`
     );
 
-    const addDocPromises = songs.map((song) => {
-      return setDoc(doc(setListSongsCollection, song.fileName), song);
+    const addDocPromises = songs.map((song, idx) => {
+      return setDoc(doc(setListSongsCollection, song.name), {
+        ...song,
+        order: idx,
+      });
     });
 
     try {
@@ -225,8 +226,6 @@ const SongListSearchable = ({
               key={song.src}
               draggable
               onDragStart={(e) => onDragStart(e, song)}
-              // onTouchStart={(e) => handleTouchStart(e, song)}
-              // onTouchEnd={(e) => handleTouchEnd()}
               className="flex justify-between hover:bg-slate-600 border-b-1 border border-neutral-500 items-center pr-6"
             >
               <p

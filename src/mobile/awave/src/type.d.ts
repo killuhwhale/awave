@@ -8,6 +8,7 @@ type SongProps = {
   fileName: string;
   album?: string;
   artist?: string;
+  order?: number;
 };
 
 interface Matches {

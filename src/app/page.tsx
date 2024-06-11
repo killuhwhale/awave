@@ -401,7 +401,7 @@ const Home: React.FC = () => {
               )}`,
             });
           });
-
+          allSongs.sort((a, b) => ((a.order ?? 0) > (b.order ?? 0) ? 1 : -1));
           return {
             title: doc.id,
             order: idx,
@@ -930,18 +930,12 @@ const Home: React.FC = () => {
 
     const newSongs = [...onDeckSongsRef.current];
     const fNewSongs = newSongs.filter((song) => {
-      // if (song.src === songToremove?.src) {
-      //   console.log("Found to remove: ", song);
-      // }
-      console.log("Found to remove: ", song);
       return song.fileName !== songToremove?.fileName;
     });
     onDeckSongsRef.current = fNewSongs;
-    console.log("fNewSongs: ", fNewSongs);
-
     setOnDeckSongs(fNewSongs);
 
-    // setShowRemoveOnDeckSong(false);
+    setShowRemoveOnDeckSong(false);
   };
 
   const [curSetListIdx, setCurSetListIdx] = useState(0);
@@ -1141,12 +1135,9 @@ const Home: React.FC = () => {
           <div className="flex w-full justify-center items-center space-x-24 h-5/6">
             {onDeckSongs ? (
               <SongListOnDeck
+                createSetlistPage={false}
                 songs={onDeckSongs}
                 playRequestedSong={playRequestedSong}
-                removeOnDeckSong={removeOnDeckSong}
-                restoreNonPlayingPlayerSongOnDeck={
-                  restoreNonPlayingPlayerSongOnDeck
-                }
                 onDragOver={onDragOver}
                 onDrop={onDrop}
                 onDragStartRearrangeDeck={onDragStartRearrangeDeck}
@@ -1249,10 +1240,6 @@ const Home: React.FC = () => {
                 <SongListSearchable
                   key={`${idx}_SongListSearchable`}
                   playRequestedSong={playRequestedSong}
-                  restoreNonPlayingPlayerSongOnDeck={
-                    restoreNonPlayingPlayerSongOnDeck
-                  }
-                  removeOnDeckSong={removeOnDeckSong}
                   addSongToTopOfOnDeck={addSongToTopOfOnDeck}
                   hidden={idx !== curSetListIdx}
                   title={setlist.title}

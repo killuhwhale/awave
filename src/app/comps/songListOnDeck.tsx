@@ -25,7 +25,7 @@ const SongListOnDeck = ({
     console.log("Playing song handleDoubleClick: ", song.name);
     loadSongFromTouch(song);
   };
-  console.log("WTF?!?!?!?!??!", createSetlistPage);
+
   return (
     <div className="w-full h-full pl-4 pr-4 items-center flex flex-col ">
       <div className="flex w-full justify-between">

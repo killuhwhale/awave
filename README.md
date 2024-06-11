@@ -6,6 +6,10 @@ cd ~/ws_node/awave/src/mobile/awave && yarn web
 cd ~/ws_node/awave && npm run dev
 ```
 
+# Notes
+Mobile Controller must be set to the host device name that it should control since it will pull music from Firebase according to this name.
+
+
 #  TODO()
 1. [Security] Check TURN server with credentials; need to lock down.
 2. [Performance_Testing] Test Large Setlist 5k songs? and playing for 5 hours straight
@@ -67,8 +71,8 @@ Send request to clear collection at firebase via music/{deviceName}/songs/*
 node indexSongs.js
 node src/fileServer/src/server.js
 Change device name in ../../config.js
-curl http://localhost:3001/save
 curl http://localhost:3001/clear
+curl http://localhost:3001/save
 
 
 

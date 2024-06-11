@@ -112,13 +112,17 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
 
   return (
     <View style={{ flex: 15 }}>
-      <View style={{ padding: 16 }}>
+      <Text style={{ color: "white", fontWeight: "bold", fontSize: 36 }}>
+        Music
+      </Text>
+      <View style={{ padding: 16, alignItems: "center" }}>
         <TextInput
           style={{
-            width: "100%",
             backgroundColor: "black",
             color: "white",
-            padding: 4,
+            padding: 8,
+            width: "75%",
+            borderRadius: 8,
           }}
           placeholder="Search"
           onChange={(ev) => {
@@ -137,7 +141,8 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
                 style={{
                   backgroundColor: "#2563eb",
                   padding: 8,
-                  marginBottom: 3,
+                  marginBottom: 8,
+                  borderRadius: 8,
                 }}
               >
                 <TouchableHighlight
@@ -147,7 +152,15 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
                     sendSongToPlayer(song);
                   }}
                 >
-                  <Text style={{ color: "white" }}>{song.name}</Text>
+                  <Text
+                    style={{
+                      color: "white",
+                      marginLeft: 8,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {song.name}
+                  </Text>
                 </TouchableHighlight>
               </View>
             );

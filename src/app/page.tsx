@@ -705,6 +705,16 @@ const Home: React.FC = () => {
         currentPlayerRef.current = newPlayer;
       }
 
+      // Listening for load errors
+      newPlayer?.on("loaderror", function (id, error) {
+        console.error("Error loading song:", id, error);
+      });
+
+      // Listening for play errors
+      newPlayer?.on("playerror", function (id, error) {
+        console.error("Error playing song:", error);
+      });
+
       newPlayer?.once("load", function () {
         const dur = newPlayer.duration();
 

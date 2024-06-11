@@ -510,49 +510,76 @@ function Main() {
                 marginBottom: 8,
               }}
             >
-              <Text style={{ fontSize: 24, color: "white", marginBottom: 12 }}>
+              <Text
+                style={{
+                  fontSize: 24,
+                  color: "white",
+                  marginBottom: 12,
+                  fontWeight: "bold",
+                }}
+              >
                 Connection Details
               </Text>
 
               <View style={{ flex: 1, flexDirection: "row", padding: 8 }}>
                 <View style={{ flex: 1, flexDirection: "column" }}>
-                  <Text style={{ textAlign: "center", color: "white" }}>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      color: "white",
+                      fontWeight: "bold",
+                      marginBottom: 8,
+                    }}
+                  >
                     Party Name
                   </Text>
-                  <TextInput
-                    style={{
-                      width: "100%",
-                      backgroundColor: "black",
-                      color: "white",
-                      padding: 4,
-                    }}
-                    placeholder="Party Name"
-                    value={partyName}
-                    onChange={(ev) => {
-                      setPartyName(ev.nativeEvent.text);
-                      updatePartyName(ev.nativeEvent.text, secretCode);
-                    }}
-                  />
+                  <View style={{ alignItems: "center" }}>
+                    <TextInput
+                      style={{
+                        backgroundColor: "black",
+                        color: "white",
+                        padding: 8,
+                        width: "75%",
+                        borderRadius: 8,
+                      }}
+                      placeholder="Party Name"
+                      value={partyName}
+                      onChange={(ev) => {
+                        setPartyName(ev.nativeEvent.text);
+                        updatePartyName(ev.nativeEvent.text, secretCode);
+                      }}
+                    />
+                  </View>
                 </View>
 
                 <View style={{ flex: 1, flexDirection: "column" }}>
-                  <Text style={{ textAlign: "center", color: "white" }}>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      color: "white",
+                      marginBottom: 8,
+                      fontWeight: "bold",
+                    }}
+                  >
                     Secret
                   </Text>
-                  <TextInput
-                    style={{
-                      width: "100%",
-                      backgroundColor: "black",
-                      color: "white",
-                      padding: 4,
-                    }}
-                    placeholder="Secret Code"
-                    value={secretCode}
-                    onChange={(ev) => {
-                      setSecretCode(ev.nativeEvent.text);
-                      updateSecretCode(partyName, ev.nativeEvent.text);
-                    }}
-                  />
+                  <View style={{ alignItems: "center" }}>
+                    <TextInput
+                      style={{
+                        backgroundColor: "black",
+                        color: "white",
+                        padding: 8,
+                        width: "75%",
+                        borderRadius: 8,
+                      }}
+                      placeholder="Secret Code"
+                      value={secretCode}
+                      onChange={(ev) => {
+                        setSecretCode(ev.nativeEvent.text);
+                        updateSecretCode(partyName, ev.nativeEvent.text);
+                      }}
+                    />
+                  </View>
                 </View>
               </View>
             </View>
@@ -561,7 +588,11 @@ function Main() {
               id="row2"
               style={{ flex: 3, padding: 8, marginTop: 8, marginBottom: 8 }}
             >
-              <Text style={{ fontSize: 24, color: "white" }}>Microphone</Text>
+              <Text
+                style={{ fontSize: 24, color: "white", fontWeight: "bold" }}
+              >
+                Microphone
+              </Text>
               <View
                 style={{
                   backgroundColor: onCallColor,
@@ -570,6 +601,8 @@ function Main() {
                   alignContent: "center",
                   alignItems: "center",
                   padding: 12,
+                  margin: 12,
+                  marginHorizontal: 24,
                 }}
               >
                 <Text
@@ -584,12 +617,49 @@ function Main() {
               </View>
 
               {isOnCall ? (
-                <View style={{ margin: 4, backgroundColor: "#be123c" }}>
-                  <Button title="Hang Up" onPress={hangUp} />
+                <View
+                  style={{
+                    backgroundColor: "#be123c",
+                    marginHorizontal: 24,
+                  }}
+                >
+                  <TouchableHighlight
+                    onPress={hangUp}
+                    style={{ borderRadius: 8 }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        textAlign: "center",
+                        padding: 12,
+                      }}
+                    >
+                      Hang Up
+                    </Text>
+                  </TouchableHighlight>
                 </View>
               ) : (
-                <View style={{ margin: 4, backgroundColor: "#0e7490" }}>
-                  <Button title="Call" onPress={callMusicPlayer} />
+                <View
+                  style={{
+                    backgroundColor: "#0e7490",
+                    marginHorizontal: 24,
+                    borderRadius: 8,
+                  }}
+                >
+                  <TouchableHighlight
+                    onPress={callMusicPlayer}
+                    style={{ borderRadius: 8 }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        textAlign: "center",
+                        padding: 12,
+                      }}
+                    >
+                      Call
+                    </Text>
+                  </TouchableHighlight>
                 </View>
               )}
             </View>
@@ -604,7 +674,11 @@ function Main() {
                 marginBottom: 8,
               }}
             >
-              <Text style={{ fontSize: 24, color: "white" }}>Controls</Text>
+              <Text
+                style={{ fontSize: 24, color: "white", fontWeight: "bold" }}
+              >
+                Controls
+              </Text>
               <View
                 style={{
                   flexDirection: "row",
@@ -639,7 +713,13 @@ function Main() {
 
             <View style={{ flex: 1, flexDirection: "row" }}>
               <View style={{ flex: 1, flexDirection: "column" }}>
-                <Text style={{ textAlign: "center", color: "white" }}>
+                <Text
+                  style={{
+                    textAlign: "center",
+                    color: "white",
+                    marginTop: 150,
+                  }}
+                >
                   Admin
                 </Text>
                 <TextInput
@@ -678,7 +758,10 @@ function Main() {
                   </Text>
                 </View>
 
-                <ScrollView horizontal={true} style={{ flex: 1 }}>
+                <ScrollView
+                  horizontal={true}
+                  style={{ flex: 1, marginHorizontal: 8 }}
+                >
                   <View style={{ flex: 1, flexDirection: "row" }}>
                     {setlists.map((sl, idx) => {
                       return (
@@ -687,6 +770,7 @@ function Main() {
                           style={{
                             flex: 1,
                             width: 150,
+                            marginRight: 8,
                             borderRadius: 8,
                             backgroundColor:
                               currentSetlist?.title === sl.title
@@ -721,10 +805,39 @@ function Main() {
                     })}
                   </View>
                 </ScrollView>
-                <Button
-                  title="Load Current Setlist"
-                  onPress={sendLoadSetlist}
-                />
+
+                <View
+                  style={{
+                    width: "100%",
+                    flex: 1,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={{ width: "80%", marginTop: 8 }}>
+                    <TouchableHighlight
+                      onPress={sendLoadSetlist}
+                      underlayColor="blue"
+                      style={{
+                        marginTop: 6,
+                        backgroundColor: "#020617",
+                        borderRadius: 8,
+                        borderWidth: 2,
+                        borderColor: "#3f3f46",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "white",
+                          textAlign: "center",
+                          padding: 8,
+                        }}
+                      >
+                        Load Current Setlist
+                      </Text>
+                    </TouchableHighlight>
+                  </View>
+                </View>
               </View>
             </View>
           </View>
@@ -734,31 +847,37 @@ function Main() {
         style={{
           height: "15%",
           flexDirection: "row",
-          borderTopColor: "red",
+          borderTopColor: "white",
           borderWidth: 2,
         }}
       >
-        <TouchableHighlight
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            backgroundColor: controlTab,
-          }}
-          onPress={() => setCurrentPage(0)}
-        >
-          <Text style={{ color: "#FFF", textAlign: "center" }}>Controls</Text>
-        </TouchableHighlight>
+        <View style={{ flex: 1, padding: 8, backgroundColor: "#020617" }}>
+          <TouchableHighlight
+            style={{
+              height: "100%",
+              justifyContent: "center",
+              backgroundColor: controlTab,
+              borderRadius: 8,
+            }}
+            onPress={() => setCurrentPage(0)}
+          >
+            <Text style={{ color: "#FFF", textAlign: "center" }}>Controls</Text>
+          </TouchableHighlight>
+        </View>
 
-        <TouchableHighlight
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            backgroundColor: musicTab,
-          }}
-          onPress={() => setCurrentPage(1)}
-        >
-          <Text style={{ color: "#FFF", textAlign: "center" }}>Music</Text>
-        </TouchableHighlight>
+        <View style={{ flex: 1, padding: 8, backgroundColor: "#020617" }}>
+          <TouchableHighlight
+            style={{
+              height: "100%",
+              justifyContent: "center",
+              backgroundColor: musicTab,
+              borderRadius: 8,
+            }}
+            onPress={() => setCurrentPage(1)}
+          >
+            <Text style={{ color: "#FFF", textAlign: "center" }}>Music</Text>
+          </TouchableHighlight>
+        </View>
       </View>
     </View>
   );

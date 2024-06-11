@@ -37,7 +37,6 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
         const songs = [] as SongProps[];
         const songRes = await getDocs(collection(db, collectionPath));
         songRes.docs.forEach((doc) => songs.push(doc.data() as SongProps));
-        console.log("Songs:", songs);
         setSongs(songs);
       } catch (err) {
         console.log("err getting songs", err);

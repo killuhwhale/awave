@@ -74,12 +74,6 @@ const CTLBTN: React.FC<{ fn: any; text: string }> = ({ fn, text }) => {
   );
 };
 
-// Holds Microphone and Controls
-const ControllerView = () => {};
-
-// Holds Songs/ Setlist
-const SongView = () => {};
-
 function Main() {
   const [partyName, setPartyName] = useState("");
   const [adminCode, setAdminCode] = useState("");
@@ -96,24 +90,28 @@ function Main() {
 
   const [user, setUser] = useState<User | null>(null);
 
+  const signIn = () => {
+    signInAnonymously(auth)
+      .then((creds) => {
+        console.log("Signing in res: ", creds);
+        setUser(creds.user);
+      })
+      .catch((err) => {
+        console.log("Error signing in!");
+      });
+  };
+
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((fbUser) => {
       if (fbUser) {
         setUser(fbUser);
       } else {
-        setUser(null);
+        signIn();
       }
     });
 
     if (!user) {
-      signInAnonymously(auth)
-        .then((creds) => {
-          console.log("Signing in res: ", creds);
-          setUser(creds.user);
-        })
-        .catch((err) => {
-          console.log("Error signing in!");
-        });
+      signIn();
     }
     return () => unsub();
   }, [user]);
@@ -455,16 +453,14 @@ function Main() {
   };
 
   useEffect(() => {
-    if (!partyName) return;
+    if (!partyName || !user) return;
+
     const setListPath = `setlists/${partyName}/setlists`;
     console.log("loading setlists: ", setListPath);
     const _ = async () => {
-      console.log("Getting doc...");
       const setlistDocs = await getDocs(collection(db, setListPath));
-      console.log("Got doc:", setlistDocs);
       const allSetlists = [] as Setlist[];
       setlistDocs.docs.forEach((doc) => {
-        // console.log("Setlist: ", doc.data());
         allSetlists.push(doc.data() as Setlist);
       });
 
@@ -476,7 +472,7 @@ function Main() {
     _()
       .then(() => {})
       .catch((err) => console.error(err));
-  }, [partyName]);
+  }, [partyName, user]);
 
   const onCallColor = isOnCall ? "#9f1239" : "#166534";
   const onCallText = isOnCall ? "Connected" : "Not Connected";

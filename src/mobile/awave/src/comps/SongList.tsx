@@ -179,7 +179,7 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
           }
           onChange={(ev) => {
             const data = ev.nativeEvent.text;
-            // console.log("text: ", data);
+            console.log("text: ", data);
             debFilterText(data);
           }}
         />

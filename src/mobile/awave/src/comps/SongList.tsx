@@ -26,29 +26,11 @@ import { debounce, filter } from "@root/utils/helpers";
 
 const db = getFirestore(fbApp);
 
-const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
-  sendSongToPlayer,
-}) => {
-  const [songs, setSongs] = useState<SongProps[] | null>(null);
+const useSongs = () => {
+  const [songs, setSongs] = useState<SongProps[]>([]);
 
   useEffect(() => {
     const collectionPath = `music/${config["deviceName"]}/songs`;
-    // const getSongs = async () => {
-    //   try {
-    //     const songs = [] as SongProps[];
-    //     const songRes = await getDocs(collection(db, collectionPath));
-    //     songRes.docs.forEach((doc) => {
-    //       const songChunk = JSON.parse(
-    //         (doc.data() as Map<string, string>)["songs"]
-    //       ) as Map<string, string>;
-
-    //       songs.push(...Object.values(songChunk));
-    //     });
-    //     setSongs(songs);
-    //   } catch (err) {
-    //     console.log("err getting songs", err);
-    //   }
-    // };
 
     const getSongs = async () => {
       try {
@@ -61,7 +43,10 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
           return Object.values(songChunk);
         });
         setSongs(fetchedSongs);
-        console.log("Got songs from FB successfully.");
+
+        const endTime = global.performance.now();
+        const timeTaken = endTime - startTime;
+        console.log(`GatheringSongs took: ${timeTaken} ms`);
       } catch (err) {
         console.log("Error getting songs", err);
       }
@@ -70,14 +55,65 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
     console.log("GatheringSongs");
     const startTime = global.performance.now();
 
-    getSongs()
-      .then(() => {
-        const endTime = global.performance.now();
-        const timeTaken = endTime - startTime;
-        console.log(`GatheringSongs took: ${timeTaken} ms`);
-      })
-      .catch((err) => console.log("err", err));
-  }, []);
+    getSongs();
+  }, [config]);
+
+  return songs;
+};
+
+const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
+  sendSongToPlayer,
+}) => {
+  // const [songs, setSongs] = useState<SongProps[] | null>(null);
+
+  const songs = useSongs();
+  // useEffect(() => {
+  //   const collectionPath = `music/${config["deviceName"]}/songs`;
+  //   // const getSongs = async () => {
+  //   //   try {
+  //   //     const songs = [] as SongProps[];
+  //   //     const songRes = await getDocs(collection(db, collectionPath));
+  //   //     songRes.docs.forEach((doc) => {
+  //   //       const songChunk = JSON.parse(
+  //   //         (doc.data() as Map<string, string>)["songs"]
+  //   //       ) as Map<string, string>;
+
+  //   //       songs.push(...Object.values(songChunk));
+  //   //     });
+  //   //     setSongs(songs);
+  //   //   } catch (err) {
+  //   //     console.log("err getting songs", err);
+  //   //   }
+  //   // };
+
+  //   // const getSongs = async () => {
+  //   //   try {
+  //   //     console.log("Gathering songs...");
+  //   //     const songRes = await getDocs(collection(db, collectionPath));
+  //   //     const fetchedSongs: SongProps[] = songRes.docs.flatMap((doc) => {
+  //   //       const songChunk = JSON.parse(doc.data().songs) as {
+  //   //         [key: string]: SongProps;
+  //   //       };
+  //   //       return Object.values(songChunk);
+  //   //     });
+  //   //     setSongs(fetchedSongs);
+  //   //     console.log("Got songs from FB successfully.");
+  //   //   } catch (err) {
+  //   //     console.log("Error getting songs", err);
+  //   //   }
+  //   // };
+
+  //   console.log("GatheringSongs");
+  //   const startTime = global.performance.now();
+
+  //   getSongs()
+  //     .then(() => {
+  //       const endTime = global.performance.now();
+  //       const timeTaken = endTime - startTime;
+  //       console.log(`GatheringSongs took: ${timeTaken} ms`);
+  //     })
+  //     .catch((err) => console.log("err", err));
+  // }, []);
 
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
   const [

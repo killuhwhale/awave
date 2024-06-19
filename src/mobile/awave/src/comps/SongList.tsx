@@ -33,23 +33,41 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
 
   useEffect(() => {
     const collectionPath = `music/${config["deviceName"]}/songs`;
+    // const getSongs = async () => {
+    //   try {
+    //     const songs = [] as SongProps[];
+    //     const songRes = await getDocs(collection(db, collectionPath));
+    //     songRes.docs.forEach((doc) => {
+    //       const songChunk = JSON.parse(
+    //         (doc.data() as Map<string, string>)["songs"]
+    //       ) as Map<string, string>;
+
+    //       songs.push(...Object.values(songChunk));
+    //     });
+    //     setSongs(songs);
+    //   } catch (err) {
+    //     console.log("err getting songs", err);
+    //   }
+    // };
+
     const getSongs = async () => {
       try {
-        const songs = [] as SongProps[];
+        console.log("Gathering songs...");
         const songRes = await getDocs(collection(db, collectionPath));
-        songRes.docs.forEach((doc) => {
-          const songChunk = JSON.parse(
-            (doc.data() as Map<string, string>)["songs"]
-          ) as Map<string, string>;
-
-          songs.push(...Object.values(songChunk));
+        const fetchedSongs: SongProps[] = songRes.docs.flatMap((doc) => {
+          const songChunk = JSON.parse(doc.data().songs) as {
+            [key: string]: SongProps;
+          };
+          return Object.values(songChunk);
         });
-        setSongs(songs);
+        setSongs(fetchedSongs);
+        console.log("Got songs from FB successfully.");
       } catch (err) {
-        console.log("err getting songs", err);
+        console.log("Error getting songs", err);
       }
     };
 
+    console.log("Gathering songs...");
     getSongs()
       .then(() => console.log("Got songs from FB successfully."))
       .catch((err) => console.log("err", err));

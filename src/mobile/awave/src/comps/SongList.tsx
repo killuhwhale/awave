@@ -67,9 +67,9 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
       }
     };
 
-    console.log("Gathering songs...");
+    console.time("GatheringSongs");
     getSongs()
-      .then(() => console.log("Got songs from FB successfully."))
+      .then(() => console.timeEnd("GatheringSongs"))
       .catch((err) => console.log("err", err));
   }, []);
 

@@ -41,7 +41,6 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
           const songChunk = JSON.parse(
             (doc.data() as Map<string, string>)["songs"]
           ) as Map<string, string>;
-          console.log("songChunk", songChunk);
 
           songs.push(...Object.values(songChunk));
         });
@@ -52,7 +51,7 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
     };
 
     getSongs()
-      .then((res) => console.log(res))
+      .then(() => console.log("Got songs from FB successfully."))
       .catch((err) => console.log("err", err));
   }, []);
 
@@ -78,7 +77,7 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
   const [searchByArtist, setSearchByArtist] = useState(false);
 
   const filterText = (searchTerm: string): void => {
-    console.log("Filtering: ", searchTerm);
+    // console.log("Filtering: ", searchTerm);
     if (!searchTerm) {
       // reset to all results
       setFilteredSongIdxs(
@@ -180,7 +179,7 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
           }
           onChange={(ev) => {
             const data = ev.nativeEvent.text;
-            console.log("text: ", data);
+            // console.log("text: ", data);
             debFilterText(data);
           }}
         />
@@ -203,7 +202,7 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
                   }}
                 >
                   <TouchableHighlight
-                    style={{ width: "100%", height: "100%" }}
+                    style={{ width: "100%" }}
                     onPress={() => {
                       console.log("Sending song to player: ", song);
                       sendSongToPlayer(song);
@@ -244,43 +243,6 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
           <></>
         )}
       </View>
-      <ScrollView style={{ flex: 1, width: "100%" }}>
-        {/* {filteredSongs ? (
-          filteredSongs.map((song, i) => {
-            return (
-              <View
-                key={`${i}_songlist_song_${song.name}`}
-                style={{
-                  backgroundColor: "#2563eb",
-                  padding: 8,
-                  marginBottom: 8,
-                  borderRadius: 8,
-                }}
-              >
-                <TouchableHighlight
-                  style={{ width: "100%", height: "100%" }}
-                  onPress={() => {
-                    console.log("Sending song to player: ", song);
-                    sendSongToPlayer(song);
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "white",
-                      marginLeft: 8,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {song.name}
-                  </Text>
-                </TouchableHighlight>
-              </View>
-            );
-          })
-        ) : (
-          <></>
-        )} */}
-      </ScrollView>
     </View>
   );
 };

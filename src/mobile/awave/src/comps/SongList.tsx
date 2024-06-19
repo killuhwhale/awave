@@ -179,9 +179,9 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
             searchByArtist ? "Search by Artist" : "Search by Song Name"
           }
           onChange={(ev) => {
-            const data = ev.target as unknown as any;
-            console.log("text: ", data.value);
-            debFilterText(data.value);
+            const data = ev.nativeEvent.text;
+            console.log("text: ", data);
+            debFilterText(data);
           }}
         />
       </View>

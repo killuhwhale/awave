@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import { collection, getDocs, getFirestore } from "firebase/firestore/lite";
-import fbApp from "@root/firebase/firebaseApp";
+import { User, getAuth, signInAnonymously } from "firebase/auth";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -22,9 +22,9 @@ import {
   rtcMsg,
 } from "@root/utils/utils";
 
+import fbApp from "@root/firebase/firebaseApp";
 import config from "@root/utils/config";
 import { CMD, debounce } from "@root/utils/helpers";
-import { User, getAuth, signInAnonymously } from "firebase/auth";
 import SongList from "@root/comps/SongList";
 
 const auth = getAuth(fbApp);

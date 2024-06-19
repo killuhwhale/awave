@@ -34,20 +34,43 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-
-
+// music/devicename/songs/chunkNum/{songs: stringifiedJson data}
 async function saveSongs(songs){
   const collectionName = `music/${config['deviceName']}/songs`
-  const songDocs = Object.keys(songs).map(key => {
+  const maxSongsPerDoc = 4500
+  // const maxSongsPerDoc = 100
+  const songDocs = []
+  let songCount = 0
+  let chunkCount = 0
+  let currentSongChunk = {}
+  const totalChunks = (Object.keys(songs).length / maxSongsPerDoc)
+  console.log(`Saving songs to firebase: ${totalChunks} chunks, max size: ${maxSongsPerDoc}, total songs: ${Object.keys(songs).length}`)
+
+  Object.keys(songs).forEach(key => {
     const fileName = key
     const artist = songs[key]
     let name = fileName.split("/").slice(-1)[0].split(".").slice(0, -1).join(".");
-    return db.collection(collectionName).doc(name).set({
-      name, fileName, artist,
-    })
+
+    if(name === ""){
+      console.error("Name bad: ", fileName, artist)
+    }
+
+    currentSongChunk[name] =  {
+        name, fileName, artist,
+      }
+    songCount++
+
+    if(songCount >= maxSongsPerDoc){
+      // console.log("Saving song chunk: ", chunkCount, currentSongChunk)
+      songDocs.push( db.collection(collectionName).doc(chunkCount.toString()).set({songs: JSON.stringify(currentSongChunk)}))
+      chunkCount++
+      currentSongChunk = {}
+      songCount = 0
+    }
   })
 
   try{
+    console.log("Awaiting firebase promises...")
     const res = await Promise.all(songDocs)
     console.log("Done setting all docs: ", res.length)
     return true

@@ -1,5 +1,6 @@
 import CONFIG from "../../../config.json";
 
+export const SM_BTN_SIZE = 28;
 export const MD_BTN_SIZE = 36;
 export const PLAYERNAME_LEFT = "p1";
 export const PLAYERNAME_RIGHT = "p2";

@@ -1,7 +1,13 @@
 "use client";
-import React, { useState, ChangeEvent, useLayoutEffect } from "react";
+import React, { useState, ChangeEvent, useLayoutEffect, useRef } from "react";
 
-import { MD_BTN_SIZE, debounce, filter, filterOptions } from "../utils/utils";
+import {
+  MD_BTN_SIZE,
+  SM_BTN_SIZE,
+  debounce,
+  filter,
+  filterOptions,
+} from "../utils/utils";
 import CIcon from "@coreui/icons-react";
 import {
   cilMediaPause,
@@ -9,7 +15,11 @@ import {
   cilVerticalAlignBottom,
   cilVerticalAlignTop,
   cilArrowCircleLeft,
+  cilArrowRight,
+  cilArrowLeft,
 } from "@coreui/icons";
+
+import { FixedSizeList as List } from "react-window";
 
 import CONFIG from "../../../config.json";
 
@@ -25,10 +35,32 @@ import ActionCancelModal from "./modals/ActionCancelModal";
 
 const db = getFirestore(fbApp);
 
+const Switch: React.FC = () => {
+  return (
+    <label className="switch">
+      <input type="checkbox" />
+      <span
+        style={{
+          position: "absolute",
+          cursor: "pointer",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "#ccc",
+          WebkitTransition: ".4s",
+          transition: ".4s",
+          borderRadius: 34,
+        }}
+      ></span>
+    </label>
+  );
+};
+
 const SongListSearchable = ({
   songs,
   title,
-  hidden,
+
   onDragStart,
   setNewPlayer,
   leftSong,
@@ -40,6 +72,7 @@ const SongListSearchable = ({
   addSongToTopOfOnDeck,
 }: SongListSearchProps) => {
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
+
   const [
     filteredSongNamesDecoratedStings,
     setFilteredSongNamesDecoratedStings,
@@ -58,6 +91,18 @@ const SongListSearchable = ({
     setFilteredSongNamesDecoratedStings(packageNameMarks);
   }, [songs]);
 
+  const [layout, setLayout] = useState({ width: 0, height: 0 });
+  const parentRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    if (!parentRef.current) return;
+
+    const { offsetHeight: height, offsetWidth: width } = parentRef.current;
+
+    setLayout({ width: width, height: height });
+  }, [parentRef]);
+
+  const [searchByArtist, setSearchByArtist] = useState(false);
+
   const filterText = (searchTerm: string): void => {
     console.log("Filtering: ", searchTerm);
     if (!searchTerm) {
@@ -75,20 +120,23 @@ const SongListSearchable = ({
     }
 
     // Updates filtered data.
-    const stringData = songs.map(
-      (song: SongProps) => `${song.name} ${song.artist}`
-    );
+    const stringData = songs.map((song: SongProps) => {
+      if (searchByArtist) return song.artist ?? song.name;
+      return song.name;
+    });
+
     // console.log("Filter text: ", searchTerm, stringData);
     const options: filterOptions = {
       word: false,
     };
     const { items, marks } = filter(searchTerm, stringData, options);
-    // console.log("Filter results: ", marks);
+    console.log("Filter results: ", items);
     setFilteredSongIdxs(items);
     const songNameMarks = new Map<string, string>();
+
     items.forEach((filterIdx: number, idx: number) => {
-      const app = songs[filterIdx];
-      songNameMarks.set(app?.name ?? "", marks[idx] ?? "");
+      const song = songs[filterIdx];
+      songNameMarks.set(song?.name ?? "", marks[idx] ?? "");
     });
 
     setFilteredSongNamesDecoratedStings(songNameMarks);
@@ -170,11 +218,7 @@ const SongListSearchable = ({
   };
 
   return (
-    <div
-      className={`w-full h-full p-4 items-center flex flex-col ${
-        hidden ? "hidden" : ""
-      }`}
-    >
+    <div className={`w-full h-full p-4 items-center flex flex-col `}>
       <div className="flex flex-col w-full justify-center">
         <p className="text-center">{title} </p>
         <div className="flex w-full justify-start">
@@ -205,10 +249,22 @@ const SongListSearchable = ({
           )}
         </div>
       </div>
+      <div
+        className="flex flex-row justify-center content-center items-center border-4 border-white pl-8 pr-8 pt-4 pb-4"
+        onClick={() => setSearchByArtist(!searchByArtist)}
+      >
+        <p>Song</p>
+        <CIcon
+          icon={searchByArtist ? cilArrowRight : cilArrowLeft}
+          width={SM_BTN_SIZE}
+          className=" text-slate-200 font-bold pl-1 pr-1"
+        />
+        <p>Artist</p>
+      </div>
       <div className="w-full flex justify-center m-4">
         <input
           type="text"
-          placeholder="Search Song"
+          placeholder={searchByArtist ? "Search by Artist" : "Search Song"}
           className="w-3/4 bg-color-slate-300 text-neutral-500 pl-4 pt-1 pb-1"
           onChange={(ev: ChangeEvent<HTMLInputElement>) =>
             debFilterText(ev.target.value)
@@ -216,8 +272,138 @@ const SongListSearchable = ({
         />
       </div>
 
-      <div className="overflow-y-auto flex flex-col w-full p-1">
-        {filteredSongs?.map((song, idx) => {
+      <div
+        className="overflow-y-auto flex flex-col w-full p-1 h-full"
+        ref={parentRef}
+      >
+        <List
+          itemCount={filteredSongs.length}
+          itemSize={75}
+          height={layout.height}
+          width={layout.width}
+        >
+          {({ index, style }) => {
+            const song = filteredSongs[index];
+
+            const curDecorName = filteredSongNamesDecoratedStings.get(
+              song.name
+            );
+
+            const artistText =
+              curDecorName &&
+              curDecorName.length > 0 &&
+              searchByArtist &&
+              filteredSongs.length != songs.length
+                ? curDecorName
+                : `${song.artist}`;
+
+            return song.name.startsWith("--") ? (
+              <div style={style} key={`${index}_mt`}></div>
+            ) : (
+              <div
+                key={song.src}
+                style={style}
+                draggable
+                onDragStart={(e) => onDragStart(e, song)}
+                className="flex justify-between hover:bg-slate-600 border-b-1 border border-neutral-500 items-center "
+              >
+                <div className="m-12 w-full">
+                  <p
+                    key={`SLS_${song.src}`}
+                    onDoubleClick={(e) => handleDoubleClick(song)}
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        curDecorName &&
+                        curDecorName.length > 0 &&
+                        !searchByArtist
+                          ? curDecorName
+                          : `${song.name}`,
+                    }}
+                  ></p>
+                  <p
+                    key={`SLSArt_${song.src}`}
+                    onDoubleClick={(e) => handleDoubleClick(song)}
+                    dangerouslySetInnerHTML={{
+                      __html: artistText === "undefined" ? "" : artistText,
+                    }}
+                  ></p>
+                </div>
+
+                <p
+                  className="pr-6 pl-6"
+                  onDoubleClick={() => {
+                    // setNewPlayer(song);
+                    if (addSongToTopOfOnDeck) addSongToTopOfOnDeck(song);
+                  }}
+                >
+                  |
+                </p>
+
+                {addSongToTopOfOnDeck ? (
+                  <div
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      flex: 1,
+                      justifyContent: "center",
+                      alignContent: "center",
+                      alignItems: "center",
+                    }}
+                    onDoubleClick={() => {
+                      // setNewPlayer(song);
+                      if (addSongToTopOfOnDeck) addSongToTopOfOnDeck(song);
+                    }}
+                  >
+                    <div>
+                      <CIcon
+                        icon={cilArrowCircleLeft}
+                        width={MD_BTN_SIZE * 0.92}
+                        className="mr-4 hover:text-emerald-700 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <></>
+                )}
+                {setNewPlayer ? (
+                  <div>
+                    {isLeftPlaying &&
+                    leftPlayerRef &&
+                    leftPlayerRef?.current?.playing() &&
+                    leftSong &&
+                    leftSong.src === song.src ? (
+                      <CIcon
+                        icon={cilMediaPause}
+                        width={MD_BTN_SIZE * 0.75}
+                        className="mr-4 hover:text-emerald-700 cursor-pointer"
+                        onClick={() => {
+                          // setNewPlayer(song);
+                          if (masterPause) masterPause();
+                        }}
+                      />
+                    ) : (
+                      <CIcon
+                        icon={cilMediaPlay}
+                        width={MD_BTN_SIZE * 0.75}
+                        className="mr-4 hover:text-emerald-700 cursor-pointer"
+                        onClick={() => {
+                          // if (masterPause) masterPause();
+                          setNewPlayer(song);
+
+                          // if (leftPlayerRef) leftPlayerRef?.current?.play();
+                        }}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <></>
+                )}
+              </div>
+            );
+          }}
+        </List>
+
+        {/* {filteredSongs?.map((song, idx) => {
           const curDecorName = filteredSongNamesDecoratedStings.get(song.name);
           return song.name.startsWith("--") ? (
             <div key={`${idx}_mt`}></div>
@@ -312,7 +498,7 @@ const SongListSearchable = ({
               )}
             </div>
           );
-        })}
+        })} */}
       </div>
 
       <ActionCancelModal

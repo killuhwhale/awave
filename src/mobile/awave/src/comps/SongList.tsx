@@ -8,10 +8,12 @@ import React, {
 import {
   Button,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   TouchableHighlight,
   View,
+  VirtualizedList,
 } from "react-native";
 
 import { collection, getDocs, getFirestore } from "firebase/firestore/lite";
@@ -28,7 +30,6 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
   sendSongToPlayer,
 }) => {
   const [songs, setSongs] = useState<SongProps[] | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const collectionPath = `music/${config["deviceName"]}/songs`;
@@ -36,7 +37,14 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
       try {
         const songs = [] as SongProps[];
         const songRes = await getDocs(collection(db, collectionPath));
-        songRes.docs.forEach((doc) => songs.push(doc.data() as SongProps));
+        songRes.docs.forEach((doc) => {
+          const songChunk = JSON.parse(
+            (doc.data() as Map<string, string>)["songs"]
+          ) as Map<string, string>;
+          console.log("songChunk", songChunk);
+
+          songs.push(...Object.values(songChunk));
+        });
         setSongs(songs);
       } catch (err) {
         console.log("err getting songs", err);
@@ -67,6 +75,8 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
     setFilteredSongNamesDecoratedStings(packageNameMarks);
   }, [songs]);
 
+  const [searchByArtist, setSearchByArtist] = useState(false);
+
   const filterText = (searchTerm: string): void => {
     console.log("Filtering: ", searchTerm);
     if (!searchTerm) {
@@ -84,9 +94,11 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
     }
 
     // Updates filtered data.
-    const stringData = songs.map(
-      (song: SongProps) => `${song.name} ${song.artist}`
-    );
+    const stringData = songs.map((song: SongProps) => {
+      if (searchByArtist) return song.artist ?? song.name;
+      return song.name;
+    });
+
     // console.log("Filter text: ", searchTerm, stringData);
     const options: filterOptions = {
       word: false,
@@ -115,6 +127,46 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
         Music
       </Text>
       <View style={{ padding: 16, alignItems: "center" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 4,
+          }}
+        >
+          <Text
+            onPress={() => setSearchByArtist(!searchByArtist)}
+            style={{
+              color: searchByArtist ? "white" : "#60a5fa",
+              marginLeft: 8,
+              fontWeight: "bold",
+              marginRight: 8,
+            }}
+          >
+            Song
+          </Text>
+
+          <Switch
+            value={searchByArtist}
+            onValueChange={setSearchByArtist}
+            trackColor={{ false: "white", true: "white" }}
+            ios_backgroundColor="white"
+            thumbColor={searchByArtist ? "#3b82f6" : "#60a5fa"}
+          />
+
+          <Text
+            onPress={() => setSearchByArtist(!searchByArtist)}
+            style={{
+              color: searchByArtist ? "#3b82f6" : "white",
+              marginLeft: 8,
+              fontWeight: "bold",
+              marginRight: 8,
+            }}
+          >
+            Artist
+          </Text>
+        </View>
+
         <TextInput
           style={{
             backgroundColor: "black",
@@ -123,7 +175,9 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
             width: "75%",
             borderRadius: 8,
           }}
-          placeholder="Search"
+          placeholder={
+            searchByArtist ? "Search by Artist" : "Search by Song Name"
+          }
           onChange={(ev) => {
             const data = ev.target as unknown as any;
             console.log("text: ", data.value);
@@ -131,8 +185,67 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
           }}
         />
       </View>
-      <ScrollView style={{ flex: 1, width: "100%" }}>
+
+      <View style={{ flex: 5, width: "100%" }}>
         {filteredSongs ? (
+          <VirtualizedList<SongProps>
+            data={filteredSongs}
+            initialNumToRender={12}
+            renderItem={({ item, index }) => {
+              const song = item as SongProps;
+              return (
+                <View
+                  style={{
+                    backgroundColor: "#2563eb",
+                    padding: 8,
+                    marginBottom: 8,
+                    borderRadius: 8,
+                  }}
+                >
+                  <TouchableHighlight
+                    style={{ width: "100%", height: "100%" }}
+                    onPress={() => {
+                      console.log("Sending song to player: ", song);
+                      sendSongToPlayer(song);
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        marginLeft: 8,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {song.name}
+
+                      <Text
+                        style={{
+                          color: "grey",
+                          marginLeft: 8,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {song.artist ? ` - ${song.artist}` : ""}
+                      </Text>
+                    </Text>
+                  </TouchableHighlight>
+                </View>
+              );
+            }}
+            keyExtractor={(item, index) =>
+              `${index}_songlist_song_${item.name}`
+            }
+            getItemCount={() => filteredSongs.length}
+            getItem={(item, index) => {
+              return filteredSongs[index] as SongProps;
+            }}
+          />
+        ) : (
+          <></>
+        )}
+      </View>
+      <ScrollView style={{ flex: 1, width: "100%" }}>
+        {/* {filteredSongs ? (
           filteredSongs.map((song, i) => {
             return (
               <View
@@ -166,7 +279,7 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
           })
         ) : (
           <></>
-        )}
+        )} */}
       </ScrollView>
     </View>
   );

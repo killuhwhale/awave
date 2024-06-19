@@ -393,7 +393,7 @@ const Home: React.FC = () => {
           const allSongs = [] as SongProps[];
           songDocs.docs.forEach((songDoc) => {
             const songData = songDoc.data() as SongProps;
-            console.log("songDoc: ", songData);
+            // console.log("songDoc: ", songData);
             allSongs.push({
               ...songData,
               src: `http://${host}:3001/${encodeURIComponent(
@@ -1246,12 +1246,11 @@ const Home: React.FC = () => {
             {combinedSetlists.map((setlist: Setlist, idx: number) => {
               return !setlist.songs ? (
                 <div key={`${idx}_SongListSearchable`}></div>
-              ) : (
+              ) : idx === curSetListIdx ? (
                 <SongListSearchable
                   key={`${idx}_SongListSearchable`}
                   playRequestedSong={playRequestedSong}
                   addSongToTopOfOnDeck={addSongToTopOfOnDeck}
-                  hidden={idx !== curSetListIdx}
                   title={setlist.title}
                   songs={setlist.songs}
                   onDragStart={onDragStart}
@@ -1259,6 +1258,8 @@ const Home: React.FC = () => {
                     confirmLoadSetlist(idx - 1);
                   }}
                 />
+              ) : (
+                <></>
               );
             })}
           </div>

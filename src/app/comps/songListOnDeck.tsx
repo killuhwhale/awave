@@ -1,7 +1,9 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import CIcon from "@coreui/icons-react";
 import { cilX } from "@coreui/icons";
+
+import { FixedSizeList as List } from "react-window";
 
 const SongListOnDeck = ({
   songs,
@@ -25,6 +27,17 @@ const SongListOnDeck = ({
     console.log("Playing song handleDoubleClick: ", song.name);
     loadSongFromTouch(song);
   };
+
+  const [layout, setLayout] = useState({ width: 0, height: 0 });
+  const parentRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (!parentRef.current) return;
+
+    const { offsetHeight: height, offsetWidth: width } = parentRef.current;
+    console.log("layoutEffect: ", parentRef.current.style);
+    setLayout({ width: width, height: height });
+  }, [parentRef]);
 
   return (
     <div className="w-full h-full pl-4 pr-4 items-center flex flex-col ">
@@ -74,8 +87,65 @@ const SongListOnDeck = ({
       ) : (
         <></>
       )}
-      <div className="overflow-y-auto flex flex-col w-full mb-2 pb-4">
-        {songs?.map((song, idx) => {
+      <div
+        className="overflow-y-auto flex flex-col w-full mb-2 pb-4 h-full"
+        ref={parentRef}
+      >
+        <List
+          height={layout.height}
+          width={layout.width}
+          itemCount={songs.length}
+          itemSize={75}
+          className="w-full h-full"
+        >
+          {({ index, style }) => {
+            const song = songs[index];
+            return song.name.startsWith("--") ? (
+              <div key={`${index}_mt`} style={style}></div>
+            ) : (
+              <div
+                style={style}
+                className="group flex justify-between border-b-1 border border-neutral-500"
+                onClick={() => {}}
+                key={`${index}_rmondeck`}
+              >
+                <div
+                  className="p-4 w-11/12 hover:bg-slate-600 "
+                  key={`SLOD_${song.src}`}
+                  draggable
+                  onDragStart={(e) => {
+                    onDragStartRearrangeDeck(e, song, index);
+                  }}
+                  onDragOver={(e) => {
+                    onDragOver(e);
+                    onDragOverRearrangeDeck(e);
+                  }}
+                  onDrop={(e) => {
+                    onDrop(e, index);
+                    onDropRearrangeDeck(e, index);
+                  }}
+                  // onTouchStart={(e) => handleTouchStart(e, song)}
+                  // onTouchEnd={(e) => handleTouchEnd()}
+                  onDoubleClick={(e) => handleDoubleClick(song)}
+                >
+                  <p className="text-slate-300">{song.name}</p>
+                  <p>{song.artist}</p>
+                </div>
+                <div className="w-1/12 justify-center content-center flex items-center align-middle">
+                  <CIcon
+                    icon={cilX}
+                    size="xl"
+                    onClick={() => confirmRemoveOnDeckSong(song)}
+                    className=" hidden group-hover:block"
+                    color="#be123c"
+                  />
+                </div>
+              </div>
+            );
+          }}
+        </List>
+
+        {/* {songs?.map((song, idx) => {
           return song.name.startsWith("--") ? (
             <div key={`${idx}_mt`}></div>
           ) : (
@@ -117,7 +187,7 @@ const SongListOnDeck = ({
               </div>
             </div>
           );
-        })}
+        })} */}
       </div>
       {createSetlistPage ? (
         <div

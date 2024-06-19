@@ -37,7 +37,7 @@ const db = admin.firestore();
 // music/devicename/songs/chunkNum/{songs: stringifiedJson data}
 async function saveSongs(songs){
   const collectionName = `music/${config['deviceName']}/songs`
-  const maxSongsPerDoc = 4500
+  const maxSongsPerDoc = 3000
   // const maxSongsPerDoc = 100
   const songDocs = []
   let songCount = 0

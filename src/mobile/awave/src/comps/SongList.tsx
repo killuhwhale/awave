@@ -67,9 +67,15 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
       }
     };
 
-    console.time("GatheringSongs");
+    console.log("GatheringSongs");
+    const startTime = global.performance.now();
+
     getSongs()
-      .then(() => console.timeEnd("GatheringSongs"))
+      .then(() => {
+        const endTime = global.performance.now();
+        const timeTaken = endTime - startTime;
+        console.log(`GatheringSongs took: ${timeTaken} ms`);
+      })
       .catch((err) => console.log("err", err));
   }, []);
 

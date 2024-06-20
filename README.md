@@ -58,6 +58,17 @@ Then we will also store this data in Firebase by Device Name
 Firebase => /music/{deviceName}/songs/songObject
 
 
+## Data Contraints
+52,000+ songs
+47,604 -- 4.6mb
+
+379 -- 23kb
+
+1. Limit on number of reads per 24 hours
+2. Firebase documents can only be max 1Mb
+
+We need to store songs as stringified json in chunks.
+Each song is roughly ~
 
 
 ## How to update
@@ -85,8 +96,11 @@ bash build.sh ios && eas build -p ios
 Download .ipa and upload via Transporter app.
 
 # Build Android
+
 cd src/mobile/awave
-bash build.sh android &&  JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  eas build --platform android --local
+bash build.sh android &&  JAVA_HOME=/usr/lib/jvm/openjdk-17  eas build --platform android --local
+JAVA_HOME=/usr/lib/jvm/openjdk-17  ./gradlew clean
+
 ## Output => build-1716313595711.aab
 
 ## Build APK from AAB
@@ -96,7 +110,7 @@ unzip awave.apks -d .
 ## Extract APK from .apks created from bundletool and ADB install
 
 ## Run android locally
-cd ~/ws_node/awave/src/mobile/awave && bash build.sh android && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  npx expo run:android
+cd ~/ws_node/awave/src/mobile/awave && bash build.sh android && JAVA_HOME=/usr/lib/jvm/openjdk-17  npx expo run:android
 
 # PM2 ts_wss
 # Install PM2 globally

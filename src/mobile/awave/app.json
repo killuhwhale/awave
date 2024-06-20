@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.ekildog.awave"
+      "package": "com.killuhwhale.awave"
     },
     "web": {
       "favicon": "./assets/favicon.png"

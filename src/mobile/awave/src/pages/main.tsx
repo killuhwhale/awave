@@ -7,8 +7,6 @@ import {
   TextInput,
   TouchableHighlight,
   View,
-  StyleSheet,
-  Dimensions,
 } from "react-native";
 
 import { collection, getDocs, getFirestore } from "firebase/firestore/lite";
@@ -483,466 +481,408 @@ function Main() {
 
   const controlTab = currentPage === 0 ? "#334155" : "#0f172a";
   const musicTab = currentPage === 1 ? "#334155" : "#0f172a";
-
-  const scrollViewRef = useRef(null);
-
-  const scrollToPage = (pageIndex) => {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ x: width * pageIndex, animated: true });
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        ref={scrollViewRef}
+    <View
+      style={{
+        height: "100%",
+        width: "100%",
+        paddingTop: 42,
+      }}
+    >
+      <View style={{ height: "85%", paddingBottom: 24 }}>
+        {currentPage === 0 ? (
+          <ScrollView
+            id="mainscroll"
+            style={{ flex: 1, display: currentPage === 0 ? "flex" : "none" }}
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
+            <View
+              id="row1"
+              style={{
+                flex: 2,
+                flexDirection: "column",
+                padding: 8,
+                marginTop: 8,
+                marginBottom: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 24,
+                  color: "white",
+                  marginBottom: 12,
+                  fontWeight: "bold",
+                }}
+              >
+                Connection Details
+              </Text>
+
+              <View style={{ flex: 1, flexDirection: "row", padding: 8 }}>
+                <View style={{ flex: 1, flexDirection: "column" }}>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      color: "white",
+                      fontWeight: "bold",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Party Name
+                  </Text>
+                  <View style={{ alignItems: "center" }}>
+                    <TextInput
+                      style={{
+                        backgroundColor: "black",
+                        color: "white",
+                        padding: 8,
+                        width: "75%",
+                        borderRadius: 8,
+                      }}
+                      placeholder="Party Name"
+                      value={partyName}
+                      onChange={(ev) => {
+                        setPartyName(ev.nativeEvent.text);
+                        updatePartyName(ev.nativeEvent.text, secretCode);
+                      }}
+                    />
+                  </View>
+                </View>
+
+                <View style={{ flex: 1, flexDirection: "column" }}>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      color: "white",
+                      marginBottom: 8,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Secret
+                  </Text>
+                  <View style={{ alignItems: "center" }}>
+                    <TextInput
+                      style={{
+                        backgroundColor: "black",
+                        color: "white",
+                        padding: 8,
+                        width: "75%",
+                        borderRadius: 8,
+                      }}
+                      placeholder="Secret Code"
+                      value={secretCode}
+                      onChange={(ev) => {
+                        setSecretCode(ev.nativeEvent.text);
+                        updateSecretCode(partyName, ev.nativeEvent.text);
+                      }}
+                    />
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <View
+              id="row2"
+              style={{ flex: 3, padding: 8, marginTop: 8, marginBottom: 8 }}
+            >
+              <Text
+                style={{ fontSize: 24, color: "white", fontWeight: "bold" }}
+              >
+                Microphone
+              </Text>
+              <View
+                style={{
+                  backgroundColor: onCallColor,
+                  borderRadius: 12,
+                  justifyContent: "center",
+                  alignContent: "center",
+                  alignItems: "center",
+                  padding: 12,
+                  margin: 12,
+                  marginHorizontal: 24,
+                }}
+              >
+                <Text
+                  style={{
+                    textAlign: "center",
+                    color: "white",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {onCallText}
+                </Text>
+              </View>
+
+              {isOnCall ? (
+                <View
+                  style={{
+                    backgroundColor: "#be123c",
+                    marginHorizontal: 24,
+                  }}
+                >
+                  <TouchableHighlight
+                    onPress={hangUp}
+                    style={{ borderRadius: 8 }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        textAlign: "center",
+                        padding: 12,
+                      }}
+                    >
+                      Hang Up
+                    </Text>
+                  </TouchableHighlight>
+                </View>
+              ) : (
+                <View
+                  style={{
+                    backgroundColor: "#0e7490",
+                    marginHorizontal: 24,
+                    borderRadius: 8,
+                  }}
+                >
+                  <TouchableHighlight
+                    onPress={callMusicPlayer}
+                    style={{ borderRadius: 8 }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        textAlign: "center",
+                        padding: 12,
+                      }}
+                    >
+                      Call
+                    </Text>
+                  </TouchableHighlight>
+                </View>
+              )}
+            </View>
+
+            <View
+              id="row3"
+              style={{
+                flex: 4,
+                width: "100%",
+                padding: 8,
+                marginTop: 8,
+                marginBottom: 8,
+              }}
+            >
+              <Text
+                style={{ fontSize: 24, color: "white", fontWeight: "bold" }}
+              >
+                Controls
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  width: "100%",
+                  justifyContent: "center",
+                }}
+              >
+                <CTLBTN fn={sendPlay} text="Play" />
+                <CTLBTN fn={sendPause} text="Pause" />
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  width: "100%",
+                  justifyContent: "center",
+                }}
+              >
+                <CTLBTN fn={sendPause} text="Pause" />
+                <CTLBTN fn={sendNext} text="Next" />
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  width: "100%",
+                  justifyContent: "center",
+                }}
+              >
+                <CTLBTN fn={sendVolDown} text="Vol Down" />
+                <CTLBTN fn={sendVolUp} text="Vol Up" />
+              </View>
+            </View>
+
+            <View style={{ flex: 1, flexDirection: "row" }}>
+              <View style={{ flex: 1, flexDirection: "column" }}>
+                <Text
+                  style={{
+                    textAlign: "center",
+                    color: "white",
+                    marginTop: 150,
+                  }}
+                >
+                  Admin
+                </Text>
+                <TextInput
+                  style={{
+                    width: "100%",
+                    backgroundColor: "black",
+                    color: "white",
+                    padding: 4,
+                  }}
+                  placeholder="Admin Code"
+                  value={adminCode}
+                  onChange={(ev) => {
+                    setAdminCode(ev.nativeEvent.text);
+                  }}
+                />
+                <Button title="Reset Player" onPress={resetPlayer} />
+              </View>
+            </View>
+          </ScrollView>
+        ) : (
+          // ~~~~~~~~~~~~ Music Page ~~~~~~~~~~~~~~~~~~~~~~~~~  //
+          <View
+            style={{
+              flex: 3,
+              gap: 10,
+              display: currentPage === 1 ? "flex" : "none",
+            }}
+          >
+            <View
+              style={{ flex: 10, padding: 8, marginTop: 8, marginBottom: 8 }}
+            >
+              <SongList sendSongToPlayer={sendSongToPlayer} />
+            </View>
+            <View
+              style={{ flex: 4, padding: 8, marginTop: 8, marginBottom: 8 }}
+            >
+              <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, justifyContent: "center" }}>
+                  <Text style={{ fontSize: 24, color: "white" }}>Setlist</Text>
+                  <Text style={{ fontSize: 16, color: "white" }}>
+                    Current Setlist: {currentSetlist?.title}
+                  </Text>
+                </View>
+
+                <ScrollView
+                  horizontal={true}
+                  style={{ flex: 1, marginHorizontal: 8 }}
+                >
+                  <View style={{ flex: 1, flexDirection: "row" }}>
+                    {setlists.map((sl, idx) => {
+                      return (
+                        <View
+                          key={`sl_${idx}`}
+                          style={{
+                            flex: 1,
+                            width: 150,
+                            marginRight: 8,
+                            borderRadius: 8,
+                            backgroundColor:
+                              currentSetlist?.title === sl.title
+                                ? "#166534"
+                                : "black",
+                            padding: 8,
+                          }}
+                        >
+                          <TouchableHighlight
+                            onPress={() => setCurrentSetlist(sl)}
+                            style={{
+                              height: "100%",
+                              width: "100%",
+                              justifyContent: "center",
+                              alignContent: "center",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color:
+                                  sl.order == currentSetlist?.order
+                                    ? "white"
+                                    : "grey",
+                                textAlign: "center",
+                              }}
+                            >
+                              {sl.title}
+                            </Text>
+                          </TouchableHighlight>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+
+                <View
+                  style={{
+                    width: "100%",
+                    flex: 1,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={{ width: "80%", marginTop: 8 }}>
+                    <TouchableHighlight
+                      onPress={sendLoadSetlist}
+                      underlayColor="blue"
+                      style={{
+                        marginTop: 6,
+                        backgroundColor: "#020617",
+                        borderRadius: 8,
+                        borderWidth: 2,
+                        borderColor: "#3f3f46",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "white",
+                          textAlign: "center",
+                          padding: 8,
+                        }}
+                      >
+                        Load Current Setlist
+                      </Text>
+                    </TouchableHighlight>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+      </View>
+      <View
+        style={{
+          height: "15%",
+          flexDirection: "row",
+          borderTopColor: "white",
+          borderWidth: 2,
+        }}
       >
-        <View style={[styles.page, { backgroundColor: "#ff6347" }]}>
-          <Text style={styles.text}>Page 1</Text>
+        <View style={{ flex: 1, padding: 8, backgroundColor: "#020617" }}>
+          <TouchableHighlight
+            style={{
+              height: "100%",
+              justifyContent: "center",
+              backgroundColor: controlTab,
+              borderRadius: 8,
+            }}
+            onPress={() => setCurrentPage(0)}
+          >
+            <Text style={{ color: "#FFF", textAlign: "center" }}>Controls</Text>
+          </TouchableHighlight>
         </View>
-        <View style={[styles.page, { backgroundColor: "#4682b4" }]}>
-          <Text style={styles.text}>Page 2</Text>
+
+        <View style={{ flex: 1, padding: 8, backgroundColor: "#020617" }}>
+          <TouchableHighlight
+            style={{
+              height: "100%",
+              justifyContent: "center",
+              backgroundColor: musicTab,
+              borderRadius: 8,
+            }}
+            onPress={() => setCurrentPage(1)}
+          >
+            <Text style={{ color: "#FFF", textAlign: "center" }}>Music</Text>
+          </TouchableHighlight>
         </View>
-      </ScrollView>
-      <View style={styles.buttonContainer}>
-        <Button title="Page 1" onPress={() => scrollToPage(0)} />
-        <Button title="Page 2" onPress={() => scrollToPage(1)} />
       </View>
     </View>
-
-    // <View
-    //   style={{
-    //     height: "100%",
-    //     width: "100%",
-    //     paddingTop: 42,
-    //   }}
-    // >
-    //   <View style={{ height: "85%", paddingBottom: 24 }}>
-    //     {currentPage === 0 ? (
-    //       <ScrollView
-    //         id="mainscroll"
-    //         style={{ flex: 1, display: currentPage === 0 ? "flex" : "none" }}
-    //         contentContainerStyle={{ flexGrow: 1 }}
-    //       >
-    //         <View
-    //           id="row1"
-    //           style={{
-    //             flex: 2,
-    //             flexDirection: "column",
-    //             padding: 8,
-    //             marginTop: 8,
-    //             marginBottom: 8,
-    //           }}
-    //         >
-    //           <Text
-    //             style={{
-    //               fontSize: 24,
-    //               color: "white",
-    //               marginBottom: 12,
-    //               fontWeight: "bold",
-    //             }}
-    //           >
-    //             Connection Details
-    //           </Text>
-
-    //           <View style={{ flex: 1, flexDirection: "row", padding: 8 }}>
-    //             <View style={{ flex: 1, flexDirection: "column" }}>
-    //               <Text
-    //                 style={{
-    //                   textAlign: "center",
-    //                   color: "white",
-    //                   fontWeight: "bold",
-    //                   marginBottom: 8,
-    //                 }}
-    //               >
-    //                 Party Name
-    //               </Text>
-    //               <View style={{ alignItems: "center" }}>
-    //                 <TextInput
-    //                   style={{
-    //                     backgroundColor: "black",
-    //                     color: "white",
-    //                     padding: 8,
-    //                     width: "75%",
-    //                     borderRadius: 8,
-    //                   }}
-    //                   placeholder="Party Name"
-    //                   value={partyName}
-    //                   onChange={(ev) => {
-    //                     setPartyName(ev.nativeEvent.text);
-    //                     updatePartyName(ev.nativeEvent.text, secretCode);
-    //                   }}
-    //                 />
-    //               </View>
-    //             </View>
-
-    //             <View style={{ flex: 1, flexDirection: "column" }}>
-    //               <Text
-    //                 style={{
-    //                   textAlign: "center",
-    //                   color: "white",
-    //                   marginBottom: 8,
-    //                   fontWeight: "bold",
-    //                 }}
-    //               >
-    //                 Secret
-    //               </Text>
-    //               <View style={{ alignItems: "center" }}>
-    //                 <TextInput
-    //                   style={{
-    //                     backgroundColor: "black",
-    //                     color: "white",
-    //                     padding: 8,
-    //                     width: "75%",
-    //                     borderRadius: 8,
-    //                   }}
-    //                   placeholder="Secret Code"
-    //                   value={secretCode}
-    //                   onChange={(ev) => {
-    //                     setSecretCode(ev.nativeEvent.text);
-    //                     updateSecretCode(partyName, ev.nativeEvent.text);
-    //                   }}
-    //                 />
-    //               </View>
-    //             </View>
-    //           </View>
-    //         </View>
-
-    //         <View
-    //           id="row2"
-    //           style={{ flex: 3, padding: 8, marginTop: 8, marginBottom: 8 }}
-    //         >
-    //           <Text
-    //             style={{ fontSize: 24, color: "white", fontWeight: "bold" }}
-    //           >
-    //             Microphone
-    //           </Text>
-    //           <View
-    //             style={{
-    //               backgroundColor: onCallColor,
-    //               borderRadius: 12,
-    //               justifyContent: "center",
-    //               alignContent: "center",
-    //               alignItems: "center",
-    //               padding: 12,
-    //               margin: 12,
-    //               marginHorizontal: 24,
-    //             }}
-    //           >
-    //             <Text
-    //               style={{
-    //                 textAlign: "center",
-    //                 color: "white",
-    //                 fontWeight: "bold",
-    //               }}
-    //             >
-    //               {onCallText}
-    //             </Text>
-    //           </View>
-
-    //           {isOnCall ? (
-    //             <View
-    //               style={{
-    //                 backgroundColor: "#be123c",
-    //                 marginHorizontal: 24,
-    //               }}
-    //             >
-    //               <TouchableHighlight
-    //                 onPress={hangUp}
-    //                 style={{ borderRadius: 8 }}
-    //               >
-    //                 <Text
-    //                   style={{
-    //                     color: "white",
-    //                     textAlign: "center",
-    //                     padding: 12,
-    //                   }}
-    //                 >
-    //                   Hang Up
-    //                 </Text>
-    //               </TouchableHighlight>
-    //             </View>
-    //           ) : (
-    //             <View
-    //               style={{
-    //                 backgroundColor: "#0e7490",
-    //                 marginHorizontal: 24,
-    //                 borderRadius: 8,
-    //               }}
-    //             >
-    //               <TouchableHighlight
-    //                 onPress={callMusicPlayer}
-    //                 style={{ borderRadius: 8 }}
-    //               >
-    //                 <Text
-    //                   style={{
-    //                     color: "white",
-    //                     textAlign: "center",
-    //                     padding: 12,
-    //                   }}
-    //                 >
-    //                   Call
-    //                 </Text>
-    //               </TouchableHighlight>
-    //             </View>
-    //           )}
-    //         </View>
-
-    //         <View
-    //           id="row3"
-    //           style={{
-    //             flex: 4,
-    //             width: "100%",
-    //             padding: 8,
-    //             marginTop: 8,
-    //             marginBottom: 8,
-    //           }}
-    //         >
-    //           <Text
-    //             style={{ fontSize: 24, color: "white", fontWeight: "bold" }}
-    //           >
-    //             Controls
-    //           </Text>
-    //           <View
-    //             style={{
-    //               flexDirection: "row",
-    //               width: "100%",
-    //               justifyContent: "center",
-    //             }}
-    //           >
-    //             <CTLBTN fn={sendPlay} text="Play" />
-    //             <CTLBTN fn={sendPause} text="Pause" />
-    //           </View>
-    //           <View
-    //             style={{
-    //               flexDirection: "row",
-    //               width: "100%",
-    //               justifyContent: "center",
-    //             }}
-    //           >
-    //             <CTLBTN fn={sendPause} text="Pause" />
-    //             <CTLBTN fn={sendNext} text="Next" />
-    //           </View>
-    //           <View
-    //             style={{
-    //               flexDirection: "row",
-    //               width: "100%",
-    //               justifyContent: "center",
-    //             }}
-    //           >
-    //             <CTLBTN fn={sendVolDown} text="Vol Down" />
-    //             <CTLBTN fn={sendVolUp} text="Vol Up" />
-    //           </View>
-    //         </View>
-
-    //         <View style={{ flex: 1, flexDirection: "row" }}>
-    //           <View style={{ flex: 1, flexDirection: "column" }}>
-    //             <Text
-    //               style={{
-    //                 textAlign: "center",
-    //                 color: "white",
-    //                 marginTop: 150,
-    //               }}
-    //             >
-    //               Admin
-    //             </Text>
-    //             <TextInput
-    //               style={{
-    //                 width: "100%",
-    //                 backgroundColor: "black",
-    //                 color: "white",
-    //                 padding: 4,
-    //               }}
-    //               placeholder="Admin Code"
-    //               value={adminCode}
-    //               onChange={(ev) => {
-    //                 setAdminCode(ev.nativeEvent.text);
-    //               }}
-    //             />
-    //             <Button title="Reset Player" onPress={resetPlayer} />
-    //           </View>
-    //         </View>
-    //       </ScrollView>
-    //     ) : (
-    //       // ~~~~~~~~~~~~ Music Page ~~~~~~~~~~~~~~~~~~~~~~~~~  //
-    //       <View
-    //         style={{
-    //           flex: 3,
-    //           gap: 10,
-    //           display: currentPage === 1 ? "flex" : "none",
-    //         }}
-    //       >
-    //         <View
-    //           style={{ flex: 10, padding: 8, marginTop: 8, marginBottom: 8 }}
-    //         >
-    //           <SongList sendSongToPlayer={sendSongToPlayer} />
-    //         </View>
-    //         <View
-    //           style={{ flex: 4, padding: 8, marginTop: 8, marginBottom: 8 }}
-    //         >
-    //           <View style={{ flex: 1 }}>
-    //             <View style={{ flex: 1, justifyContent: "center" }}>
-    //               <Text style={{ fontSize: 24, color: "white" }}>Setlist</Text>
-    //               <Text style={{ fontSize: 16, color: "white" }}>
-    //                 Current Setlist: {currentSetlist?.title}
-    //               </Text>
-    //             </View>
-
-    //             <ScrollView
-    //               horizontal={true}
-    //               style={{ flex: 1, marginHorizontal: 8 }}
-    //             >
-    //               <View style={{ flex: 1, flexDirection: "row" }}>
-    //                 {setlists.map((sl, idx) => {
-    //                   return (
-    //                     <View
-    //                       key={`sl_${idx}`}
-    //                       style={{
-    //                         flex: 1,
-    //                         width: 150,
-    //                         marginRight: 8,
-    //                         borderRadius: 8,
-    //                         backgroundColor:
-    //                           currentSetlist?.title === sl.title
-    //                             ? "#166534"
-    //                             : "black",
-    //                         padding: 8,
-    //                       }}
-    //                     >
-    //                       <TouchableHighlight
-    //                         onPress={() => setCurrentSetlist(sl)}
-    //                         style={{
-    //                           height: "100%",
-    //                           width: "100%",
-    //                           justifyContent: "center",
-    //                           alignContent: "center",
-    //                         }}
-    //                       >
-    //                         <Text
-    //                           style={{
-    //                             color:
-    //                               sl.order == currentSetlist?.order
-    //                                 ? "white"
-    //                                 : "grey",
-    //                             textAlign: "center",
-    //                           }}
-    //                         >
-    //                           {sl.title}
-    //                         </Text>
-    //                       </TouchableHighlight>
-    //                     </View>
-    //                   );
-    //                 })}
-    //               </View>
-    //             </ScrollView>
-
-    //             <View
-    //               style={{
-    //                 width: "100%",
-    //                 flex: 1,
-    //                 flexDirection: "row",
-    //                 justifyContent: "center",
-    //               }}
-    //             >
-    //               <View style={{ width: "80%", marginTop: 8 }}>
-    //                 <TouchableHighlight
-    //                   onPress={sendLoadSetlist}
-    //                   underlayColor="blue"
-    //                   style={{
-    //                     marginTop: 6,
-    //                     backgroundColor: "#020617",
-    //                     borderRadius: 8,
-    //                     borderWidth: 2,
-    //                     borderColor: "#3f3f46",
-    //                   }}
-    //                 >
-    //                   <Text
-    //                     style={{
-    //                       color: "white",
-    //                       textAlign: "center",
-    //                       padding: 8,
-    //                     }}
-    //                   >
-    //                     Load Current Setlist
-    //                   </Text>
-    //                 </TouchableHighlight>
-    //               </View>
-    //             </View>
-    //           </View>
-    //         </View>
-    //       </View>
-    //     )}
-    //   </View>
-    //   <View
-    //     style={{
-    //       height: "15%",
-    //       flexDirection: "row",
-    //       borderTopColor: "white",
-    //       borderWidth: 2,
-    //     }}
-    //   >
-    //     <View style={{ flex: 1, padding: 8, backgroundColor: "#020617" }}>
-    //       <TouchableHighlight
-    //         style={{
-    //           height: "100%",
-    //           justifyContent: "center",
-    //           backgroundColor: controlTab,
-    //           borderRadius: 8,
-    //         }}
-    //         onPress={() => setCurrentPage(0)}
-    //       >
-    //         <Text style={{ color: "#FFF", textAlign: "center" }}>Controls</Text>
-    //       </TouchableHighlight>
-    //     </View>
-
-    //     <View style={{ flex: 1, padding: 8, backgroundColor: "#020617" }}>
-    //       <TouchableHighlight
-    //         style={{
-    //           height: "100%",
-    //           justifyContent: "center",
-    //           backgroundColor: musicTab,
-    //           borderRadius: 8,
-    //         }}
-    //         onPress={() => setCurrentPage(1)}
-    //       >
-    //         <Text style={{ color: "#FFF", textAlign: "center" }}>Music</Text>
-    //       </TouchableHighlight>
-    //     </View>
-    //   </View>
-    // </View>
   );
 }
 
-const { width, height } = Dimensions.get("window");
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  page: {
-    width: width,
-    height,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 24,
-    color: "#fff",
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 20,
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-around",
-  },
-});
 export default Main;

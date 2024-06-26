@@ -37,14 +37,15 @@ const db = admin.firestore();
 // music/devicename/songs/chunkNum/{songs: stringifiedJson data}
 async function saveSongs(songs){
   const collectionName = `music/${config['deviceName']}/songs`
-  const maxSongsPerDoc = 3000
+  // const maxSongsPerDoc = 4500
+  const maxSongsPerDoc = 3000 // TEsting if more docs are a bit faster to parse
   // const maxSongsPerDoc = 100
   const songDocs = []
   let songCount = 0
   let chunkCount = 0
   let currentSongChunk = {}
   const totalChunks = (Object.keys(songs).length / maxSongsPerDoc)
-  console.log(`Saving songs to firebase: ${totalChunks} chunks, max size: ${maxSongsPerDoc}, total songs: ${Object.keys(songs).length}`)
+  console.log(`Saving ${Object.keys(songs).length} songs to firebase: ${totalChunks} chunks, max size: ${maxSongsPerDoc}`)
 
   Object.keys(songs).forEach(key => {
     const fileName = key
@@ -68,9 +69,13 @@ async function saveSongs(songs){
       songCount = 0
     }
   })
+  // Save last doc chunk
+  if(Object.keys(currentSongChunk).length > 0){
+    songDocs.push( db.collection(collectionName).doc(chunkCount.toString()).set({songs: JSON.stringify(currentSongChunk)}))
+  }
 
   try{
-    console.log("Awaiting firebase promises...")
+    console.log("Awaiting firebase promises...", songDocs.length)
     const res = await Promise.all(songDocs)
     console.log("Done setting all docs: ", res.length)
     return true
@@ -83,11 +88,12 @@ async function saveSongs(songs){
 
 function getSongs(){
   try{
-    const data = fs.readFileSync(config["songFile"], "utf-8")
-    return JSON.parse(data)
+
+    return JSON.parse(fs.readFileSync(config["songFile"], "utf-8"))
   }catch(err){
-    console.log("err getSongs; ", err)
+    console.log("Error getting songs: ", err)
   }
+  return {}
 }
 
 async function deleteCollection(collectionPath, batchSize) {

@@ -25,6 +25,7 @@
       },
       "package": "com.killuhwhale.awave"
     },
+    "platforms": ["ios", "android"],
     "web": {
       "favicon": "./assets/favicon.png"
     },

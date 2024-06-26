@@ -19,10 +19,6 @@ module.exports = function(api) {
           alias: {
             // Define your aliases here
             "@root": "./src",
-            "@screens": "./src/screens",
-            "@utils": "./src/utils",
-            "@assets": "./src/assets",
-            "@navigation": "./src/navigation",
             // Add more as needed
           },
         },

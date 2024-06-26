@@ -65,6 +65,22 @@ const getPrefix = (idx: number): string => {
   }
 };
 
+/*
+ * A generic search algorithm designed for filtering (very) large lists of strings; when an input string
+ * contains all the parts (words or characters; whitespace is ignored) of the query, spread-out over the text
+ * then the string is considered to be a match. It works with the way internet browsers (e.g. Firefox, Google
+ * Chrome) filter address-bar suggestions on user input. It is also quite fast; on my i7 laptop, filtering
+ *     1) a list of ~23000 items takes around 50ms (yes, milliseconds!);
+ *     2) a list of ~1 million text items took under 1 second.
+ * It works both in NodeJS as well as in browser environments (so far I only tested FF and GC).
+ *
+ * It has two functioning modes:
+ * 1) word-mode: each (whitespace-separated) word in the input query must be found **whole** in the text:
+ *     e.g. "foo bar" will match "123foo456bar789" but not "f oo ba r";
+ * 2) charater-mode: the input query is matched per-character (whitespace is completely ignored):
+ *     e.g. "foo bar" will match "f o o b a r" and even "-f.oo-ba.r-".
+ */
+
 // https://gist.github.com/vpalos/4334557
 export const filter = (
   query: string,
@@ -80,14 +96,14 @@ export const filter = (
   }
 
   // prepare options
-  const ignoreCase = option("case", false);
+  const ignoreCase = true;
   const enableMarking = option("mark", true);
   const markSuffix = "</span>";
-  const matchWholeWords = option("word", true);
+  const matchWholeWords = true;
   const limit = option("limit", 0);
 
   // prepare query
-  query = ignoreCase ? query : query.toLowerCase();
+  query = ignoreCase ? query.toLowerCase() : query;
   query = query.replace(/\s+/g, matchWholeWords ? " " : "");
   query = query.replace(/(^\s+|\s+$)/g, "");
   const queryList = query.split(matchWholeWords ? " " : "");
@@ -119,8 +135,8 @@ export const filter = (
       continue;
 
     const text = ignoreCase
-      ? items[itemIndex]
-      : items[itemIndex]!.toLowerCase();
+      ? items[itemIndex]!.toLowerCase()
+      : items[itemIndex];
 
     let mark = "";
 

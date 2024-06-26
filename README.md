@@ -96,6 +96,19 @@ bash build.sh ios && eas build -p ios
 Download .ipa and upload via Transporter app.
 
 # Build Android
+npx expo run:android --device aPixel2XL_4GB
+
+## Android Sqlite DB
+ /data/data/com.killuhwhale.awave/databases/songs.db
+
+
+## Previous Failures
+###
+ - https://github.com/expo/expo/issues/28632
+I Solved it by editing node_modules/expo-asset/expo-module.config to
+{
+  "platforms": ["ios", "android"]
+}
 
 cd src/mobile/awave
 bash build.sh android &&  JAVA_HOME=/usr/lib/jvm/openjdk-17  eas build --platform android --local

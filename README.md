@@ -7,37 +7,19 @@ cd ~/ws_node/awave/src/mobile/awave && bash build.sh android && npx expo run:and
 cd ~/ws_node/awave && npm run dev
 ```
 
+
+Loading from DB took:  1895.7790579999564
+Loading from Firebase and inserting took:  913.1902229998959
+
+
 # Notes
 Mobile Controller must be set to the host device name that it should control since it will pull music from Firebase according to this name.
-
-
-
-
-
-adb shell dumpsys SurfaceFlinger --list
-
-
-
-
-
-
-
-
-
-
 
 
 #  TODO()
 1. [Security] Check TURN server with credentials; need to lock down.
 2. [Performance_Testing] Test Large Setlist 5k songs? and playing for 5 hours straight
-3. [Order_Songs] Create a tool to print list of songs from each set list so I can give it to chat gpt witha prompt to get a good order
-4.   Then the tools should also take a new order of songs and upload to firebase
-        Possibly add to the createSetlist where we use a textArea to transfer state of song list, we need to just keep fileNames
-        This way, I can paste a new list and it will update the list of songs in the setlist, the I just press upload like normal.
-        Also, the drag and drop would also change the same list so again the text area is just a reflection of state, whatever is on the the line represents a fileName (file path from rootDir root music dir)
 
-5.  Get songs from setlists on Mobile
-    Render SongList Search for each setlist and allow send play to play from setlist.
 
 # Host Device Setup
 - Disable Gestures https://extensions.gnome.org/extension/4049/disable-gestures-2021/
@@ -48,6 +30,8 @@ adb shell dumpsys SurfaceFlinger --list
   - pm2 startup
   - pm2 unstartup systemd
   - pm2 delete awave
+
+
 
 # Setup Music Client (Chromebook)
 git clone
@@ -115,6 +99,9 @@ Download .ipa and upload via Transporter app.
 # Build Android
 cd src/mobile/awave/ && npx expo run:android --device aPixel2XL_4GB
 
+# Update Version
+app/build.gradle
+
 ## Android Sqlite DB
  adb root
  adb shell
@@ -130,14 +117,20 @@ I Solved it by editing node_modules/expo-asset/expo-module.config to
 }
 
 cd src/mobile/awave
-bash build.sh android &&  JAVA_HOME=/usr/lib/jvm/openjdk-17  eas build --platform android --local
+rm build-*aab
+bash build.sh android && eas build --platform android --local
 JAVA_HOME=/usr/lib/jvm/openjdk-17  ./gradlew clean
 
 ## Output => build-1716313595711.aab
 
 ## Build APK from AAB
+### Script
+bash buildAndroidAPK.sh
+
+
+rm awave.apks
 java -jar ~/Downloads/bundletool-all-1.16.0.jar build-apks --bundle=/home/killuh/ws_node/awave/src/mobile/awave/*.aab --output=awave.apks --mode=universal
-unzip awave.apks -d .
+unzip -o  awave.apks -d .
 
 ## Extract APK from .apks created from bundletool and ADB install
 

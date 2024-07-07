@@ -97,6 +97,7 @@ const ControlPage: React.FC<ControlPageProps> = ({
                   width: "75%",
                   borderRadius: 8,
                 }}
+                placeholderTextColor="white"
                 placeholder="Party Name"
                 value={partyName}
                 onChange={(ev) => {
@@ -127,6 +128,7 @@ const ControlPage: React.FC<ControlPageProps> = ({
                   width: "75%",
                   borderRadius: 8,
                 }}
+                placeholderTextColor="white"
                 placeholder="Secret Code"
                 value={secretCode}
                 onChange={(ev) => {
@@ -271,6 +273,7 @@ const ControlPage: React.FC<ControlPageProps> = ({
                 color: "white",
                 padding: 4,
               }}
+              placeholderTextColor="white"
               placeholder="Admin Code"
               value={adminCode}
               onChange={(ev) => {

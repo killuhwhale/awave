@@ -179,6 +179,7 @@ const SongList: React.FC<{
             width: "75%",
             borderRadius: 8,
           }}
+          placeholderTextColor="white"
           placeholder={
             searchByArtist ? "Search by Artist" : "Search by Song Name"
           }

@@ -2,6 +2,7 @@
   "expo": {
     "name": "awave",
     "slug": "awave",
+    "sdkVersion": "51.0.0",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,8 +16,16 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.killuhwhale.awave"
+      "bundleIdentifier": "com.killuhwhale.awave",
+      "icon": "icon.png",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSExceptionDomains": {}
+        },
+        "NSCameraUsageDescription": "Allow microphone features?",
+        "NSMicrophoneUsageDescription": "Allow microphone features?"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,3 +45,5 @@
     }
   }
 }
+
+

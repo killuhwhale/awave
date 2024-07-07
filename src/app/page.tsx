@@ -263,7 +263,8 @@ const Home: React.FC = () => {
       const userSecret = data["secretCode"];
       console.log("cmdType: ", typeof cmdType, cmdType);
 
-      if (!isGoodSecret(CONFIG.secret, userSecret)) return;
+      if (!isGoodSecret(CONFIG.secret, userSecret))
+        return console.error("BAD SECRET!");
 
       if (cmdType == 1) {
         executeCmd(data);
@@ -340,6 +341,7 @@ const Home: React.FC = () => {
         );
         break;
       default:
+        console.log("Command not found: ", data.cmd, CMD.getCmd);
         break;
     }
   };

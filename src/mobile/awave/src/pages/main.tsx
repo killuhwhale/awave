@@ -1,7 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  Button,
   Dimensions,
   ScrollView,
   View,
@@ -10,10 +10,8 @@ import {
   TouchableHighlight,
 } from "react-native";
 
-import { collection, getDocs, getFirestore } from "firebase/firestore/lite";
-import { User, getAuth, signInAnonymously } from "firebase/auth";
+import { User, signInAnonymously } from "firebase/auth";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   RTCIceCandidate,
   RTCPeerConnection,
@@ -24,13 +22,11 @@ import {
 } from "@root/utils/utils";
 
 import ControlPage from "@root/pages/controlpage";
-import fbApp from "@root/firebase/firebaseApp";
 import config from "@root/utils/config";
 import { CMD, debounce } from "@root/utils/helpers";
 import MusicPage from "@root/pages/musicpage";
+import { auth, db } from "@root/firebase/firebaseApp";
 
-const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
 const WSURL = config["wss_url"];
 const { width, height } = Dimensions.get("window");
 
@@ -65,13 +61,10 @@ function Main() {
   const wsRef = useRef<WebSocket | null>(null);
   const [isOnCall, setIsOnCall] = useState(false);
 
-  const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
-  const [currentSetlist, setCurrentSetlist] = useState<Setlist | null>(null);
   const streamRef = useRef<any | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
   const [user, setUser] = useState<User | null>(null);
-
   const signIn = () => {
     signInAnonymously(auth)
       .then((creds) => {
@@ -434,28 +427,6 @@ function Main() {
     }
   };
 
-  useEffect(() => {
-    if (!partyName || !user) return;
-
-    const setListPath = `setlists/${partyName}/setlists`;
-    console.log("loading setlists: ", setListPath);
-    const _ = async () => {
-      const setlistDocs = await getDocs(collection(db, setListPath));
-      const allSetlists = [] as Setlist[];
-      setlistDocs.docs.forEach((doc) => {
-        allSetlists.push(doc.data() as Setlist);
-      });
-
-      setSetlists(allSetlists.sort((a, b) => (a.order > b.order ? 1 : -1)));
-      setCurrentSetlist(
-        allSetlists.sort((a, b) => (a.order > b.order ? 1 : -1))[0]
-      );
-    };
-    _()
-      .then(() => {})
-      .catch((err) => console.error(err));
-  }, [partyName, user]);
-
   const scrollViewRef = useRef(null);
 
   const scrollToPage = (pageIndex) => {
@@ -508,11 +479,11 @@ function Main() {
           <View style={[styles.page, { backgroundColor: "#1e293b" }]}>
             {user ? (
               <MusicPage
+                db={db}
                 sendSongToPlayer={sendSongToPlayer}
-                currentSetlist={currentSetlist}
-                setCurrentSetlist={setCurrentSetlist}
-                setlists={setlists}
                 sendLoadSetlist={sendLoadSetlist}
+                partyName={partyName}
+                secretCode={secretCode}
               />
             ) : (
               <View></View>

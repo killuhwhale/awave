@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, ChangeEvent, useLayoutEffect, useRef } from "react";
+import React, {
+  useState,
+  ChangeEvent,
+  useLayoutEffect,
+  useRef,
+  useEffect,
+} from "react";
 
 import {
   MD_BTN_SIZE,
@@ -60,7 +66,7 @@ const Switch: React.FC = () => {
 const SongListSearchable = ({
   songs,
   title,
-
+  hidden,
   onDragStart,
   setNewPlayer,
   leftSong,
@@ -70,6 +76,8 @@ const SongListSearchable = ({
   masterPause,
   playRequestedSong,
   addSongToTopOfOnDeck,
+  leftDurationRef,
+  leftDuration,
 }: SongListSearchProps) => {
   const [filteredSongIdxs, setFilteredSongIdxs] = useState<number[]>([]);
 
@@ -99,7 +107,7 @@ const SongListSearchable = ({
     const { offsetHeight: height, offsetWidth: width } = parentRef.current;
 
     setLayout({ width: width, height: height });
-  }, [parentRef]);
+  }, [parentRef, hidden]);
 
   const [searchByArtist, setSearchByArtist] = useState(false);
 
@@ -153,14 +161,11 @@ const SongListSearchable = ({
       db,
       `setlists/${CONFIG["partyName"]}/setlists`
     );
-
     setDoc(doc(setListCollection, title), { title });
-
     const setListSongsCollection = collection(
       db,
       `setlists/${CONFIG["partyName"]}/setlists/${title}/songs`
     );
-
     const addDocPromises = songs.map((song, idx) => {
       return setDoc(doc(setListSongsCollection, song.name), {
         ...song,
@@ -218,7 +223,10 @@ const SongListSearchable = ({
   };
 
   return (
-    <div className={`w-full h-full p-4 items-center flex flex-col `}>
+    <div
+      className={`w-full h-full p-4 items-center flex flex-col`}
+      style={{ display: hidden ? "none" : "" }}
+    >
       <div className="flex flex-col w-full justify-center">
         <p className="text-center">{title} </p>
         <div className="flex w-full justify-start">

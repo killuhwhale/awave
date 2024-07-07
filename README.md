@@ -3,11 +3,28 @@
 # Quick Copy
 cd ~/ws_node/awave/src/fileServer/src && go run cmdServer 127.0.0.1:4000
 cd ~/ws_node/awave/src/mobile/awave && yarn web
+cd ~/ws_node/awave/src/mobile/awave && bash build.sh android && npx expo run:android
 cd ~/ws_node/awave && npm run dev
 ```
 
 # Notes
 Mobile Controller must be set to the host device name that it should control since it will pull music from Firebase according to this name.
+
+
+
+
+
+adb shell dumpsys SurfaceFlinger --list
+
+
+
+
+
+
+
+
+
+
 
 
 #  TODO()
@@ -96,14 +113,16 @@ bash build.sh ios && eas build -p ios
 Download .ipa and upload via Transporter app.
 
 # Build Android
-npx expo run:android --device aPixel2XL_4GB
+cd src/mobile/awave/ && npx expo run:android --device aPixel2XL_4GB
 
 ## Android Sqlite DB
- /data/data/com.killuhwhale.awave/databases/songs.db
+ adb root
+ adb shell
+ sqlite3 /data/data/com.killuhwhale.awave/databases/songs.db
 
 
 ## Previous Failures
-###
+### Android build failure
  - https://github.com/expo/expo/issues/28632
 I Solved it by editing node_modules/expo-asset/expo-module.config to
 {

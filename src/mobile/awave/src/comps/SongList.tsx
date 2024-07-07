@@ -1,16 +1,7 @@
-import React, {
-  ChangeEvent,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
   ActivityIndicator,
-  Button,
-  FlatList,
-  ScrollView,
   Switch,
   Text,
   TextInput,
@@ -19,176 +10,7 @@ import {
   VirtualizedList,
 } from "react-native";
 
-import SQLite from "react-native-sqlite-storage";
-import { collection, getDocs, getFirestore } from "firebase/firestore/lite";
-import fbApp from "@root/firebase/firebaseApp";
-
-import config from "@root/utils/config";
 import { debounce, filter } from "@root/utils/helpers";
-
-const sqlDB = SQLite.openDatabase({ name: "songs.db", location: "default" });
-const db = getFirestore(fbApp);
-
-const initializeDatabase = () => {
-  // dropTable();
-  createTable();
-};
-
-const createTable = () => {
-  return new Promise((res, rej) => {
-    sqlDB.transaction((tx) => {
-      tx.executeSql(
-        `CREATE TABLE IF NOT EXISTS Songs (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT,
-          artist TEXT,
-          fileName TEXT,
-          songorder INTEGER,
-          UNIQUE(fileName)
-        );`,
-        [],
-        () => {
-          console.log("Table created successfully");
-          res("");
-        },
-        (error) => {
-          console.log("Error creating table: ", error);
-          rej();
-        }
-      );
-    });
-  });
-};
-
-const dropTable = () => {
-  return new Promise((res, rej) => {
-    sqlDB.transaction((tx) => {
-      tx.executeSql(
-        `DROP TABLE Songs;`,
-        [],
-        () => res(console.log("Old table SONGS dropped")),
-        (error) => rej(console.error("Error dropping table:", error))
-      );
-    });
-  });
-};
-
-// Call this function to insert all songs
-const insertSongs = (songs) => {
-  try {
-    sqlDB.transaction((tx) => {
-      songs.forEach((song) => {
-        tx.executeSql(
-          `INSERT INTO Songs (name, artist, fileName, songorder) VALUES (?, ?, ?, ?);`,
-          [song.name, song.artist ?? "", song.fileName, song.order ?? 0],
-          (tx, results) => {
-            // console.log("Song inserted");
-          },
-          (error) => {
-            console.log("Error inserting song: ", song, error);
-          }
-        );
-      });
-    });
-  } catch (err) {
-    console.log("Error inserting: ", err);
-  }
-};
-
-const loadAllSongs = () => {
-  return new Promise<any>((resolve, reject) => {
-    try {
-      sqlDB.transaction((tx) => {
-        tx.executeSql(
-          `SELECT name FROM Songs;`,
-          [],
-          (tx, results) => {
-            console.log("results: ", Object.keys(results));
-            console.log("results: ", Object.keys(results.rows));
-            const rows = [];
-            for (let i = 0; i < results.rows.length; i++) {
-              rows.push(results.rows.item(i));
-            }
-            console.log("Loaded songs: ", rows.length);
-            resolve(rows);
-          },
-          (error) => {
-            console.error("Error checking table existence: ", error);
-            reject();
-          }
-        );
-      });
-    } catch (err) {
-      console.log("LoadAllSongs error: ", err);
-      reject(err);
-    }
-  });
-};
-
-const getPaginatedSongs = (page, itemsPerPage, callback) => {
-  const offset = page * itemsPerPage;
-  sqlDB.transaction((tx) => {
-    tx.executeSql(
-      `SELECT * FROM Songs LIMIT ? OFFSET ?;`,
-      [itemsPerPage, offset],
-      (tx, results) => {
-        const rows = results.rows;
-        let songs = [];
-        for (let i = 0; i < rows.length; i++) {
-          songs.push(rows.item(i));
-        }
-        console.log("Setting loaded songs");
-        callback(songs);
-      },
-      (error) => {
-        console.log("Error fetching songs: ", error);
-      }
-    );
-  });
-};
-
-const searchSongs = (query, callback) => {
-  // `SELECT * FROM Songs WHERE name LIKE ? OR artist LIKE ?;`,
-  sqlDB.transaction((tx) => {
-    tx.executeSql(
-      `SELECT * FROM Songs WHERE name LIKE ?;`,
-      [`%${query}%`],
-      (tx, results) => {
-        const rows = results.rows;
-        let songs = [];
-        for (let i = 0; i < rows.length; i++) {
-          songs.push(rows.item(i));
-        }
-        callback(songs);
-      },
-      (error) => {
-        console.log("Error searching songs: ", error);
-      }
-    );
-  });
-};
-
-const songsTableExist = () => {
-  return new Promise<number>((resolve, reject) => {
-    sqlDB.transaction((tx) => {
-      tx.executeSql(
-        `SELECT name FROM Songs;`,
-        [],
-        (tx, results) => {
-          if (results.rows.length > 0) {
-            resolve(results.rows.length);
-          } else {
-            resolve(results.rows.length);
-          }
-        },
-        (error) => {
-          console.error("Error checking table existence: ", error);
-          reject(0);
-        }
-      );
-    });
-  });
-};
 
 const LoadingSpinner = () => {
   return (
@@ -204,73 +26,25 @@ const LoadingSpinner = () => {
   );
 };
 
-const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
-  sendSongToPlayer,
-}) => {
-  const songsRef = useRef<SongProps[] | null>(null);
-  const [fetchedSongs, setFetchedSongs] = useState(false);
-
+const SongList: React.FC<{
+  sendSongToPlayer(song: SongProps): void;
+  songs: SongProps[];
+}> = ({ sendSongToPlayer, songs }) => {
+  const songsRef = useRef<SongProps[] | null>(songs);
+  const filteredSongIdxsRef = useRef<number[]>(
+    Array.from(Array(songsRef.current.length).keys())
+  );
   const itemsPerPage = 20;
 
+  const [songState, setSongState] = useState(false);
+
   useEffect(() => {
-    if (songsRef.current && songsRef.current.length > 0) return;
-    const collectionPath = `music/${config["deviceName"]}/songs`;
-    const getSongs = async () => {
-      try {
-        initializeDatabase();
-        const numSongsInTable = await songsTableExist();
+    songsRef.current = songs;
+    filteredSongIdxsRef.current = Array.from(
+      Array(songsRef.current.length).keys()
+    );
+  }, [songs]);
 
-        if (numSongsInTable > 0) {
-          console.log(
-            "Songs already fetched from FB and inserted, not getting again."
-          );
-          // Load first page of songs from DB
-          songsRef.current = await loadAllSongs(); // TODO get all songs from DB
-          filteredSongIdxsRef.current = Array.from(
-            Array(songsRef.current.length).keys()
-          );
-          console.log("setting setFetchedSongs True! Done!");
-          setFetchedSongs(true);
-          return;
-        }
-
-        // console.log("Gathering songs...");
-        const songRes = await getDocs(collection(db, collectionPath));
-        console.log("songsRes", songRes);
-        const fetchedSongs: SongProps[] = songRes.docs.flatMap((doc) => {
-          const songChunk = JSON.parse(doc.data().songs) as {
-            [key: string]: SongProps;
-          };
-          // console.log("Chunk: ", songChunk);
-          return Object.values(songChunk);
-        });
-        console.log("Fetched songs: ", fetchedSongs.length);
-        insertSongs(fetchedSongs);
-        songsRef.current = fetchedSongs;
-        filteredSongIdxsRef.current = Array.from(
-          Array(songsRef.current.length).keys()
-        );
-        console.log("setting setFetchedSongs True! Done!");
-        setFetchedSongs(true);
-
-        // console.log("Got songs from FB successfully.");
-      } catch (err) {
-        console.log("Error getting songs", err);
-      }
-    };
-
-    console.log("GatheringSongs");
-    const startTime = global.performance.now();
-    getSongs()
-      .then(() => {
-        const endTime = global.performance.now();
-        const timeTaken = endTime - startTime;
-        console.log(`GatheringSongs took: ${timeTaken} ms`);
-      })
-      .catch((err) => console.log("err", err));
-  }, []);
-
-  const filteredSongIdxsRef = useRef<number[]>([]);
   useLayoutEffect(() => {
     if (!songsRef.current) return;
     filteredSongIdxsRef.current = Array.from(
@@ -287,7 +61,7 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
       filteredSongIdxsRef.current = Array.from(
         Array(songsRef.current.length).keys()
       );
-      return;
+      return setSongState(!songState);
     }
 
     // Updates filtered data.
@@ -302,6 +76,8 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
     };
     const { items, marks } = filter(searchTerm, stringData, options);
     filteredSongIdxsRef.current = items;
+    console.log("Setting song search state update");
+    setSongState(!songState);
   };
 
   const debFilterText = debounce(filterText, 350);
@@ -348,6 +124,7 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
     );
   };
 
+  const cState = songState ? " " : "";
   return (
     <View style={{ flex: 15 }}>
       <Text style={{ color: "white", fontWeight: "bold", fontSize: 36 }}>
@@ -413,14 +190,18 @@ const SongList: React.FC<{ sendSongToPlayer(song: SongProps): void }> = ({
       </View>
 
       <View style={{ flex: 5, width: "100%" }}>
-        {songsRef.current && filteredSongIdxsRef.current && fetchedSongs ? (
+        {songsRef.current && filteredSongIdxsRef.current ? (
           <VirtualizedList<SongProps>
             data={filteredSongIdxsRef.current}
             windowSize={itemsPerPage}
             keyExtractor={(item, index) =>
               `${index}_songlist_song_${songsRef.current[item[index]]}`
             }
-            getItemCount={() => filteredSongIdxsRef.current.length}
+            getItemCount={() => {
+              return filteredSongIdxsRef.current
+                ? filteredSongIdxsRef.current.length
+                : 0;
+            }}
             getItem={(item, index) => {
               return songsRef.current[item[index]] as SongProps;
             }}

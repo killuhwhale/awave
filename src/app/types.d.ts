@@ -21,7 +21,7 @@ type SongProps = {
 type SongListSearchProps = {
   songs: SongProps[];
   title: string;
-  // hidden: boolean;
+  hidden: boolean;
   onDragStart(e: any, song: SongProps): void;
   setNewPlayer?(newSong: SongProps): void;
   leftPlayerRef?: React.MutableRefObject<Howl | null | undefined>;
@@ -32,6 +32,8 @@ type SongListSearchProps = {
   playNextSong?(playerName: string, nextSong: SongProps): void;
   playRequestedSong?(song: SongProps): Promise<void>;
   addSongToTopOfOnDeck?(songToGoOnDeck: SongProps): void;
+  leftDurationRef?: React.MutableRefObject<number>;
+  leftDuration?: number;
 };
 
 type SongListOnDeckProps = {

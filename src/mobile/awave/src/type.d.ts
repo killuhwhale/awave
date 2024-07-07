@@ -1,6 +1,7 @@
 type Setlist = {
   order: number;
   title: string;
+  songs: SongProps[];
 };
 
 type SongProps = {

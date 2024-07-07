@@ -97,7 +97,8 @@ export const filter = (
 
   // prepare options
   const ignoreCase = true;
-  const enableMarking = option("mark", true);
+  // const enableMarking = option("mark", true);
+  const enableMarking = false;
   const markSuffix = "</span>";
   const matchWholeWords = true;
   const limit = option("limit", 0);

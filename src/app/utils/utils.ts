@@ -112,14 +112,14 @@ export const filter = (
   }
 
   // prepare options
-  const ignoreCase = option("case", false);
+  const ignoreCase = true;
   const enableMarking = option("mark", true);
   const markSuffix = "</span>";
-  const matchWholeWords = option("word", true);
+  const matchWholeWords = true;
   const limit = option("limit", 0);
 
   // prepare query
-  query = ignoreCase ? query : query.toLowerCase();
+  query = ignoreCase ? query.toLowerCase() : query;
   query = query.replace(/\s+/g, matchWholeWords ? " " : "");
   query = query.replace(/(^\s+|\s+$)/g, "");
   const queryList = query.split(matchWholeWords ? " " : "");
@@ -151,8 +151,8 @@ export const filter = (
       continue;
 
     const text = ignoreCase
-      ? items[itemIndex]
-      : items[itemIndex]!.toLowerCase();
+      ? items[itemIndex]!.toLowerCase()
+      : items[itemIndex];
 
     let mark = "";
 

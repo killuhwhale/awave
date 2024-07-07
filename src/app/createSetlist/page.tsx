@@ -27,6 +27,7 @@ import { User, getAuth, signInAnonymously } from "firebase/auth";
 
 import ActionCancelModal from "./../comps/modals/ActionCancelModal";
 import { DEFAULT_SONG, MD_BTN_SIZE, getSongs } from "../utils/utils";
+import TextToSongListModal from "../comps/modals/TextToSongList";
 
 /**
  *
@@ -128,6 +129,13 @@ const Home = () => {
       } catch (err) {
         console.log("Error playing new song: ", err);
       }
+    });
+
+    leftPlayerRef.current.on("end", () => {
+      leftDurationRef.current = 0;
+      seekRef.current = 0;
+      setSeek(0);
+      setLeftDuration(0);
     });
   };
 
@@ -409,28 +417,136 @@ const Home = () => {
 
   const [showRemoveSetlist, setShowRemoveSetlist] = useState(false);
 
+  const [seek, setSeek] = useState(0);
+  const seekRef = useRef(0);
+
+  const updateSeek = () => {
+    if (leftPlayerRef.current && isLeftPlaying) {
+      seekRef.current = leftPlayerRef.current.seek();
+      requestAnimationFrame(updateSeek);
+    }
+  };
+
+  useEffect(() => {
+    updateSeek();
+  }, [isLeftPlaying]);
+
+  useEffect(() => {
+    setInterval(() => {
+      setSeek(seekRef.current);
+    }, 250);
+  }, []);
+
+  const handleSeekChange = (e: any) => {
+    const newSeek = parseFloat(e.target.value);
+    // setSeek(newSeek);
+    console.log("Manual seek change....", newSeek);
+    if (leftPlayerRef.current) {
+      leftPlayerRef.current.seek(newSeek);
+    }
+  };
+
+  const [showTextToSongModal, setShowTextToSongModal] = useState(false);
+
+  /** Probably wont use
+   *
+   * Attempted to use this to copy paste ChatGPT list of songs to create setlists.
+   * But chatGPT isnt giving the exact names that I have given it.
+   *
+   *
+   */
+  const addSongListToDeck = (songList: string) => {
+    const songs = songList.split("\n");
+    console.log("Songs split: ", songs);
+    if (!allSongs) return;
+
+    const songMap = Object.fromEntries(
+      allSongs.map((song) => {
+        return [song.fileName.toLocaleLowerCase(), song]; // Perform our match on lowercase filename
+      })
+    );
+
+    const newSongList = songs.map((song) => {
+      return songMap[song.toLocaleLowerCase()];
+    });
+    console.log("newSongList: ", newSongList);
+  };
+
   return (
     <div
       id="pageRoot"
       className="flex min-h-screen h-screen max-h-screen  flex-col items-center justify-between ml-8 mr-8"
     >
       <div className="flex flex-col justify-center  w-full h-1/6 max-h-1/6 min-h-1/6 ">
-        <div className="flex w-full justify-center items-center space-x-24 h-3/6">
-          {isLeftPlaying ? (
-            <CIcon
-              icon={cilMediaPause}
-              width={MD_BTN_SIZE * 2}
-              color="#61DAFB"
-              onClick={masterPause}
+        <div className="flex w-full justify-center items-center  h-3/6">
+          <div className="flex-1">
+            <div className="w-min" style={{ margin: "0 auto" }}>
+              {isLeftPlaying ? (
+                <CIcon
+                  icon={cilMediaPause}
+                  width={MD_BTN_SIZE * 2}
+                  color="#61DAFB"
+                  onClick={masterPause}
+                />
+              ) : (
+                <CIcon
+                  icon={cilMediaPlay}
+                  width={MD_BTN_SIZE * 2}
+                  color="#61DAFB"
+                  onClick={masterPlay}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <div style={{ margin: "0 auto" }} className="w-min">
+              <input
+                style={{ zIndex: 50 }}
+                type="range"
+                min="0"
+                max={leftDuration}
+                step="0.01"
+                value={seek}
+                onChange={handleSeekChange}
+              />
+
+              <div className="flex-row flex">
+                <div>(</div>
+                <div className="min-w-[35px] text-center">
+                  {Math.floor(seekRef.current)}
+                </div>
+                <div>/ </div>
+                <div className="min-w-[40px] text-center">
+                  {" "}
+                  {Math.floor(leftDuration)}s
+                </div>
+                <div>)</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <p>{leftSong?.name}</p>
+            <p>{leftSong?.artist}</p>
+          </div>
+          {/* <div>
+            <p
+              className=" border-rose-800 border-2 cursor-pointer"
+              onClick={() => setShowTextToSongModal(true)}
+            >
+              Upload songs to deck
+            </p>
+            <TextToSongListModal
+              isOpen={showTextToSongModal}
+              message="Paste list from GPT here."
+              onAction={addSongListToDeck}
+              onClose={() => {
+                setShowTextToSongModal(false);
+              }}
+              actionText="Put On Deck"
             />
-          ) : (
-            <CIcon
-              icon={cilMediaPlay}
-              width={MD_BTN_SIZE * 2}
-              color="#61DAFB"
-              onClick={masterPlay}
-            />
-          )}
+          </div> */}
         </div>
       </div>
 
@@ -493,6 +609,7 @@ const Home = () => {
                         }`}
                         onClick={() => {
                           setCurSetListIdx(idx);
+                          console.log("Seting current setlist idx: ", idx);
                         }}
                       >
                         <p
@@ -567,6 +684,8 @@ const Home = () => {
                     leftPlayerRef={leftPlayerRef}
                     leftSong={leftSong}
                     isLeftPlaying={isLeftPlaying}
+                    leftDuration={leftDuration}
+                    leftDurationRef={leftDurationRef}
                   />
                 );
               })

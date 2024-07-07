@@ -1,16 +1,12 @@
-import { StatusBar } from "expo-status-bar";
-import React, { StyleSheet, Text, View } from "react-native";
+import React, { StyleSheet, View } from "react-native";
 
 import Main from "./src/pages/main";
-import { StrictMode } from "react";
 
 export default function App() {
   return (
-    <StrictMode>
-      <View style={styles.container}>
-        <Main />
-      </View>
-    </StrictMode>
+    <View style={styles.container}>
+      <Main />
+    </View>
   );
 }
 

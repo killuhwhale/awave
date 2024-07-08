@@ -127,7 +127,7 @@ const SongList: React.FC<{
   const cState = songState ? " " : "";
   return (
     <View style={{ flex: 15 }}>
-      <Text style={{ color: "white", fontWeight: "bold", fontSize: 36 }}>
+      <Text style={{ color: "white", fontWeight: "bold", fontSize: 24 }}>
         Music
       </Text>
       <View style={{ padding: 16, alignItems: "center" }}>

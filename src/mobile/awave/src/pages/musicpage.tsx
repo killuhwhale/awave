@@ -159,9 +159,13 @@ const MusicPage: React.FC<MusicPageProps> = ({
       <View style={{ flex: 2 }}>
         <View style={{ flex: 1 }}>
           <View style={{ flex: 1, justifyContent: "center" }}>
-            <Text style={{ fontSize: 24, color: "white" }}>Setlist</Text>
+            <Text
+              style={{ fontSize: 22, color: "#93c5fd", fontWeight: "bold" }}
+            >
+              Setlists
+            </Text>
             <Text style={{ fontSize: 16, color: "white" }}>
-              Current Setlist: {currentSetlist?.title}
+              Selected: {currentSetlist?.title}
             </Text>
           </View>
 

@@ -43,6 +43,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "backgroundColor": "#1e293b",
+      "splash": {
+        "image": "./assets/splash.png"
+      },
       "package": "com.killuhwhale.awave"
     },
     "platforms": ["ios", "android"],

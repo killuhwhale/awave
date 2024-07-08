@@ -504,7 +504,14 @@ function Main() {
           borderWidth: 2,
         }}
       >
-        <View style={{ flex: 1, padding: 8, backgroundColor: "#020617" }}>
+        <View
+          style={{
+            flex: 1,
+            padding: 8,
+            backgroundColor: "#020617",
+            marginBottom: Platform.OS === "ios" ? 7 : 0,
+          }}
+        >
           <TouchableHighlight
             style={{
               height: "100%",

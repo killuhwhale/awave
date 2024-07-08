@@ -141,10 +141,7 @@ const ControlPage: React.FC<ControlPageProps> = ({
         </View>
       </View>
 
-      <View
-        id="row2"
-        style={{ flex: 3, padding: 8, marginTop: 8, marginBottom: 8 }}
-      >
+      <View id="row2" style={{ flex: 3, padding: 8, marginBottom: 8 }}>
         <Text style={{ fontSize: 24, color: "white", fontWeight: "bold" }}>
           Microphone
         </Text>
@@ -215,7 +212,6 @@ const ControlPage: React.FC<ControlPageProps> = ({
           flex: 4,
           width: "100%",
           padding: 8,
-          marginTop: 8,
           marginBottom: 8,
         }}
       >

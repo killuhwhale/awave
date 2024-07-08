@@ -9,7 +9,7 @@ import config from "@root/utils/config";
 type MusicPageProps = {
   db: Firestore;
   sendSongToPlayer: (song: SongProps) => void;
-  sendLoadSetlist: () => void;
+  sendLoadSetlist: (setlist: Setlist) => void;
   partyName: string;
   secretCode: string;
 };
@@ -225,7 +225,9 @@ const MusicPage: React.FC<MusicPageProps> = ({
           >
             <View style={{ width: "80%", marginTop: 8 }}>
               <TouchableHighlight
-                onPress={sendLoadSetlist}
+                onPress={() => {
+                  sendLoadSetlist(currentSetlist);
+                }}
                 underlayColor="blue"
                 style={{
                   marginTop: 6,

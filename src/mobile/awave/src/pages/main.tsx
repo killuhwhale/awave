@@ -402,14 +402,16 @@ function Main() {
     }
   };
 
-  const sendLoadSetlist = () => {
+  const sendLoadSetlist = (currentSetlist) => {
     console.log(
       "Sending LoadSetlist",
       partyName,
       secretCode,
       typeof currentSetlist?.order
     );
-    sendCommand(CMD.LOADSETLIST, currentSetlist?.title, 0);
+    if (currentSetlist) {
+      sendCommand(CMD.LOADSETLIST, currentSetlist?.title, 0);
+    }
   };
 
   const sendSongToPlayer = (song: SongProps) => {

@@ -443,9 +443,10 @@ function Main() {
         justifyContent: "center",
         alignItems: "center",
         height: "100%",
+        marginTop: Platform.OS === "ios" ? 20 : 0,
       }}
     >
-      <View style={{ height: "90%", marginTop: Platform.OS == "ios" ? 20 : 0 }}>
+      <View style={{ height: "90%" }}>
         <ScrollView
           horizontal
           pagingEnabled

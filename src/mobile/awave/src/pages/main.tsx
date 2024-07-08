@@ -444,7 +444,7 @@ function Main() {
         height: "100%",
       }}
     >
-      <View style={{ height: "90%" }}>
+      <View style={{ height: "90%", marginTop: 20 }}>
         <ScrollView
           horizontal
           pagingEnabled

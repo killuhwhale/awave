@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TouchableHighlight,
+  Platform,
 } from "react-native";
 
 import { User, signInAnonymously } from "firebase/auth";
@@ -444,7 +445,7 @@ function Main() {
         height: "100%",
       }}
     >
-      <View style={{ height: "90%", marginTop: 20 }}>
+      <View style={{ height: "90%", marginTop: Platform.OS == "ios" ? 20 : 0 }}>
         <ScrollView
           horizontal
           pagingEnabled

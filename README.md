@@ -16,15 +16,6 @@ Loading from Firebase and inserting took:  913.1902229998959
 Mobile Controller must be set to the host device name that it should control since it will pull music from Firebase according to this name.
 
 
-#  TODO()
-
-Android Webrtc isnt working on Prod....
-- Check for internet perms...
-- Check logcat
-
-iOS
-margin on the top is pushed but need to rebuild and verify....
-
 1. [Security] Check TURN server with credentials; need to lock down.
 2. [Performance_Testing] Test Large Setlist 5k songs? and playing for 5 hours straight
 
@@ -105,10 +96,9 @@ bash build.sh ios && eas build -p ios
 Download .ipa and upload via Transporter app.
 
 # Build Android
+bash buildAndroidAPK.sh com.killuhwhale.awave.apk
 cd src/mobile/awave/ && npx expo run:android --device aPixel2XL_4GB
 
-# Update Version
-app/build.gradle
 
 ## Android Sqlite DB
  adb root

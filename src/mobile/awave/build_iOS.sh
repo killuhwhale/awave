@@ -3,9 +3,9 @@
 echo "Removed derived data"
 rm -r /Users/$USER/Library/Developer/Xcode/DerivedData/
 
-echo "\n"
+echo ""
 bash build.sh ios
-echo "\n"
+echo ""
 
 echo "Building app"
 bash build.sh ios && eas build -p ios --local

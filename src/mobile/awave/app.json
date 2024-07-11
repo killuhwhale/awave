@@ -2,7 +2,7 @@
   "expo": {
     "name": "awave",
     "slug": "awave",
-    "version": "0.0.12",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -30,8 +30,7 @@
       }
     },
     "android": {
-      // "versionCode": 3, NEED TO UPDATE!!!!!!!!!!
-      "versionCode": 3,
+      "versionCode": 5,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",

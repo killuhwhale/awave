@@ -1,10 +1,12 @@
 import { collection, Firestore, getDocs } from "firebase/firestore/lite";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, Text, TouchableHighlight, View } from "react-native";
 // import SQLite from "react-native-sqlite-storage";
 
 import SongList from "@root/comps/SongList";
 import config from "@root/utils/config";
+
+const ALL_SONGS_TITLE = "All Songs";
 
 type MusicPageProps = {
   db: Firestore;
@@ -23,6 +25,7 @@ const MusicPage: React.FC<MusicPageProps> = ({
 }) => {
   const [setlists, setSetlists] = useState<Setlist[]>([] as Setlist[]);
   const [currentSetlist, setCurrentSetlist] = useState<Setlist | null>(null);
+  // const allSongsRef = useRef<SongProps[] | null>(null);
 
   useEffect(() => {
     getUserMusic()
@@ -51,11 +54,12 @@ const MusicPage: React.FC<MusicPageProps> = ({
     console.log("All songs undefined: ", allSongs === undefined);
     console.log("All setlists undefined: ", setlists === undefined);
 
+    // allSongsRef.current = allSongs;
     let combinedSetlist = [
       {
-        order: -1,
+        order: 0,
         songs: allSongs,
-        title: "All Songs",
+        title: ALL_SONGS_TITLE,
       } as Setlist,
     ];
 
@@ -165,7 +169,7 @@ const MusicPage: React.FC<MusicPageProps> = ({
               Setlists
             </Text>
             <Text style={{ fontSize: 16, color: "white" }}>
-              Selected: {currentSetlist?.title}
+              Selected: {currentSetlist?.title} ({currentSetlist?.order})
             </Text>
           </View>
 
@@ -175,6 +179,11 @@ const MusicPage: React.FC<MusicPageProps> = ({
                 <></>
               ) : (
                 setlists.map((sl, idx) => {
+                  // const moddedSetlist = {
+                  //   ...sl,
+                  //   order: sl.title === "All Songs" ? 0 : idx + 1,
+                  // };
+                  const moddedSetlist = sl;
                   return (
                     <View
                       key={`sl_${idx}`}
@@ -185,14 +194,14 @@ const MusicPage: React.FC<MusicPageProps> = ({
                         marginBottom: 3,
                         borderRadius: 16,
                         backgroundColor:
-                          currentSetlist?.title === sl.title
+                          currentSetlist?.title === moddedSetlist.title
                             ? "#075985"
                             : "#020617",
                         padding: 8,
                       }}
                     >
                       <TouchableHighlight
-                        onPress={() => setCurrentSetlist(sl)}
+                        onPress={() => setCurrentSetlist(moddedSetlist)}
                         style={{
                           height: "100%",
                           width: "100%",
@@ -203,7 +212,7 @@ const MusicPage: React.FC<MusicPageProps> = ({
                         <Text
                           style={{
                             color:
-                              sl.order == currentSetlist?.order
+                              currentSetlist?.title === moddedSetlist.title
                                 ? "white"
                                 : "grey",
                             textAlign: "center",

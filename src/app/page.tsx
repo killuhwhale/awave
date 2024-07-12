@@ -48,7 +48,7 @@ import useInterceptBackNavigation from "./comps/interceptBackEvent";
  *   MetalMan.wma
  *
  */
-
+const ALL_SONGS_TITLE = "All Songs";
 const partyName = CONFIG["partyName"];
 const WSURL = CONFIG["wss_url"];
 const host = CONFIG["host"];
@@ -97,6 +97,7 @@ const Home: React.FC = () => {
   const [onDeckSongs, setOnDeckSongs] = useState<SongProps[] | null>(null);
   const onDeckSongsRef = useRef<SongProps[] | null>(null);
   const [allSongs, setAllSongs] = useState<SongProps[] | null>(null);
+  const allSongsRef = useRef<SongProps[] | null>(null);
 
   const [user, setUser] = useState<User | null>(null);
 
@@ -465,6 +466,7 @@ const Home: React.FC = () => {
       setOnDeckSongs(songs);
       onDeckSongsRef.current = songs;
       setAllSongs(songs);
+      allSongsRef.current = songs;
 
       console.log("Init load for songs!!");
       if (!leftPlayerRef.current) {
@@ -978,10 +980,12 @@ const Home: React.FC = () => {
   }, [scrollIntervalID]);
 
   const allSongsSetlist = {
-    title: "All Songs",
+    title: ALL_SONGS_TITLE,
     order: 0,
     songs: allSongs,
   };
+
+  console.log("COMBINED SETLIST: ", allSongsSetlist);
 
   const combinedSetlists = [
     allSongsSetlist,
@@ -1017,11 +1021,17 @@ const Home: React.FC = () => {
 
     const setlist = allSetlists[setlistIdx];
 
-    console.log("unconfirmedLoadSetlist ", setlist);
+    console.log("unconfirmedLoadSetlist ", setlist, setlistIdx);
     if (setlist) {
-      setOnDeckSongs(setlist.songs);
-      onDeckSongsRef.current = setlist.songs;
-      setCurSetListIdx(setlistIdx);
+      if (setlist.title == ALL_SONGS_TITLE) {
+        onDeckSongsRef.current = allSongsRef.current;
+        setOnDeckSongs(allSongsRef.current);
+        setCurSetListIdx(0);
+      } else {
+        onDeckSongsRef.current = setlist.songs;
+        setOnDeckSongs(setlist.songs);
+        setCurSetListIdx(setlistIdx);
+      }
     }
   };
 
@@ -1250,6 +1260,7 @@ const Home: React.FC = () => {
                 <div key={`${idx}_SongListSearchable`}></div>
               ) : idx === curSetListIdx ? (
                 <SongListSearchable
+                  hidden={idx !== curSetListIdx}
                   key={`${idx}_SongListSearchable`}
                   playRequestedSong={playRequestedSong}
                   addSongToTopOfOnDeck={addSongToTopOfOnDeck}

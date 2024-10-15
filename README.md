@@ -3,7 +3,6 @@
 # AWave
 ![JukeBox](https://github.com/killuhwhale/awave/blob/main/public/example.gif)
 
-![JukeBox](https://github.com/killuhwhale/awave/blob/main/public/example.png)
 
 
 

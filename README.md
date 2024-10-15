@@ -1,4 +1,11 @@
+
+
 # AWave
+
+![JukeBox](https://github.com/killuhwhale/awave/blob/main/public/example.png)
+
+
+
 ```bash
 # Quick Copy
 cd ~/ws_node/awave/src/fileServer/src && go run cmdServer 127.0.0.1:4000

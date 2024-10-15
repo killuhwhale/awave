@@ -5,6 +5,7 @@ cd ~/ws_node/awave/src/fileServer/src && go run cmdServer 127.0.0.1:4000
 cd ~/ws_node/awave/src/mobile/awave && build.sh web && yarn web
 cd ~/ws_node/awave/src/mobile/awave && bash build.sh android && npx expo run:android
 cd ~/ws_node/awave && npm run dev
+cd ~/ws_node/awave/src/website && npm run dev
 ```
 
 
